@@ -1,13 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Novabit</title>
+<meta charset="UTF-8">
+<title>Novabit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  font-family:Roboto,Arial,sans-serif;
+  margin:0;
+  background:#f8f9fa;
+  padding-bottom:70px;
+}
+
+/* Header */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+header h1{margin:0;font-size:20px;}
+#menuBtn{
+  background:#4b49ac;
+  color:#fff;
+  border:none;
+  padding:8px 15px;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* Layout */
+.container{padding:20px;}
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom:20px;
+}
+
+/* Tables */
+.table-container{max-height:400px;overflow:auto;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;font-size:14px;}
+th{
+  background:#1a1a2e;
+  color:#fff;
+  position:sticky;
+  top:0;
+}
+tr:nth-child(even){background:#f1f1f1;}
+.price-up{color:green;font-weight:bold;}
+.price-down{color:red;font-weight:bold;}
+
+/* Buttons */
+button{
+  background:#4b49ac;
+  color:#fff;
+  border:none;
+  padding:10px 15px;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* Bottom Nav */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:#1a1a2e;
+  display:flex;
+  justify-content:space-around;
+  padding:10px 0;
+  z-index:20;
+}
+.bottom-nav a{
+  color:#fff;
+  text-decoration:none;
+  font-size:14px;
+}
+.bottom-nav a.active{color:#4b49ac;}
+</style>
 </head>
+
 <body>
-  <h1>Welcome to Novabit</h1>
-  <p>This platform is currently running in <b>DEMO mode</b>.</p>
-  <p>All balances and trades are simulated. No real funds are involved.</p>
-  <a href="login.html">Login</a>
+
+<header>
+  <h1 id="pageTitle">Dashboard</h1>
+  <button id="menuBtn">Menu</button>
+</header>
+
+<div class="container">
+
+<!-- ================= DASHBOARD ================= -->
+<div id="dashboardSection">
+  <div class="card">
+    <h2>Top 100 Coins</h2>
+    <div class="table-container">
+      <table id="dashboardTable">
+        <thead>
+          <tr>
+            <th>Coin</th>
+            <th>Price (USD)</th>
+            <th>24h</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= WALLET ================= -->
+<div id="walletSection" style="display:none">
+  <div class="card">
+    <h2>Total Balance</h2>
+    <h1>$0.00</h1>
+    <button>Deposit</button>
+    <button>Withdraw</button>
+  </div>
+
+  <div class="card">
+    <h2>Your Assets (Top 100)</h2>
+    <div class="table-container">
+      <table id="walletTable">
+        <thead>
+          <tr>
+            <th>Coin</th>
+            <th>Price</th>
+            <th>Balance</th>
+            <th>Value (USD)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MARKETS ================= -->
+<div id="marketSection" style="display:none">
+  <div class="card">
+    <h2>Markets</h2>
+    <div class="table-container">
+      <table id="marketTable">
+        <thead>
+          <tr>
+            <th>Coin</th>
+            <th>Price</th>
+            <th>24h</th>
+            <th>Market Cap</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ================= BOTTOM NAV ================= -->
+<div class="bottom-nav">
+  <a href="#" class="active" onclick="openPage('dashboard',this)">Dashboard</a>
+  <a href="#" onclick="openPage('wallet',this)">Wallet</a>
+  <a href="#" onclick="openPage('market',this)">Markets</a>
+</div>
+
+<script>
+/* Page Switch */
+const sections={
+  dashboard:document.getElementById('dashboardSection'),
+  wallet:document.getElementById('walletSection'),
+  market:document.getElementById('marketSection')
+};
+const title=document.getElementById('pageTitle');
+
+function openPage(page,el){
+  Object.values(sections).forEach(s=>s.style.display='none');
+  sections[page].style.display='block';
+
+  document.querySelectorAll('.bottom-nav a')
+    .forEach(a=>a.classList.remove('active'));
+  el.classList.add('active');
+
+  title.innerText=page.charAt(0).toUpperCase()+page.slice(1);
+}
+
+/* Load Market Data */
+fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
+.then(res=>res.json())
+.then(data=>{
+  const dBody=document.querySelector('#dashboardTable tbody');
+  const wBody=document.querySelector('#walletTable tbody');
+  const mBody=document.querySelector('#marketTable tbody');
+
+  data.forEach(c=>{
+    // Dashboard
+    dBody.innerHTML+=`
+      <tr>
+        <td>${c.symbol.toUpperCase()}</td>
+        <td>$${c.current_price.toLocaleString()}</td>
+        <td class="${c.price_change_percentage_24h>=0?'price-up':'price-down'}">
+          ${c.price_change_percentage_24h.toFixed(2)}%
+        </td>
+      </tr>`;
+
+    // Wallet (zero balance demo)
+    wBody.innerHTML+=`
+      <tr>
+        <td>${c.symbol.toUpperCase()}</td>
+        <td>$${c.current_price.toLocaleString()}</td>
+        <td>0.0000</td>
+        <td>$0.00</td>
+      </tr>`;
+
+    // Markets
+    mBody.innerHTML+=`
+      <tr>
+        <td>${c.symbol.toUpperCase()}</td>
+        <td>$${c.current_price.toLocaleString()}</td>
+        <td class="${c.price_change_percentage_24h>=0?'price-up':'price-down'}">
+          ${c.price_change_percentage_24h.toFixed(2)}%
+        </td>
+        <td>$${c.market_cap.toLocaleString()}</td>
+      </tr>`;
+  });
+});
+</script>
+
 </body>
 </html>
