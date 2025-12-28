@@ -11,51 +11,41 @@ body { font-family:'Roboto',sans-serif; margin:0; background:#f8f9fa; padding-bo
 header { background:#1a1a2e; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10; }
 header h1 { margin:0; font-size:20px; }
 #menuBtn { background:#4b49ac; color:#fff; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:500; }
-
 /* Side Menu */
 #sideMenu { position:fixed; top:0; right:-33%; width:33%; max-width:300px; height:100%; background:#fff; box-shadow:-2px 0 6px rgba(0,0,0,0.2); transition:right .3s; z-index:100; padding:20px; overflow-y:auto; }
 #sideMenu.active { right:0; }
 #sideMenu h2 { margin-top:0; }
 #sideMenu a { display:block; margin:15px 0; color:#1a1a2e; text-decoration:none; font-weight:500; }
 #closeMenu { background:#e74c3c; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-bottom:15px; }
-
 /* Container */
 .container{ padding:20px; }
-
 /* Coin Selector */
 .coin-scroll { display:flex; overflow-x:auto; gap:10px; padding:10px 0; }
 .coin-card { background:#fff; border:1px solid #ccc; border-radius:10px; padding:10px; text-align:center; width:80px; flex-shrink:0; cursor:pointer; }
 .coin-card:hover { border-color:#4b49ac; }
 .coin-card img { width:40px; height:40px; margin-bottom:5px; }
-
 /* Cards */
 .card { background:#fff; padding:25px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); margin-bottom:20px; }
 .card h2 { margin-top:0; }
-
 /* Inputs */
 .input-group { margin-bottom:15px; }
 .input-group label { display:block; margin-bottom:5px; font-weight:500; }
 .input-group input { width:100%; padding:10px; border:1px solid #ccc; border-radius:5px; }
-
 /* Buttons */
 button { padding:10px 20px; margin-right:10px; background:#4b49ac; color:#fff; border:none; border-radius:5px; cursor:pointer; font-weight:500; }
 button:hover { background:#3a3690; }
-
 /* Chart */
 #chart { height:300px; }
-
 /* Table */
 .table-container { max-height:200px; overflow-y:auto; margin-top:20px; }
 table { width:100%; border-collapse:collapse; }
 th,td { padding:10px; text-align:left; }
 th { background:#1a1a2e; color:#fff; position:sticky; top:0; }
 tr:nth-child(even){ background:#f1f1f1; }
-
 /* Bottom Navbar */
 .bottom-nav { position:fixed; bottom:0; width:100%; background:#1a1a2e; display:flex; justify-content:space-around; padding:10px 0; z-index:10; }
 .bottom-nav a { color:#fff; text-decoration:none; font-size:14px; display:flex; flex-direction:column; align-items:center; }
 .bottom-nav a.active { color:#4b49ac; }
-
 @media(min-width:768px){ .bottom-nav{ display:none; } }
 </style>
 </head>
@@ -73,7 +63,7 @@ tr:nth-child(even){ background:#f1f1f1; }
   <a href="index.html">Dashboard</a>
   <a href="wallet.html">Wallet</a>
   <a href="market.html">Market</a>
-  <a href="trade.html">Trade</a>
+  <a href="trade.html" class="active">Trade</a>
   <a href="profile.html">Profile</a>
   <a href="settings.html">Settings</a>
 </div>
@@ -151,50 +141,58 @@ tr:nth-child(even){ background:#f1f1f1; }
 const sideMenu = document.getElementById('sideMenu');
 function toggleMenu(){ sideMenu.classList.toggle('active'); }
 
-// Demo Wallet
-let walletBalances = {};
+// Wallet
+let walletBalances = {}; // symbol: amount
 let tradeHistory = [];
 function renderWallet(){
   let html = '<ul>';
   for(let coin in walletBalances){
-    html += `<li>${coin}: ${walletBalances[coin]}</li>`;
+    if(walletBalances[coin] > 0){
+      html += `<li>${coin}: ${walletBalances[coin]}</li>`;
+    }
   }
+  if(html === '<ul>') html += '<li>No balances</li>';
   html += '</ul>';
   document.getElementById('walletBalances').innerHTML = html;
 }
 
-// Fetch Top 100 coins
+// Coin data
+let coinMap = {}; // symbol -> id
+let coinPrices = {}; // symbol -> current_price
+
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(res=>res.json())
 .then(data=>{
   const coinScroll = document.getElementById('coinScroll');
   data.forEach(coin=>{
-    if(!walletBalances[coin.symbol.toUpperCase()]) walletBalances[coin.symbol.toUpperCase()] = 0;
+    const symbol = coin.symbol.toUpperCase();
+    coinMap[symbol] = coin.id; // id واقعی برای نمودار
+    coinPrices[symbol] = coin.current_price;
+    if(!walletBalances[symbol]) walletBalances[symbol]=0;
+
     const div = document.createElement('div');
     div.className='coin-card';
-    div.innerHTML=`<img src="${coin.image}" alt="${coin.symbol}"><div>${coin.symbol.toUpperCase()}</div><div>$${coin.current_price}</div>`;
-    div.onclick=()=>selectCoin(coin.symbol.toUpperCase());
+    div.innerHTML=`<img src="${coin.image}" alt="${symbol}"><div>${symbol}</div><div>$${coin.current_price}</div>`;
+    div.onclick=()=>selectCoin(symbol);
     coinScroll.appendChild(div);
   });
   renderWallet();
 });
 
-// Select Coin
+// Select coin
 let currentPrice = 0;
+let currentSymbol = '';
 function selectCoin(symbol){
+  currentSymbol = symbol;
   document.getElementById('buyCoin').value = symbol;
-  fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${symbol.toLowerCase()}&vs_currencies=usd`)
-    .then(res=>res.json())
-    .then(data=>{
-      currentPrice = data[symbol.toLowerCase()]?.usd || 0;
-      document.getElementById('currentPrice').innerText = currentPrice ? `$${currentPrice}` : 'Not found';
-      updateChart(symbol);
-    });
+  currentPrice = coinPrices[symbol] || 0;
+  document.getElementById('currentPrice').innerText = currentPrice ? `$${currentPrice}` : '-';
+  updateChart(symbol);
 }
 
 // Buy/Sell
 function buyCoin(){
-  const coin = document.getElementById('buyCoin').value.toUpperCase();
+  const coin = currentSymbol;
   const amt = parseFloat(document.getElementById('amount').value);
   if(!coin || !amt || !currentPrice) return alert('Invalid input');
   walletBalances[coin] = (walletBalances[coin] || 0) + amt;
@@ -202,7 +200,7 @@ function buyCoin(){
   renderWallet();
 }
 function sellCoin(){
-  const coin = document.getElementById('buyCoin').value.toUpperCase();
+  const coin = currentSymbol;
   const amt = parseFloat(document.getElementById('amount').value);
   if(!coin || !amt || !currentPrice) return alert('Invalid input');
   if(!walletBalances[coin] || walletBalances[coin]<amt) return alert('Insufficient balance');
@@ -222,7 +220,9 @@ function addTrade(type, coin, amt, price){
 let chart = LightweightCharts.createChart(document.getElementById('chart'), {width:window.innerWidth*0.9, height:300, layout:{textColor:'#000'}, grid:{vertLines:{color:'#eee'}, horzLines:{color:'#eee'}}});
 let lineSeries = chart.addLineSeries();
 function updateChart(symbol){
-  fetch(`https://api.coingecko.com/api/v3/coins/${symbol.toLowerCase()}/market_chart?vs_currency=usd&days=7`)
+  const id = coinMap[symbol];
+  if(!id) return;
+  fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=7`)
     .then(res=>res.json())
     .then(data=>{
       const prices = data.prices.map(p=>({time:Math.floor(p[0]/1000), value:p[1]}));
@@ -230,7 +230,7 @@ function updateChart(symbol){
     });
 }
 
-// Responsive chart resize
+// Responsive chart
 window.addEventListener('resize', ()=>{ chart.resize(window.innerWidth*0.9,300); });
 </script>
 </body>
