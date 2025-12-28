@@ -4,121 +4,33 @@
 <meta charset="UTF-8">
 <title>Wallet | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body{
-  font-family: 'Roboto', sans-serif;
-  margin:0;
-  background:#f8f9fa;
-  padding-bottom:70px;
-}
-
-/* Header */
-header{
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  position:sticky;
-  top:0;
-  z-index:10;
-}
+body{margin:0;font-family:Arial,Roboto,sans-serif;background:#f8f9fa;padding-bottom:70px;}
+header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;}
 header h1{margin:0;font-size:20px;}
-#menuBtn{
-  background:#4b49ac; color:#fff; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:500;
-}
-
-/* Side Menu */
-#sideMenu{
-  position:fixed; top:0; right:-400px; width:33%; height:100%; background:#fff; box-shadow:-2px 0 6px rgba(0,0,0,.2);
-  transition:right .3s; z-index:100; padding:20px;
-}
+#menuBtn{background:#4b49ac;color:#fff;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;}
+#sideMenu{position:fixed;top:0;right:-400px;width:33%;height:100%;background:#fff;box-shadow:-2px 0 6px rgba(0,0,0,.2);transition:right 0.3s;padding:20px;z-index:100;}
 #sideMenu.active{right:0;}
 #sideMenu h2{margin-top:0;}
-#sideMenu a{display:block; margin:15px 0; color:#1a1a2e; text-decoration:none; font-weight:500;}
-#closeMenu{
-  background:#e74c3c; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-bottom:15px;
-}
+#sideMenu a{display:block;margin:15px 0;color:#1a1a2e;text-decoration:none;font-weight:500;}
+#closeMenu{background:#e74c3c;color:#fff;border:none;padding:8px 12px;border-radius:5px;cursor:pointer;margin-bottom:15px;}
 
-/* Container */
 .container{padding:20px;}
-
-/* Cards */
-.card{
-  background:#fff;
-  padding:25px;
-  border-radius:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,0.1);
-  margin-bottom:20px;
-}
+.card{background:#fff;padding:25px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:20px;}
 .card h2{margin-top:0;}
-.total-balance{
-  font-size:32px;
-  font-weight:bold;
-  margin:10px 0 20px;
-}
-
-/* Buttons */
-button{
-  padding:10px 20px;
-  margin-right:10px;
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
-  font-weight:500;
-}
+.total-balance{font-size:32px;font-weight:bold;margin:10px 0 20px;}
+button{padding:10px 20px;margin-right:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:500;}
 button:hover{background:#3a3690;}
-
-/* Table */
-.table-container{
-  max-height:420px;
-  overflow-y:auto;
-  margin-top:20px;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-th,td{
-  padding:10px;
-  text-align:left;
-  font-size:14px;
-}
-th{
-  background:#1a1a2e;
-  color:#fff;
-  position:sticky;
-  top:0;
-}
+.table-container{max-height:400px;overflow:auto;margin-top:10px;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;font-size:14px;text-align:left;}
+th{background:#1a1a2e;color:#fff;position:sticky;top:0;}
 tr:nth-child(even){background:#f1f1f1;}
-
-/* Bottom Nav */
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  background:#1a1a2e;
-  display:flex;
-  justify-content:space-around;
-  padding:10px 0;
-}
-.bottom-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-size:14px;
-}
+.bottom-nav{position:fixed;bottom:0;width:100%;background:#1a1a2e;display:flex;justify-content:space-around;padding:10px 0;z-index:20;}
+.bottom-nav a{color:#fff;text-decoration:none;font-size:14px;display:flex;flex-direction:column;align-items:center;}
 .bottom-nav a.active{color:#4b49ac;}
-
-@media(min-width:768px){
-  .bottom-nav{display:none;}
-}
 </style>
 </head>
-
 <body>
 
 <header>
@@ -129,98 +41,96 @@ tr:nth-child(even){background:#f1f1f1;}
 <!-- Side Menu -->
 <div id="sideMenu">
   <button id="closeMenu" onclick="toggleMenu()">Close</button>
-  <h2>Menu</h2> 
-  <a href="#" class="active">Profile</a>
-  <a href="#" class="active">Settings</a>
+  <h2>Menu</h2>
+  <a href="index.html">Dashboard</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="market.html">Market</a>
+  <a href="trade.html">Trade</a>
 </div>
 
 <div class="container">
 
-  <!-- TOTAL BALANCE -->
-  <div class="card">
-    <h2>Total Balance</h2>
-    <div class="total-balance" id="totalBalance">$0.00</div>
-    <button>Deposit</button>
-    <button>Withdraw</button>
-  </div>
+<!-- TOTAL BALANCE -->
+<div class="card">
+  <h2>Total Balance</h2>
+  <div class="total-balance" id="totalBalance">$0.00</div>
+  <button>Deposit</button>
+  <button>Withdraw</button>
+</div>
 
-  <!-- ASSETS -->
-  <div class="card">
-    <h2>Assets (Top 100)</h2>
-    <div class="table-container">
-      <table id="walletTable">
-        <thead>
-          <tr>
-            <th>Coin</th>
-            <th>Price (USD)</th>
-            <th>Balance</th>
-            <th>Value (USD)</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- HISTORY -->
-  <div class="card">
-    <h2>Transaction History</h2>
-    <table>
+<!-- ASSETS -->
+<div class="card">
+  <h2>Assets (Top 100)</h2>
+  <div class="table-container">
+    <table id="walletTable">
       <thead>
         <tr>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Asset</th>
-          <th>Amount</th>
-          <th>Status</th>
+          <th>Coin</th>
+          <th>Price (USD)</th>
+          <th>Balance</th>
+          <th>Value (USD)</th>
         </tr>
       </thead>
-      <tbody>
-        <tr>
-          <td>—</td>
-          <td>—</td>
-          <td>—</td>
-          <td>0.0000</td>
-          <td>No Transactions</td>
-        </tr>
-      </tbody>
+      <tbody></tbody>
     </table>
   </div>
+</div>
+
+<!-- TRANSACTION HISTORY -->
+<div class="card">
+  <h2>Transaction History</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Asset</th>
+        <th>Amount</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>0.0000</td>
+        <td>No Transactions</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
 </div>
 
 <!-- Bottom Nav -->
 <div class="bottom-nav">
-  <a href="dashboard.html">Dashboard</a>
+  <a href="index.html">Dashboard</a>
   <a href="wallet.html" class="active">Wallet</a>
   <a href="market.html">Market</a>
   <a href="trade.html">Trade</a>
 </div>
+
 <script>
-// Toggle Side Menu
+// Menu Toggle
 const sideMenu = document.getElementById('sideMenu');
-function toggleMenu(){
-  sideMenu.classList.toggle('active');
-}
+function toggleMenu(){ sideMenu.classList.toggle('active'); }
 
-// DEMO balances (all zero)
-const walletBalances = {};
-
-// Fetch Top 100 coins
+// Demo Wallet - Top 100 Coins with balance 0
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(res => res.json())
 .then(data => {
   const tbody = document.querySelector('#walletTable tbody');
-  let totalUSD = 0;
   tbody.innerHTML = '';
+  let totalUSD = 0;
 
   data.forEach(coin => {
     const symbol = coin.symbol.toUpperCase();
-    const balance = walletBalances[symbol] || 0;
-    const value = balance * coin.current_price;
+    const balance = 0;
+    const value = 0;
     totalUSD += value;
 
-    let tr = document.createElement('tr');
+    const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${symbol}</td>
       <td>$${coin.current_price.toLocaleString()}</td>
@@ -230,8 +140,7 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
     tbody.appendChild(tr);
   });
 
-  document.getElementById('totalBalance').innerText =
-    `$${totalUSD.toFixed(2)}`;
+  document.getElementById('totalBalance').innerText = `$${totalUSD.toFixed(2)}`;
 });
 </script>
 
