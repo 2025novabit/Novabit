@@ -2,14 +2,136 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard - Novabit</title>
+  <title>Live Crypto Dashboard - Ourbitx</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f5f6fa;
+    }
+    header {
+      background-color: #2f3640;
+      color: #fff;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header nav a {
+      color: #fff;
+      margin-left: 15px;
+      text-decoration: none;
+    }
+    .container {
+      padding: 20px;
+    }
+    .balance-card {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .crypto-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .crypto-table th, .crypto-table td {
+      padding: 12px 15px;
+      text-align: left;
+    }
+    .crypto-table th {
+      background-color: #2f3640;
+      color: #fff;
+    }
+    .crypto-table tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    .price-up { color: green; }
+    .price-down { color: red; }
+  </style>
 </head>
 <body>
-  <h1>Novabit Dashboard</h1>
-  <p>Welcome! Your demo balance: $<span id="balance">10000</span></p>
-  <a href="markets.html">Markets</a> |
-  <a href="wallet.html">Wallet</a> |
-  <a href="trade.html">Trade</a> |
-  <a href="kyc.html">KYC</a>
+  <header>
+    <h1>Ourbitx Live Dashboard</h1>
+    <nav>
+      <a href="markets.html">Markets</a>
+      <a href="wallet.html">Wallet</a>
+      <a href="trade.html">Trade</a>
+      <a href="kyc.html">KYC</a>
+    </nav>
+  </header>
+
+  <div class="container">
+
+    <div class="balance-card">
+      <h2>Welcome!</h2>
+      <p>Your demo balance: $<span id="balance">10000</span></p>
+    </div>
+
+    <h2>Live Cryptocurrency Prices</h2>
+    <table class="crypto-table">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Price (USD)</th>
+          <th>24h Change</th>
+        </tr>
+      </thead>
+      <tbody id="crypto-body">
+        <tr>
+          <td colspan="3">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const cryptoBody = document.getElementById("crypto-body");
+
+    async function fetchPrices() {
+      try {
+        const res = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,apl&vs_currencies=usd&include_24hr_change=true"
+        );
+        const data = await res.json();
+
+        cryptoBody.innerHTML = `
+          <tr>
+            <td>BTC</td>
+            <td>$${data.bitcoin.usd.toLocaleString()}</td>
+            <td class="${data.bitcoin.usd_24h_change >= 0 ? 'price-up' : 'price-down'}">
+              ${data.bitcoin.usd_24h_change.toFixed(2)}%
+            </td>
+          </tr>
+          <tr>
+            <td>ETH</td>
+            <td>$${data.ethereum.usd.toLocaleString()}</td>
+            <td class="${data.ethereum.usd_24h_change >= 0 ? 'price-up' : 'price-down'}">
+              ${data.ethereum.usd_24h_change.toFixed(2)}%
+            </td>
+          </tr>
+          <tr>
+            <td>APL</td>
+            <td>$${data.apl.usd.toLocaleString()}</td>
+            <td class="${data.apl.usd_24h_change >= 0 ? 'price-up' : 'price-down'}">
+              ${data.apl.usd_24h_change.toFixed(2)}%
+            </td>
+          </tr>
+        `;
+      } catch (error) {
+        cryptoBody.innerHTML = `<tr><td colspan="3">Error loading data</td></tr>`;
+        console.error("Fetch error:", error);
+      }
+    }
+
+    fetchPrices();               
+    setInterval(fetchPrices, 30000); // بروزرسانی هر ۳۰ ثانیه
+  </script>
 </body>
 </html>
