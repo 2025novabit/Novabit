@@ -4,4 +4,5 @@ export const AppConfig = {
   demoStartingBalance: 10000,
   kycRequired: true,
 };
-export const APP_MODE = "DEMO"; // بعداً تغییر به "REAL"
+
+export const APP_MODE = "DEMO"; // تغییر بعداً به "REAL"
