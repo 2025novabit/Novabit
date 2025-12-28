@@ -25,7 +25,15 @@ header {
   z-index: 10;
 }
 header h1 { margin: 0; font-size: 20px; }
-.menu-dot { font-size: 24px; cursor: pointer; user-select: none; }
+#menuBtn {
+  background-color: #4b49ac;
+  color: #fff;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
 
 /* Side menu */
 #sideMenu {
@@ -44,28 +52,6 @@ header h1 { margin: 0; font-size: 20px; }
 #sideMenu.active { right: 0; }
 #sideMenu h2 { margin-top: 0; }
 #sideMenu a { display: block; margin: 15px 0; color: #1a1a2e; text-decoration: none; font-weight: 500; }
-
-/* Balance Card */
-.container { padding: 20px; }
-.balance-card {
-  background-color: #fff;
-  padding: 25px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  margin-bottom: 30px;
-}
-.balance-card h2 { margin-top: 0; }
-.balance-card button {
-  padding: 10px 20px;
-  margin-right: 10px;
-  background-color: #4b49ac;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: 500;
-}
-.balance-card button:hover { background-color: #3a3690; }
 
 /* Tabs for crypto */
 .tabs { display: flex; margin-bottom: 15px; border-bottom: 2px solid #ccc; }
@@ -126,7 +112,7 @@ tr:nth-child(even) { background-color: #f1f1f1; }
 
 <header>
   <h1>Dashboard</h1>
-  <div class="menu-dot" onclick="toggleMenu()">⋮</div>
+  <button id="menuBtn" onclick="toggleMenu()">ویگام</button>
 </header>
 
 <div id="sideMenu">
@@ -140,13 +126,7 @@ tr:nth-child(even) { background-color: #f1f1f1; }
 </div>
 
 <div class="container">
-  <div class="balance-card">
-    <h2>Welcome!</h2>
-    <p>Your demo balance: $<span id="balance">10000</span></p>
-    <button>Deposit</button>
-    <button>Referral</button>
-  </div>
-
+  <!-- Tabs for crypto -->
   <div class="tabs">
     <button class="active" onclick="openTab(event,'top')">Top Coins</button>
     <button onclick="openTab(event,'movers')">Biggest Movers</button>
@@ -199,20 +179,26 @@ function openTab(evt, tabName){
   evt.currentTarget.classList.add('active');
 }
 
-// Generate Top Coins (100 coins for demo)
+// Real coin list
+const coinList = [
+  {symbol:'BTC', price:29000, change:2.5},
+  {symbol:'ETH', price:1850, change:-1.2},
+  {symbol:'APL', price:0.35, change:0.8},
+  {symbol:'BNB', price:320, change:1.5},
+  {symbol:'ADA', price:0.55, change:-8},
+  {symbol:'XRP', price:0.45, change:12},
+  {symbol:'DOGE', price:0.08, change:5.2},
+  {symbol:'SOL', price:22, change:3.1},
+  {symbol:'DOT', price:6, change:-2.3},
+  {symbol:'LTC', price:85, change:0.5}
+];
+
+// Populate Top Coins
 const topCoinsTable = document.querySelector('#topTable tbody');
 const starredTable = document.querySelector('#starredTable tbody');
-let coins=[];
-for(let i=1;i<=100;i++){
-  let symbol='COIN'+i;
-  let price=(Math.random()*1000).toFixed(2);
-  let change=((Math.random()*20)-10).toFixed(2);
-  coins.push({symbol,price,change});
-}
-
 function renderTopCoins(){
   topCoinsTable.innerHTML='';
-  coins.forEach((c,index)=>{
+  coinList.forEach((c,index)=>{
     let tr=document.createElement('tr');
     tr.innerHTML=`<td>${c.symbol}</td><td>$${c.price}</td><td class="${c.change>=0?'price-up':'price-down'}">${c.change}%</td>
     <td><span class="star" onclick="toggleStar(${index},this)">☆</span></td>`;
@@ -222,10 +208,10 @@ function renderTopCoins(){
 function toggleStar(index,el){
   if(el.classList.contains('active')){
     el.classList.remove('active');
-    removeStarred(coins[index]);
+    removeStarred(coinList[index]);
   } else{
     el.classList.add('active');
-    addStarred(coins[index]);
+    addStarred(coinList[index]);
   }
 }
 function addStarred(c){
@@ -240,5 +226,6 @@ function removeStarred(c){
 }
 renderTopCoins();
 </script>
+
 </body>
 </html>
