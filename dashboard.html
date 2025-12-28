@@ -1,230 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      margin: 0;
-      background-color: #f8f9fa;
-      padding-bottom: 60px; /* space for bottom navbar */
-    }
+<meta charset="UTF-8">
+<title>Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  background-color: #f8f9fa;
+  padding-bottom: 60px; 
+}
 
-    /* Header */
-    header {
-      background-color: #1a1a2e;
-      color: #fff;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 20px;
-    }
-    .menu-dot {
-      font-size: 24px;
-      cursor: pointer;
-      user-select: none;
-    }
+/* Header */
+header {
+  background-color: #1a1a2e;
+  color: #fff;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+header h1 { margin: 0; font-size: 20px; }
+.menu-dot { font-size: 24px; cursor: pointer; user-select: none; }
 
-    /* Side menu */
-    #sideMenu {
-      position: fixed;
-      top: 0;
-      right: -33%;
-      width: 33%;
-      max-width: 300px;
-      height: 100%;
-      background-color: #fff;
-      box-shadow: -2px 0 6px rgba(0,0,0,0.2);
-      transition: right 0.3s;
-      z-index: 20;
-      padding: 20px;
-    }
-    #sideMenu.active { right: 0; }
-    #sideMenu h2 { margin-top: 0; }
-    #sideMenu a { display: block; margin: 15px 0; color: #1a1a2e; text-decoration: none; font-weight: 500; }
+/* Side menu */
+#sideMenu {
+  position: fixed;
+  top: 0;
+  right: -33%;
+  width: 33%;
+  max-width: 300px;
+  height: 100%;
+  background-color: #fff;
+  box-shadow: -2px 0 6px rgba(0,0,0,0.2);
+  transition: right 0.3s;
+  z-index: 100;
+  padding: 20px;
+}
+#sideMenu.active { right: 0; }
+#sideMenu h2 { margin-top: 0; }
+#sideMenu a { display: block; margin: 15px 0; color: #1a1a2e; text-decoration: none; font-weight: 500; }
 
-    /* Balance Card */
-    .container { padding: 20px; }
-    .balance-card {
-      background-color: #fff;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-    }
-    .balance-card h2 { margin-top: 0; }
-    .balance-card button {
-      padding: 10px 20px;
-      margin-right: 10px;
-      background-color: #4b49ac;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .balance-card button:hover { background-color: #3a3690; }
+/* Balance Card */
+.container { padding: 20px; }
+.balance-card {
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+.balance-card h2 { margin-top: 0; }
+.balance-card button {
+  padding: 10px 20px;
+  margin-right: 10px;
+  background-color: #4b49ac;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.balance-card button:hover { background-color: #3a3690; }
 
-    /* Tabs for crypto */
-    .tabs {
-      display: flex;
-      margin-bottom: 15px;
-      border-bottom: 2px solid #ccc;
-    }
-    .tabs button {
-      flex: 1;
-      padding: 10px;
-      background-color: #fff;
-      border: none;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .tabs button.active { border-bottom: 3px solid #4b49ac; color: #4b49ac; }
+/* Tabs for crypto */
+.tabs { display: flex; margin-bottom: 15px; border-bottom: 2px solid #ccc; }
+.tabs button {
+  flex: 1;
+  padding: 10px;
+  background-color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+.tabs button.active { border-bottom: 3px solid #4b49ac; color: #4b49ac; }
 
-    /* Crypto tables */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: #fff;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-    }
-    th, td { padding: 15px; text-align: left; }
-    th { background-color: #1a1a2e; color: #fff; font-weight: 500; }
-    tr:nth-child(even) { background-color: #f1f1f1; }
-    .price-up { color: green; font-weight: bold; }
-    .price-down { color: red; font-weight: bold; }
+/* Tables */
+.table-container { max-height: 400px; overflow-y: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+th, td { padding: 10px; text-align: left; }
+th { background-color: #1a1a2e; color: #fff; font-weight: 500; position: sticky; top: 0; }
+tr:nth-child(even) { background-color: #f1f1f1; }
+.price-up { color: green; font-weight: bold; }
+.price-down { color: red; font-weight: bold; }
+.star { cursor: pointer; color: gray; font-size: 16px; }
+.star.active { color: gold; }
 
-    /* Bottom Navbar */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      background-color: #1a1a2e;
-      display: flex;
-      justify-content: space-around;
-      padding: 10px 0;
-      z-index: 10;
-    }
-    .bottom-nav a {
-      color: #fff;
-      text-decoration: none;
-      font-size: 14px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .bottom-nav a.active { color: #4b49ac; }
+/* Bottom Navbar */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #1a1a2e;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  z-index: 10;
+}
+.bottom-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.bottom-nav a.active { color: #4b49ac; }
 
-    @media (min-width: 768px) { .bottom-nav { display: none; } }
-  </style>
+@media (min-width: 768px) { .bottom-nav { display: none; } }
+</style>
 </head>
 <body>
 
-  <!-- Header -->
-  <header>
-    <h1>Dashboard</h1>
-    <div class="menu-dot" onclick="toggleMenu()">⋮</div>
-  </header>
+<header>
+  <h1>Dashboard</h1>
+  <div class="menu-dot" onclick="toggleMenu()">⋮</div>
+</header>
 
-  <!-- Side Menu -->
-  <div id="sideMenu">
-    <h2>Menu</h2>
-    <a href="#">Profile</a>
-    <a href="#">KYC</a>
-    <a href="#">Change Password</a>
-    <a href="#">2FA Settings</a>
-    <a href="#">Fees</a>
-    <a href="#">Referral</a>
+<div id="sideMenu">
+  <h2>Menu</h2>
+  <a href="#">Profile</a>
+  <a href="#">KYC</a>
+  <a href="#">Change Password</a>
+  <a href="#">2FA Settings</a>
+  <a href="#">Fees</a>
+  <a href="#">Referral</a>
+</div>
+
+<div class="container">
+  <div class="balance-card">
+    <h2>Welcome!</h2>
+    <p>Your demo balance: $<span id="balance">10000</span></p>
+    <button>Deposit</button>
+    <button>Referral</button>
   </div>
 
-  <div class="container">
-    <!-- Balance Card -->
-    <div class="balance-card">
-      <h2>Welcome!</h2>
-      <p>Your demo balance: $<span id="balance">10000</span></p>
-      <button>Deposit</button>
-      <button>Referral</button>
-    </div>
-
-    <!-- Tabs for crypto -->
-    <div class="tabs">
-      <button class="active" onclick="openTab(event, 'top')">Top Coins</button>
-      <button onclick="openTab(event, 'movers')">Biggest Movers</button>
-      <button onclick="openTab(event, 'starred')">Starred Coins</button>
-    </div>
-
-    <!-- Tab Contents -->
-    <div id="top">
-      <table>
-        <thead>
-          <tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>BTC</td><td>$29,000</td><td class="price-up">+2.5%</td></tr>
-          <tr><td>ETH</td><td>$1,850</td><td class="price-down">-1.2%</td></tr>
-          <tr><td>APL</td><td>$0.35</td><td class="price-up">+0.8%</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div id="movers" style="display:none">
-      <table>
-        <thead>
-          <tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>XRP</td><td>$0.45</td><td class="price-up">+12%</td></tr>
-          <tr><td>ADA</td><td>$0.55</td><td class="price-down">-8%</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div id="starred" style="display:none">
-      <table>
-        <thead>
-          <tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>APL</td><td>$0.35</td><td class="price-up">+0.8%</td></tr>
-          <tr><td>BNB</td><td>$320</td><td class="price-up">+1.5%</td></tr>
-        </tbody>
-      </table>
-    </div>
+  <div class="tabs">
+    <button class="active" onclick="openTab(event,'top')">Top Coins</button>
+    <button onclick="openTab(event,'movers')">Biggest Movers</button>
+    <button onclick="openTab(event,'starred')">Starred Coins</button>
   </div>
 
-  <!-- Bottom Navbar -->
-  <div class="bottom-nav">
-    <a href="#" class="active">Home</a>
-    <a href="#">Wallet</a>
-    <a href="#">Markets</a>
-    <a href="#">Trade</a>
+  <!-- Top Coins -->
+  <div id="top" class="table-container">
+    <table id="topTable">
+      <thead><tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th><th>⭐</th></tr></thead>
+      <tbody></tbody>
+    </table>
   </div>
 
-  <script>
-    function toggleMenu() {
-      const menu = document.getElementById('sideMenu');
-      menu.classList.toggle('active');
-    }
+  <!-- Movers -->
+  <div id="movers" class="table-container" style="display:none">
+    <table>
+      <thead><tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr></thead>
+      <tbody>
+        <tr><td>XRP</td><td>$0.45</td><td class="price-up">+12%</td></tr>
+        <tr><td>ADA</td><td>$0.55</td><td class="price-down">-8%</td></tr>
+      </tbody>
+    </table>
+  </div>
 
-    function openTab(evt, tabName) {
-      const tabs = ['top','movers','starred'];
-      tabs.forEach(id => document.getElementById(id).style.display = 'none');
-      document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(tabName).style.display = 'block';
-      evt.currentTarget.classList.add('active');
-    }
-  </script>
+  <!-- Starred -->
+  <div id="starred" class="table-container" style="display:none">
+    <table id="starredTable">
+      <thead><tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <a href="#" class="active">Home</a>
+  <a href="#">Wallet</a>
+  <a href="#">Markets</a>
+  <a href="#">Trade</a>
+</div>
+
+<script>
+const sideMenu = document.getElementById('sideMenu');
+function toggleMenu(){ sideMenu.classList.toggle('active'); }
+
+function openTab(evt, tabName){
+  ['top','movers','starred'].forEach(id => document.getElementById(id).style.display='none');
+  document.querySelectorAll('.tabs button').forEach(btn=>btn.classList.remove('active'));
+  document.getElementById(tabName).style.display='block';
+  evt.currentTarget.classList.add('active');
+}
+
+// Generate Top Coins (100 coins for demo)
+const topCoinsTable = document.querySelector('#topTable tbody');
+const starredTable = document.querySelector('#starredTable tbody');
+let coins=[];
+for(let i=1;i<=100;i++){
+  let symbol='COIN'+i;
+  let price=(Math.random()*1000).toFixed(2);
+  let change=((Math.random()*20)-10).toFixed(2);
+  coins.push({symbol,price,change});
+}
+
+function renderTopCoins(){
+  topCoinsTable.innerHTML='';
+  coins.forEach((c,index)=>{
+    let tr=document.createElement('tr');
+    tr.innerHTML=`<td>${c.symbol}</td><td>$${c.price}</td><td class="${c.change>=0?'price-up':'price-down'}">${c.change}%</td>
+    <td><span class="star" onclick="toggleStar(${index},this)">☆</span></td>`;
+    topCoinsTable.appendChild(tr);
+  });
+}
+function toggleStar(index,el){
+  if(el.classList.contains('active')){
+    el.classList.remove('active');
+    removeStarred(coins[index]);
+  } else{
+    el.classList.add('active');
+    addStarred(coins[index]);
+  }
+}
+function addStarred(c){
+  let tr=document.createElement('tr');
+  tr.setAttribute('data-symbol',c.symbol);
+  tr.innerHTML=`<td>${c.symbol}</td><td>$${c.price}</td><td class="${c.change>=0?'price-up':'price-down'}">${c.change}%</td>`;
+  starredTable.appendChild(tr);
+}
+function removeStarred(c){
+  let tr=starredTable.querySelector(`[data-symbol="${c.symbol}"]`);
+  if(tr) tr.remove();
+}
+renderTopCoins();
+</script>
 </body>
 </html>
