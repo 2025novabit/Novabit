@@ -7,7 +7,7 @@
 
 <style>
 body{
-  font-family:Roboto,Arial,sans-serif;
+  font-family:Arial,Roboto,sans-serif;
   margin:0;
   background:#f8f9fa;
   padding-bottom:70px;
@@ -98,7 +98,7 @@ button{
 
 <div class="container">
 
-<!-- ================= DASHBOARD ================= -->
+<!-- DASHBOARD -->
 <div id="dashboardSection">
   <div class="card">
     <h2>Top 100 Coins</h2>
@@ -117,7 +117,7 @@ button{
   </div>
 </div>
 
-<!-- ================= WALLET ================= -->
+<!-- WALLET -->
 <div id="walletSection" style="display:none">
   <div class="card">
     <h2>Total Balance</h2>
@@ -127,7 +127,7 @@ button{
   </div>
 
   <div class="card">
-    <h2>Your Assets (Top 100)</h2>
+    <h2>Your Assets</h2>
     <div class="table-container">
       <table id="walletTable">
         <thead>
@@ -135,7 +135,7 @@ button{
             <th>Coin</th>
             <th>Price</th>
             <th>Balance</th>
-            <th>Value (USD)</th>
+            <th>Value</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -144,7 +144,7 @@ button{
   </div>
 </div>
 
-<!-- ================= MARKETS ================= -->
+<!-- MARKETS -->
 <div id="marketSection" style="display:none">
   <div class="card">
     <h2>Markets</h2>
@@ -166,7 +166,7 @@ button{
 
 </div>
 
-<!-- ================= BOTTOM NAV ================= -->
+<!-- Bottom Navigation -->
 <div class="bottom-nav">
   <a href="#" class="active" onclick="openPage('dashboard',this)">Dashboard</a>
   <a href="#" onclick="openPage('wallet',this)">Wallet</a>
@@ -174,7 +174,7 @@ button{
 </div>
 
 <script>
-/* Page Switch */
+/* SPA Navigation */
 const sections={
   dashboard:document.getElementById('dashboardSection'),
   wallet:document.getElementById('walletSection'),
@@ -193,16 +193,22 @@ function openPage(page,el){
   title.innerText=page.charAt(0).toUpperCase()+page.slice(1);
 }
 
-/* Load Market Data */
+/* Load Market Data (SAFE) */
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
-.then(res=>res.json())
+.then(res=>{
+  if(!res.ok) throw new Error('API error');
+  return res.json();
+})
 .then(data=>{
   const dBody=document.querySelector('#dashboardTable tbody');
   const wBody=document.querySelector('#walletTable tbody');
   const mBody=document.querySelector('#marketTable tbody');
 
+  dBody.innerHTML='';
+  wBody.innerHTML='';
+  mBody.innerHTML='';
+
   data.forEach(c=>{
-    // Dashboard
     dBody.innerHTML+=`
       <tr>
         <td>${c.symbol.toUpperCase()}</td>
@@ -212,7 +218,6 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
         </td>
       </tr>`;
 
-    // Wallet (zero balance demo)
     wBody.innerHTML+=`
       <tr>
         <td>${c.symbol.toUpperCase()}</td>
@@ -221,7 +226,6 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
         <td>$0.00</td>
       </tr>`;
 
-    // Markets
     mBody.innerHTML+=`
       <tr>
         <td>${c.symbol.toUpperCase()}</td>
@@ -232,6 +236,10 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
         <td>$${c.market_cap.toLocaleString()}</td>
       </tr>`;
   });
+})
+.catch(err=>{
+  alert('Market data unavailable');
+  console.error(err);
 });
 </script>
 
