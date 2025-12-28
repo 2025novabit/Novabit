@@ -3,32 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <title>Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: 'Roboto', sans-serif;
       margin: 0;
       background-color: #f8f9fa;
+      padding-bottom: 60px; /* space for bottom navbar */
     }
     header {
       background-color: #1a1a2e;
       color: #fff;
-      padding: 15px 30px;
+      padding: 15px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
     header h1 {
-      font-size: 20px;
       margin: 0;
+      font-size: 20px;
     }
-    header nav a {
-      color: #fff;
-      margin-left: 20px;
+    .hamburger {
+      cursor: pointer;
+      font-size: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 18px;
+    }
+    .hamburger div {
+      width: 25px;
+      height: 3px;
+      background-color: #fff;
+      margin: 3px 0;
+    }
+    /* Side menu */
+    #sideMenu {
+      position: fixed;
+      top: 0;
+      right: -250px;
+      width: 250px;
+      height: 100%;
+      background-color: #fff;
+      box-shadow: -2px 0 6px rgba(0,0,0,0.2);
+      transition: right 0.3s;
+      z-index: 20;
+      padding: 20px;
+    }
+    #sideMenu.active {
+      right: 0;
+    }
+    #sideMenu h2 {
+      margin-top: 0;
+    }
+    #sideMenu a {
+      display: block;
+      margin: 15px 0;
+      color: #1a1a2e;
       text-decoration: none;
       font-weight: 500;
     }
+    /* Balance Card */
     .container {
-      padding: 30px;
+      padding: 20px;
     }
     .balance-card {
       background-color: #fff;
@@ -37,23 +77,8 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
       margin-bottom: 30px;
     }
-    .balance-card h2 {
-      margin-top: 0;
-    }
-    .links a {
-      display: inline-block;
-      margin-right: 15px;
-      padding: 8px 15px;
-      background-color: #4b49ac;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 5px;
-      font-size: 14px;
-      transition: 0.2s;
-    }
-    .links a:hover {
-      background-color: #3a3690;
-    }
+    .balance-card h2 { margin-top: 0; }
+    /* Crypto Table */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -71,34 +96,61 @@
       color: #fff;
       font-weight: 500;
     }
-    tr:nth-child(even) {
-      background-color: #f1f1f1;
-    }
+    tr:nth-child(even) { background-color: #f1f1f1; }
     .price-up { color: green; font-weight: bold; }
     .price-down { color: red; font-weight: bold; }
+    /* Bottom Navbar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background-color: #1a1a2e;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      z-index: 10;
+    }
+    .bottom-nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .bottom-nav a.active { color: #4b49ac; }
+
+    /* Responsive adjustments */
+    @media (min-width: 768px) {
+      .bottom-nav { display: none; }
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>Dashboard</h1>
-    <nav>
-      <a href="markets.html">Markets</a>
-      <a href="wallet.html">Wallet</a>
-      <a href="trade.html">Trade</a>
-      <a href="kyc.html">KYC</a>
-    </nav>
+    <div class="hamburger" onclick="toggleMenu()">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
   </header>
+
+  <!-- Side menu -->
+  <div id="sideMenu">
+    <h2>Menu</h2>
+    <a href="#">Profile</a>
+    <a href="#">KYC</a>
+    <a href="#">Change Password</a>
+    <a href="#">2FA Settings</a>
+    <a href="#">Fees</a>
+    <a href="#">Referral</a>
+  </div>
 
   <div class="container">
     <div class="balance-card">
       <h2>Welcome!</h2>
       <p>Your demo balance: $<span id="balance">10000</span></p>
-      <div class="links">
-        <a href="markets.html">Go to Markets</a>
-        <a href="wallet.html">Go to Wallet</a>
-        <a href="trade.html">Start Trading</a>
-        <a href="kyc.html">Complete KYC</a>
-      </div>
     </div>
 
     <h2>Cryptocurrency Prices</h2>
@@ -129,5 +181,20 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Bottom Navbar -->
+  <div class="bottom-nav">
+    <a href="#" class="active">Home</a>
+    <a href="#">Wallet</a>
+    <a href="#">Markets</a>
+    <a href="#">Trade</a>
+  </div>
+
+  <script>
+    function toggleMenu() {
+      const menu = document.getElementById('sideMenu');
+      menu.classList.toggle('active');
+    }
+  </script>
 </body>
 </html>
