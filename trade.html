@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trade - Novabit</title>
+</head>
+<body>
+  <h2>Demo Trading</h2>
+  <form id="tradeForm">
+    <select id="asset">
+      <option value="BTC">BTC</option>
+      <option value="ETH">ETH</option>
+      <option value="USDT">USDT</option>
+    </select>
+    <input type="number" id="amount" placeholder="Amount" required />
+    <button type="submit">Buy / Sell</button>
+  </form>
+  <script>
+    document.getElementById('tradeForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Trade executed in DEMO mode!');
+    });
+  </script>
+  <a href="dashboard.html">Back to Dashboard</a>
+</body>
+</html>
