@@ -26,10 +26,20 @@ header{
   z-index:10;
 }
 header h1{margin:0;font-size:20px;}
-header a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:500;
+#menuBtn{
+  background:#4b49ac; color:#fff; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:500;
+}
+
+/* Side Menu */
+#sideMenu{
+  position:fixed; top:0; right:-250px; width:250px; height:100%; background:#fff; box-shadow:-2px 0 6px rgba(0,0,0,.2);
+  transition:right .3s; z-index:100; padding:20px;
+}
+#sideMenu.active{right:0;}
+#sideMenu h2{margin-top:0;}
+#sideMenu a{display:block; margin:15px 0; color:#1a1a2e; text-decoration:none; font-weight:500;}
+#closeMenu{
+  background:#e74c3c; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-bottom:15px;
 }
 
 /* Container */
@@ -67,6 +77,7 @@ button:hover{background:#3a3690;}
 .table-container{
   max-height:420px;
   overflow-y:auto;
+  margin-top:20px;
 }
 table{
   width:100%;
@@ -112,8 +123,20 @@ tr:nth-child(even){background:#f1f1f1;}
 
 <header>
   <h1>Wallet</h1>
-  <a href="dashboard.html">Dashboard</a>
+  <button id="menuBtn" onclick="toggleMenu()">Menu</button>
 </header>
+
+<!-- Side Menu -->
+<div id="sideMenu">
+  <button id="closeMenu" onclick="toggleMenu()">Close</button>
+  <h2>Menu</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="#" class="active">Wallet</a>
+  <a href="#">Markets</a>
+  <a href="#">Trade</a>
+  <a href="#">Profile</a>
+  <a href="#">Settings</a>
+</div>
 
 <div class="container">
 
@@ -179,6 +202,12 @@ tr:nth-child(even){background:#f1f1f1;}
 </div>
 
 <script>
+// Toggle Side Menu
+const sideMenu = document.getElementById('sideMenu');
+function toggleMenu(){
+  sideMenu.classList.toggle('active');
+}
+
 // DEMO balances (all zero)
 const walletBalances = {};
 
