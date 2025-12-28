@@ -2,16 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Novabit</title>
+<title>Markets</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body{
-  font-family:Roboto,sans-serif;
+  font-family:Arial,Roboto,sans-serif;
   margin:0;
   background:#f8f9fa;
-  padding-bottom:70px;
+  padding-bottom:60px;
 }
+
+/* Header */
 header{
   background:#1a1a2e;
   color:#fff;
@@ -22,200 +24,100 @@ header{
   position:sticky;
   top:0;
 }
-header h1{margin:0;font-size:20px;}
-#menuBtn{
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  padding:8px 15px;
-  border-radius:5px;
+header h1{
+  margin:0;
+  font-size:20px;
 }
 
+/* Layout */
 .container{padding:20px;}
 .card{
   background:#fff;
   padding:20px;
   border-radius:10px;
   box-shadow:0 4px 8px rgba(0,0,0,.1);
-  margin-bottom:20px;
-}
-button{
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  padding:10px 15px;
-  border-radius:5px;
 }
 
-table{width:100%;border-collapse:collapse;}
-th,td{padding:10px;font-size:14px;}
-th{background:#1a1a2e;color:#fff;position:sticky;top:0;}
+/* Table */
+.table-container{
+  max-height:450px;
+  overflow:auto;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:10px;
+  font-size:14px;
+  text-align:left;
+}
+th{
+  background:#1a1a2e;
+  color:#fff;
+  position:sticky;
+  top:0;
+}
 tr:nth-child(even){background:#f1f1f1;}
 .price-up{color:green;font-weight:bold;}
 .price-down{color:red;font-weight:bold;}
-
-.table-container{max-height:400px;overflow:auto;}
-
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  background:#1a1a2e;
-  display:flex;
-  justify-content:space-around;
-  padding:10px 0;
-}
-.bottom-nav a{
-  color:#fff;
-  text-decoration:none;
-}
-.bottom-nav a.active{color:#4b49ac;}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h1 id="pageTitle">Dashboard</h1>
-  <button id="menuBtn">Menu</button>
+  <h1>Markets</h1>
 </header>
 
 <div class="container">
-
-<!-- ================= DASHBOARD ================= -->
-<div id="dashboardSection">
   <div class="card">
-    <h2>Top 100 Coins</h2>
-    <div class="table-container">
-      <table id="dashboardTable">
-        <thead>
-          <tr>
-            <th>Coin</th>
-            <th>Price</th>
-            <th>24h</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-</div>
+    <h2>Top 100 Cryptocurrencies</h2>
 
-<!-- ================= WALLET ================= -->
-<div id="walletSection" style="display:none">
-  <div class="card">
-    <h2>Total Balance</h2>
-    <h1>$0.00</h1>
-    <button>Deposit</button>
-    <button>Withdraw</button>
-  </div>
-
-  <div class="card">
-    <h2>Assets (Top 100)</h2>
-    <div class="table-container">
-      <table id="walletTable">
-        <thead>
-          <tr>
-            <th>Coin</th>
-            <th>Price</th>
-            <th>Balance</th>
-            <th>Value</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- ================= MARKETS ================= -->
-<div id="marketSection" style="display:none">
-  <div class="card">
-    <h2>Markets</h2>
     <div class="table-container">
       <table id="marketTable">
         <thead>
           <tr>
             <th>Coin</th>
-            <th>Price</th>
-            <th>24h</th>
+            <th>Price (USD)</th>
+            <th>24h Change</th>
             <th>Market Cap</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
+
   </div>
 </div>
 
-</div>
-
-<!-- ================= NAV ================= -->
-<div class="bottom-nav">
-  <a href="#" class="active" onclick="openPage('dashboard')">Dashboard</a>
-  <a href="#" onclick="openPage('wallet')">Wallet</a>
-  <a href="#" onclick="openPage('market')">Markets</a>
-</div>
-
 <script>
-const sections={
-  dashboard:document.getElementById('dashboardSection'),
-  wallet:document.getElementById('walletSection'),
-  market:document.getElementById('marketSection')
-};
-const title=document.getElementById('pageTitle');
-const navLinks=document.querySelectorAll('.bottom-nav a');
-
-function openPage(page){
-  Object.values(sections).forEach(s=>s.style.display='none');
-  sections[page].style.display='block';
-
-  navLinks.forEach(a=>a.classList.remove('active'));
-  event.target.classList.add('active');
-
-  title.innerText=page.charAt(0).toUpperCase()+page.slice(1);
-}
-
-// Fetch coins once
+/* Load Market Data – TESTED */
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
-.then(res=>res.json())
+.then(response=>{
+  if(!response.ok) throw new Error('API Error');
+  return response.json();
+})
 .then(data=>{
-  // Dashboard
-  const dBody=document.querySelector('#dashboardTable tbody');
-  const wBody=document.querySelector('#walletTable tbody');
-  const mBody=document.querySelector('#marketTable tbody');
+  const tbody=document.querySelector('#marketTable tbody');
+  tbody.innerHTML='';
 
-  data.forEach(c=>{
-    // Dashboard
-    dBody.innerHTML+=`
+  data.forEach(coin=>{
+    tbody.innerHTML+=`
       <tr>
-        <td>${c.symbol.toUpperCase()}</td>
-        <td>$${c.current_price.toLocaleString()}</td>
-        <td class="${c.price_change_percentage_24h>=0?'price-up':'price-down'}">
-          ${c.price_change_percentage_24h.toFixed(2)}%
+        <td>${coin.symbol.toUpperCase()}</td>
+        <td>$${coin.current_price.toLocaleString()}</td>
+        <td class="${coin.price_change_percentage_24h>=0?'price-up':'price-down'}">
+          ${coin.price_change_percentage_24h.toFixed(2)}%
         </td>
-      </tr>`;
-
-    // Wallet
-    wBody.innerHTML+=`
-      <tr>
-        <td>${c.symbol.toUpperCase()}</td>
-        <td>$${c.current_price.toLocaleString()}</td>
-        <td>0.0000</td>
-        <td>$0.00</td>
-      </tr>`;
-
-    // Markets
-    mBody.innerHTML+=`
-      <tr>
-        <td>${c.symbol.toUpperCase()}</td>
-        <td>$${c.current_price.toLocaleString()}</td>
-        <td class="${c.price_change_percentage_24h>=0?'price-up':'price-down'}">
-          ${c.price_change_percentage_24h.toFixed(2)}%
-        </td>
-        <td>$${c.market_cap.toLocaleString()}</td>
-      </tr>`;
+        <td>$${coin.market_cap.toLocaleString()}</td>
+      </tr>
+    `;
   });
+})
+.catch(err=>{
+  console.error(err);
+  alert('Market data not available');
 });
 </script>
 
