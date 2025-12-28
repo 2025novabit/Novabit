@@ -2,123 +2,116 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Markets</title>
+<title>Market</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body{
-  font-family:Arial,Roboto,sans-serif;
-  margin:0;
-  background:#f8f9fa;
-  padding-bottom:60px;
-}
-
-/* Header */
-header{
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  position:sticky;
-  top:0;
-}
-header h1{
-  margin:0;
-  font-size:20px;
-}
-
-/* Layout */
+body{font-family:Arial,Roboto,sans-serif;margin:0;background:#f8f9fa;padding-bottom:70px;}
+header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;}
+header h1{margin:0;font-size:20px;}
 .container{padding:20px;}
-.card{
-  background:#fff;
-  padding:20px;
-  border-radius:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,.1);
-}
-
-/* Table */
-.table-container{
-  max-height:450px;
-  overflow:auto;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-th,td{
-  padding:10px;
-  font-size:14px;
-  text-align:left;
-}
-th{
-  background:#1a1a2e;
-  color:#fff;
-  position:sticky;
-  top:0;
-}
+.card{background:#fff;padding:20px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:20px;}
+.table-container{max-height:400px;overflow:auto;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;font-size:14px;}
+th{background:#1a1a2e;color:#fff;position:sticky;top:0;}
 tr:nth-child(even){background:#f1f1f1;}
 .price-up{color:green;font-weight:bold;}
 .price-down{color:red;font-weight:bold;}
+.star{cursor:pointer;color:gray;font-size:18px;}
+.star.active{color:gold;}
+.bottom-nav{position:fixed;bottom:0;width:100%;background:#1a1a2e;display:flex;justify-content:space-around;padding:10px 0;z-index:20;}
+.bottom-nav a{color:#fff;text-decoration:none;font-size:14px;}
+.bottom-nav a.active{color:#4b49ac;}
 </style>
 </head>
-
 <body>
 
-<header>
-  <h1>Markets</h1>
-</header>
-
+<header><h1>Markets</h1></header>
 <div class="container">
-  <div class="card">
-    <h2>Top 100 Cryptocurrencies</h2>
 
-    <div class="table-container">
-      <table id="marketTable">
-        <thead>
-          <tr>
-            <th>Coin</th>
-            <th>Price (USD)</th>
-            <th>24h Change</th>
-            <th>Market Cap</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
+<!-- ⭐ Starred Coins -->
+<div class="card">
+  <h2>⭐ Starred Coins</h2>
+  <div class="table-container">
+    <table id="starredMarketTable">
+      <thead><tr><th>Coin</th><th>Price</th><th>24h</th></tr></thead>
+      <tbody></tbody>
+    </table>
   </div>
 </div>
 
-<script>
-/* Load Market Data – TESTED */
-fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
-.then(response=>{
-  if(!response.ok) throw new Error('API Error');
-  return response.json();
-})
-.then(data=>{
-  const tbody=document.querySelector('#marketTable tbody');
-  tbody.innerHTML='';
+<!-- 🚀 Top Movers -->
+<div class="card">
+  <h2>🚀 Top Movers (24h)</h2>
+  <div class="table-container">
+    <table id="moversMarketTable">
+      <thead><tr><th>Coin</th><th>Price</th><th>24h</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
 
-  data.forEach(coin=>{
-    tbody.innerHTML+=`
+<!-- 🌍 All Markets -->
+<div class="card">
+  <h2>🌍 All Markets</h2>
+  <div class="table-container">
+    <table id="marketTable">
+      <thead><tr><th>Coin</th><th>Price</th><th>24h</th><th>⭐</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<div class="bottom-nav">
+  <a href="index.html">Dashboard</a>
+  <a href="index.html">Wallet</a>
+  <a href="#" class="active">Markets</a>
+</div>
+
+<script>
+let starredCoins = JSON.parse(localStorage.getItem('starredCoins') || '[]');
+function saveStars(){ localStorage.setItem('starredCoins',JSON.stringify(starredCoins)); }
+function renderStarredMarket(){
+  const tbody=document.querySelector('#starredMarketTable tbody'); tbody.innerHTML='';
+  starredCoins.forEach(c=>{tbody.innerHTML+=`
+    <tr><td>${c.symbol}</td><td>$${c.price.toLocaleString()}</td><td class="${c.change>=0?'price-up':'price-down'}">${c.change.toFixed(2)}%</td></tr>`;});
+}
+
+// Load Market Data
+fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
+.then(r=>r.json())
+.then(data=>{
+  const allBody=document.querySelector('#marketTable tbody');
+  const moversBody=document.querySelector('#moversMarketTable tbody');
+  allBody.innerHTML=''; moversBody.innerHTML='';
+
+  let movers=[...data].sort((a,b)=>Math.abs(b.price_change_percentage_24h)-Math.abs(a.price_change_percentage_24h)).slice(0,10);
+  movers.forEach(c=>{moversBody.innerHTML+=`
+    <tr><td>${c.symbol.toUpperCase()}</td><td>$${c.current_price.toLocaleString()}</td><td class="${c.price_change_percentage_24h>=0?'price-up':'price-down'}">${c.price_change_percentage_24h.toFixed(2)}%</td></tr>`;});
+
+  data.forEach(c=>{
+    const symbol=c.symbol.toUpperCase();
+    const starred=starredCoins.some(s=>s.symbol===symbol);
+    allBody.innerHTML+=`
       <tr>
-        <td>${coin.symbol.toUpperCase()}</td>
-        <td>$${coin.current_price.toLocaleString()}</td>
-        <td class="${coin.price_change_percentage_24h>=0?'price-up':'price-down'}">
-          ${coin.price_change_percentage_24h.toFixed(2)}%
-        </td>
-        <td>$${coin.market_cap.toLocaleString()}</td>
-      </tr>
-    `;
+        <td>${symbol}</td>
+        <td>$${c.current_price.toLocaleString()}</td>
+        <td class="${c.price_change_percentage_24h>=0?'price-up':'price-down'}">${c.price_change_percentage_24h.toFixed(2)}%</td>
+        <td><span class="star ${starred?'active':''}" onclick="toggleStar('${symbol}',${c.current_price},${c.price_change_percentage_24h},this)">⭐</span></td>
+      </tr>`;
   });
+  renderStarredMarket();
 })
-.catch(err=>{
-  console.error(err);
-  alert('Market data not available');
-});
+.catch(err=>{console.error(err); alert('Market data not available');});
+
+function toggleStar(symbol,price,change,el){
+  const idx=starredCoins.findIndex(s=>s.symbol===symbol);
+  if(idx>-1){starredCoins.splice(idx,1); el.classList.remove('active');}
+  else{starredCoins.push({symbol,price,change}); el.classList.add('active');}
+  saveStars(); renderStarredMarket();
+}
 </script>
 
 </body>
