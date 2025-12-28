@@ -281,6 +281,7 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
   const topTable = document.querySelector('#topTable tbody');
   topTable.innerHTML = '';
   data.forEach(coin => {
+    const isStarred = starredCoins.some(c => c.symbol === coin.symbol.toUpperCase());
     let tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${coin.symbol.toUpperCase()}</td>
@@ -289,7 +290,7 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
         ${coin.price_change_percentage_24h.toFixed(2)}%
       </td>
       <td>
-        <span class="star ${starredCoins.some(c=>c.symbol===coin.symbol.toUpperCase())?'active':''}"
+        <span class="star ${isStarred ? 'active' : ''}"
           onclick="toggleStar('${coin.symbol.toUpperCase()}', ${coin.current_price}, ${coin.price_change_percentage_24h}, this)">
         ⭐</span>
       </td>
@@ -333,7 +334,6 @@ function toggleStar(symbol, price, change, el) {
   saveStarred();
   renderStarredTable();
 }
-
 </script>
 </body>
 </html>
