@@ -66,12 +66,13 @@ tr:nth-child(even){background:#f1f1f1;}
 
 <div class="bottom-nav">
   <a href="index.html">Dashboard</a>
-  <a href="index.html">Wallet</a>
-  <a href="#" class="active">Markets</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="market.html" class="active">Markets</a>
 </div>
 
 <script>
 let starredCoins = JSON.parse(localStorage.getItem('starredCoins') || '[]');
+
 function saveStars(){ localStorage.setItem('starredCoins',JSON.stringify(starredCoins)); }
 function renderStarredMarket(){
   const tbody=document.querySelector('#starredMarketTable tbody'); tbody.innerHTML='';
@@ -79,7 +80,7 @@ function renderStarredMarket(){
     <tr><td>${c.symbol}</td><td>$${c.price.toLocaleString()}</td><td class="${c.change>=0?'price-up':'price-down'}">${c.change.toFixed(2)}%</td></tr>`;});
 }
 
-// Load Market Data
+// Fetch Top 100 Coins
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(r=>r.json())
 .then(data=>{
@@ -87,10 +88,15 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
   const moversBody=document.querySelector('#moversMarketTable tbody');
   allBody.innerHTML=''; moversBody.innerHTML='';
 
+  // Top 10 Movers
   let movers=[...data].sort((a,b)=>Math.abs(b.price_change_percentage_24h)-Math.abs(a.price_change_percentage_24h)).slice(0,10);
-  movers.forEach(c=>{moversBody.innerHTML+=`
-    <tr><td>${c.symbol.toUpperCase()}</td><td>$${c.current_price.toLocaleString()}</td><td class="${c.price_change_percentage_24h>=0?'price-up':'price-down'}">${c.price_change_percentage_24h.toFixed(2)}%</td></tr>`;});
+  movers.forEach(c=>{
+    moversBody.innerHTML+=`
+      <tr><td>${c.symbol.toUpperCase()}</td><td>$${c.current_price.toLocaleString()}</td>
+      <td class="${c.price_change_percentage_24h>=0?'price-up':'price-down'}">${c.price_change_percentage_24h.toFixed(2)}%</td></tr>`;
+  });
 
+  // All Coins
   data.forEach(c=>{
     const symbol=c.symbol.toUpperCase();
     const starred=starredCoins.some(s=>s.symbol===symbol);
