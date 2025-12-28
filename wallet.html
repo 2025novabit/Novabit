@@ -1,14 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Wallet - Novabit</title>
+<meta charset="UTF-8">
+<title>Wallet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  background-color: #f8f9fa;
+  padding-bottom: 60px;
+}
+
+/* Header */
+header {
+  background-color: #1a1a2e;
+  color: #fff;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+header h1 { margin: 0; font-size: 20px; }
+#menuBtn {
+  background-color: #4b49ac;
+  color: #fff;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* Wallet container */
+.container { padding: 20px; }
+.wallet-card {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+.wallet-card h2 { margin-top: 0; }
+.wallet-card p { margin: 8px 0; font-size: 16px; }
+.wallet-card button {
+  padding: 10px 20px;
+  margin-right: 10px;
+  background-color: #4b49ac;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.wallet-card button:hover { background-color: #3a3690; }
+
+/* Transactions table */
+.table-container { max-height: 400px; overflow-y: auto; margin-top: 20px; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+th, td { padding: 10px; text-align: left; }
+th { background-color: #1a1a2e; color: #fff; font-weight: 500; position: sticky; top: 0; }
+tr:nth-child(even) { background-color: #f1f1f1; }
+.status-success { color: green; font-weight: bold; }
+.status-pending { color: orange; font-weight: bold; }
+.status-failed { color: red; font-weight: bold; }
+
+/* Bottom Navbar */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #1a1a2e;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  z-index: 10;
+}
+.bottom-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.bottom-nav a.active { color: #4b49ac; }
+
+@media (min-width: 768px) { .bottom-nav { display: none; } }
+</style>
 </head>
 <body>
-  <h2>Demo Wallet</h2>
-  <p>BTC: 0.5</p>
-  <p>ETH: 2</p>
-  <p>USDT: 5000</p>
-  <a href="dashboard.html">Back to Dashboard</a>
+
+<header>
+  <h1>Wallet</h1>
+  <button id="menuBtn" onclick="toggleMenu()">Menu</button>
+</header>
+
+<div id="sideMenu">
+  <button id="closeMenu" onclick="toggleMenu()">Close</button>
+  <h2>Menu</h2>
+  <a href="#">Dashboard</a>
+  <a href="#">Wallet</a>
+  <a href="#">Profile</a>
+  <a href="#">KYC</a>
+  <a href="#">Settings</a>
+</div>
+
+<div class="container">
+  <!-- Wallet Balances -->
+  <div class="wallet-card">
+    <h2>Account Balance</h2>
+    <p>USD Balance: $12,345.67</p>
+    <p>BTC Balance: 0.1234 BTC</p>
+    <p>ETH Balance: 2.3456 ETH</p>
+    <button>Deposit</button>
+    <button>Withdraw</button>
+  </div>
+
+  <!-- Transaction History -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Coin</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2025-12-28</td>
+          <td>BTC</td>
+          <td>Deposit</td>
+          <td>0.05</td>
+          <td class="status-success">Success</td>
+        </tr>
+        <tr>
+          <td>2025-12-27</td>
+          <td>ETH</td>
+          <td>Withdraw</td>
+          <td>1.2</td>
+          <td class="status-pending">Pending</td>
+        </tr>
+        <tr>
+          <td>2025-12-26</td>
+          <td>USD</td>
+          <td>Deposit</td>
+          <td>$500</td>
+          <td class="status-failed">Failed</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <a href="#">Dashboard</a>
+  <a href="#" class="active">Wallet</a>
+  <a href="#">Markets</a>
+  <a href="#">Trade</a>
+</div>
+
+<script>
+const sideMenu = document.getElementById('sideMenu');
+function toggleMenu() {
+  sideMenu.classList.toggle('active');
+}
+</script>
+
 </body>
 </html>
