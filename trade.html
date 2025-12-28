@@ -1,26 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Trade - Novabit</title>
+<meta charset="UTF-8">
+<title>Trade | Novabit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family:'Roboto',sans-serif; margin:0; background:#f8f9fa; padding-bottom:60px; }
+/* Header */
+header { background:#1a1a2e; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10; }
+header h1 { margin:0; font-size:20px; }
+#menuBtn { background:#4b49ac; color:#fff; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:500; }
+
+/* Side Menu */
+#sideMenu { position:fixed; top:0; right:-33%; width:33%; max-width:300px; height:100%; background:#fff; box-shadow:-2px 0 6px rgba(0,0,0,0.2); transition:right .3s; z-index:100; padding:20px; }
+#sideMenu.active { right:0; }
+#sideMenu h2 { margin-top:0; }
+#sideMenu a { display:block; margin:15px 0; color:#1a1a2e; text-decoration:none; font-weight:500; }
+#closeMenu { background:#e74c3c; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-bottom:15px; }
+
+/* Container */
+.container{ padding:20px; }
+/* Cards */
+.card { background:#fff; padding:25px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); margin-bottom:20px; }
+.card h2 { margin-top:0; }
+
+/* Inputs */
+.input-group { margin-bottom:15px; }
+.input-group label { display:block; margin-bottom:5px; font-weight:500; }
+.input-group input { width:100%; padding:10px; border:1px solid #ccc; border-radius:5px; }
+
+/* Buttons */
+button { padding:10px 20px; margin-right:10px; background:#4b49ac; color:#fff; border:none; border-radius:5px; cursor:pointer; font-weight:500; }
+button:hover { background:#3a3690; }
+
+/* Table */
+.table-container { max-height:300px; overflow-y:auto; margin-top:20px; }
+table { width:100%; border-collapse:collapse; }
+th,td { padding:10px; text-align:left; }
+th { background:#1a1a2e; color:#fff; position:sticky; top:0; }
+tr:nth-child(even){ background:#f1f1f1; }
+
+/* Bottom Navbar */
+.bottom-nav { position:fixed; bottom:0; width:100%; background:#1a1a2e; display:flex; justify-content:space-around; padding:10px 0; z-index:10; }
+.bottom-nav a { color:#fff; text-decoration:none; font-size:14px; display:flex; flex-direction:column; align-items:center; }
+.bottom-nav a.active { color:#4b49ac; }
+
+@media(min-width:768px){ .bottom-nav{ display:none; } }
+</style>
 </head>
 <body>
-  <h2>Demo Trading</h2>
-  <form id="tradeForm">
-    <select id="asset">
-      <option value="BTC">BTC</option>
-      <option value="ETH">ETH</option>
-      <option value="USDT">USDT</option>
-    </select>
-    <input type="number" id="amount" placeholder="Amount" required />
-    <button type="submit">Buy / Sell</button>
-  </form>
-  <script>
-    document.getElementById('tradeForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      alert('Trade executed in DEMO mode!');
+
+<header>
+  <h1>Trade</h1>
+  <button id="menuBtn" onclick="toggleMenu()">Menu</button>
+</header>
+
+<!-- Side Menu -->
+<div id="sideMenu">
+  <button id="closeMenu" onclick="toggleMenu()">Close</button>
+  <h2>Menu</h2>
+  <a href="index.html">Dashboard</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="market.html">Market</a>
+  <a href="trade.html">Trade</a>
+  <a href="profile.html">Profile</a>
+  <a href="settings.html">Settings</a>
+</div>
+
+<div class="container">
+  <!-- Wallet Balances -->
+  <div class="card">
+    <h2>Wallet Balances</h2>
+    <div id="walletBalances">Loading...</div>
+  </div>
+
+  <!-- Trade Form -->
+  <div class="card">
+    <h2>Trade</h2>
+    <div class="input-group">
+      <label for="buyCoin">Coin Symbol</label>
+      <input type="text" id="buyCoin" placeholder="e.g. BTC">
+    </div>
+    <div class="input-group">
+      <label for="amount">Amount</label>
+      <input type="number" id="amount" placeholder="0.0000">
+    </div>
+    <div class="input-group">
+      <label>Price (USD)</label>
+      <div id="currentPrice">-</div>
+    </div>
+    <button onclick="buyCoin()">Buy</button>
+    <button onclick="sellCoin()">Sell</button>
+  </div>
+
+  <!-- Trade History -->
+  <div class="card">
+    <h2>Trade History</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Type</th><th>Coin</th><th>Amount</th><th>Price (USD)</th></tr>
+        </thead>
+        <tbody id="tradeHistory">
+          <tr><td colspan="5">No trades yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <a href="index.html">Home</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="market.html">Markets</a>
+  <a href="trade.html" class="active">Trade</a>
+</div>
+
+<script>
+// Side Menu toggle
+const sideMenu = document.getElementById('sideMenu');
+function toggleMenu(){ sideMenu.classList.toggle('active'); }
+
+// Demo Wallet
+let walletBalances = { BTC: 0.5, ETH: 2, USDT: 1000 };
+function renderWallet(){
+  let html = '<ul>';
+  for(let coin in walletBalances){
+    html += `<li>${coin}: ${walletBalances[coin]}</li>`;
+  }
+  html += '</ul>';
+  document.getElementById('walletBalances').innerHTML = html;
+}
+renderWallet();
+
+// Fetch current price
+let currentPrice = 0;
+document.getElementById('buyCoin').addEventListener('input', function(){
+  const symbol = this.value.toLowerCase();
+  if(!symbol) return document.getElementById('currentPrice').innerText = '-';
+  fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${symbol}&vs_currencies=usd`)
+    .then(res=>res.json())
+    .then(data=>{
+      if(data[symbol]) currentPrice = data[symbol].usd;
+      else currentPrice = 0;
+      document.getElementById('currentPrice').innerText = currentPrice ? `$${currentPrice}` : 'Not found';
     });
-  </script>
-  <a href="dashboard.html">Back to Dashboard</a>
+});
+
+// Buy / Sell functions
+function buyCoin(){
+  const coin = document.getElementById('buyCoin').value.toUpperCase();
+  const amt = parseFloat(document.getElementById('amount').value);
+  if(!coin || !amt || !currentPrice) return alert('Invalid input');
+  if(!walletBalances[coin]) walletBalances[coin]=0;
+  walletBalances[coin]+=amt;
+  addTrade('Buy', coin, amt, currentPrice);
+  renderWallet();
+}
+function sellCoin(){
+  const coin = document.getElementById('buyCoin').value.toUpperCase();
+  const amt = parseFloat(document.getElementById('amount').value);
+  if(!coin || !amt || !currentPrice) return alert('Invalid input');
+  if(!walletBalances[coin] || walletBalances[coin]<amt) return alert('Insufficient balance');
+  walletBalances[coin]-=amt;
+  addTrade('Sell', coin, amt, currentPrice);
+  renderWallet();
+}
+function addTrade(type, coin, amt, price){
+  const tbody = document.getElementById('tradeHistory');
+  const date = new Date().toLocaleString();
+  const tr = document.createElement('tr');
+  tr.innerHTML=`<td>${date}</td><td>${type}</td><td>${coin}</td><td>${amt}</td><td>$${price}</td>`;
+  tbody.appendChild(tr);
+}
+</script>
+
 </body>
 </html>
