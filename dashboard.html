@@ -78,6 +78,11 @@ header h1 { margin: 0; font-size: 20px; }
   margin-bottom: 30px;
 }
 .balance-card h2 { margin-top: 0; }
+.balance-card p {
+  margin: 10px 0 20px;
+  font-size: 16px;
+  line-height: 1.5;
+}
 .balance-card button {
   padding: 10px 20px;
   margin-right: 10px;
@@ -190,6 +195,8 @@ tr:nth-child(even) { background-color: #f1f1f1; }
   <!-- Balance Card -->
   <div class="balance-card">
     <h2>Welcome!</h2>
+    <p>Deposit. Trade. Grow. 🚀<br>
+    Start now and take control of your financial future!</p>
     <button>Deposit</button>
     <button>Referral</button>
   </div>
@@ -277,32 +284,27 @@ function renderStarredTable() {
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(res => res.json())
 .then(data => {
-  // Top Coins
   const topTable = document.querySelector('#topTable tbody');
   topTable.innerHTML = '';
   data.forEach(coin => {
-    const isStarred = starredCoins.some(c => c.symbol === coin.symbol.toUpperCase());
+    const symbol = coin.symbol.toUpperCase();
+    const isStarred = starredCoins.some(c => c.symbol === symbol);
     let tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${coin.symbol.toUpperCase()}</td>
+      <td>${symbol}</td>
       <td>$${coin.current_price.toLocaleString()}</td>
       <td class="${coin.price_change_percentage_24h>=0?'price-up':'price-down'}">
         ${coin.price_change_percentage_24h.toFixed(2)}%
       </td>
       <td>
-        <span class="star ${isStarred ? 'active' : ''}"
-          onclick="toggleStar('${coin.symbol.toUpperCase()}', ${coin.current_price}, ${coin.price_change_percentage_24h}, this)">
-        ⭐</span>
+        <span class="star ${isStarred?'active':''}" onclick="toggleStar('${symbol}',${coin.current_price},${coin.price_change_percentage_24h},this)">⭐</span>
       </td>
     `;
     topTable.appendChild(tr);
   });
 
   // Biggest Movers
-  let movers = [...data].sort((a,b) => 
-    Math.abs(b.price_change_percentage_24h) - Math.abs(a.price_change_percentage_24h)
-  ).slice(0,10);
-
+  let movers = [...data].sort((a,b) => Math.abs(b.price_change_percentage_24h) - Math.abs(a.price_change_percentage_24h)).slice(0,10);
   const moversTable = document.querySelector('#moversTable tbody');
   moversTable.innerHTML = '';
   movers.forEach(coin => {
@@ -310,14 +312,11 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
     tr.innerHTML = `
       <td>${coin.symbol.toUpperCase()}</td>
       <td>$${coin.current_price.toLocaleString()}</td>
-      <td class="${coin.price_change_percentage_24h>=0?'price-up':'price-down'}">
-        ${coin.price_change_percentage_24h.toFixed(2)}%
-      </td>
+      <td class="${coin.price_change_percentage_24h>=0?'price-up':'price-down'}">${coin.price_change_percentage_24h.toFixed(2)}%</td>
     `;
     moversTable.appendChild(tr);
   });
 
-  // Render starred
   renderStarredTable();
 });
 
