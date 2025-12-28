@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KYC - Novabit</title>
+</head>
+<body>
+  <h2>KYC Form (Demo)</h2>
+  <form id="kycForm">
+    <input type="text" placeholder="Full Name" required />
+    <input type="text" placeholder="Country" required />
+    <input type="file" required />
+    <button type="submit">Submit</button>
+  </form>
+  <script>
+    document.getElementById('kycForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('KYC submitted in DEMO mode!');
+      window.location.href = "dashboard.html";
+    });
+  </script>
+  <a href="dashboard.html">Back to Dashboard</a>
+</body>
+</html>
