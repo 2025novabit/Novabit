@@ -2,49 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Novabit</title>
+<title>Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{
-  font-family:Arial,Roboto,sans-serif;
-  margin:0;
-  background:#f8f9fa;
-  padding-bottom:70px;
-}
-
-/* Header */
-header{
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  position:sticky;
-  top:0;
-  z-index:10;
-}
+body{font-family:Arial,Roboto,sans-serif;margin:0;background:#f8f9fa;padding-bottom:70px;}
+header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;}
 header h1{margin:0;font-size:20px;}
-#menuBtn{
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  padding:8px 15px;
-  border-radius:5px;
-  cursor:pointer;
-}
-
-/* Container */
 .container{padding:20px;}
-.card{
-  background:#fff;
-  padding:20px;
-  border-radius:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,.1);
-  margin-bottom:20px;
-}
-
-/* Table */
+.card{background:#fff;padding:20px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:20px;}
 .table-container{max-height:400px;overflow:auto;}
 table{width:100%;border-collapse:collapse;}
 th,td{padding:10px;font-size:14px;}
@@ -52,55 +17,18 @@ th{background:#1a1a2e;color:#fff;position:sticky;top:0;}
 tr:nth-child(even){background:#f1f1f1;}
 .price-up{color:green;font-weight:bold;}
 .price-down{color:red;font-weight:bold;}
-
-/* Buttons */
-button{
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  padding:10px 15px;
-  border-radius:5px;
-  cursor:pointer;
-}
-
-/* Star */
-.star{
-  cursor:pointer;
-  color:gray;
-  font-size:18px;
-}
-.star.active{color:gold;}
-
-/* Bottom Nav */
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  background:#1a1a2e;
-  display:flex;
-  justify-content:space-around;
-  padding:10px 0;
-  z-index:20;
-}
-.bottom-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-size:14px;
-}
+.bottom-nav{position:fixed;bottom:0;width:100%;background:#1a1a2e;display:flex;justify-content:space-around;padding:10px 0;z-index:20;}
+.bottom-nav a{color:#fff;text-decoration:none;font-size:14px;}
 .bottom-nav a.active{color:#4b49ac;}
 </style>
 </head>
 <body>
 
 <header>
-  <h1 id="pageTitle">Dashboard</h1>
-  <button id="menuBtn">Menu</button>
+  <h1>Dashboard</h1>
 </header>
 
 <div class="container">
-
-<!-- ================= DASHBOARD ================= -->
-<div id="dashboardSection">
   <div class="card">
     <h2>Top 100 Coins</h2>
     <div class="table-container">
@@ -118,70 +46,19 @@ button{
   </div>
 </div>
 
-<!-- ================= WALLET ================= -->
-<div id="walletSection" style="display:none">
-  <div class="card">
-    <h2>Total Balance</h2>
-    <h1>$0.00</h1>
-    <button>Deposit</button>
-    <button>Withdraw</button>
-  </div>
-  <div class="card">
-    <h2>Your Assets</h2>
-    <div class="table-container">
-      <table id="walletTable">
-        <thead>
-          <tr>
-            <th>Coin</th>
-            <th>Price</th>
-            <th>Balance</th>
-            <th>Value</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-</div>
-
-<!-- ================= BOTTOM NAV ================= -->
 <div class="bottom-nav">
-  <a href="#" class="active" onclick="openPage('dashboard',this)">Dashboard</a>
-  <a href="#" onclick="openPage('wallet',this)">Wallet</a>
+  <a href="index.html" class="active">Dashboard</a>
+  <a href="wallet.html">Wallet</a>
   <a href="market.html">Markets</a>
 </div>
 
 <script>
-// SPA Navigation
-const sections={
-  dashboard:document.getElementById('dashboardSection'),
-  wallet:document.getElementById('walletSection')
-};
-const title=document.getElementById('pageTitle');
-function openPage(page,el){
-  Object.values(sections).forEach(s=>s.style.display='none');
-  sections[page].style.display='block';
-  document.querySelectorAll('.bottom-nav a')
-    .forEach(a=>a.classList.remove('active'));
-  el.classList.add('active');
-  title.innerText=page.charAt(0).toUpperCase()+page.slice(1);
-}
-
-// Starred coins
-let starredCoins = JSON.parse(localStorage.getItem('starredCoins') || '[]');
-function saveStars(){ localStorage.setItem('starredCoins',JSON.stringify(starredCoins)); }
-
 // Fetch Top 100 Coins
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(r=>r.json())
 .then(data=>{
   const dBody=document.querySelector('#dashboardTable tbody');
-  const wBody=document.querySelector('#walletTable tbody');
-
-  dBody.innerHTML=''; wBody.innerHTML='';
-
+  dBody.innerHTML='';
   data.forEach(c=>{
     const symbol=c.symbol.toUpperCase();
     dBody.innerHTML+=`
@@ -189,13 +66,6 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
         <td>${symbol}</td>
         <td>$${c.current_price.toLocaleString()}</td>
         <td class="${c.price_change_percentage_24h>=0?'price-up':'price-down'}">${c.price_change_percentage_24h.toFixed(2)}%</td>
-      </tr>`;
-    wBody.innerHTML+=`
-      <tr>
-        <td>${symbol}</td>
-        <td>$${c.current_price.toLocaleString()}</td>
-        <td>0.0000</td>
-        <td>$0.00</td>
       </tr>`;
   });
 });
