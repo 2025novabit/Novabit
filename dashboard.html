@@ -237,11 +237,17 @@ tr:nth-child(even) { background-color: #f1f1f1; }
 
 <div class="bottom-nav">
   <a href="#" class="active">Home</a>
-  <a href="#">Wallet</a>
+  <a href="#" onclick="openWallet()">Wallet</a>
   <a href="#">Markets</a>
   <a href="#">Trade</a>
 </div>
 
+<script>
+function openWallet(){
+  document.getElementById('dashboardSection').style.display = 'none';
+  document.getElementById('walletSection').style.display = 'block';
+}
+</script>
 <script>
 // ------- Menu -------
 const sideMenu = document.getElementById('sideMenu');
