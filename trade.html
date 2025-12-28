@@ -217,18 +217,42 @@ function addTrade(type, coin, amt, price){
 }
 
 // Chart
-let chart = LightweightCharts.createChart(document.getElementById('chart'), {width:window.innerWidth*0.9, height:300, layout:{textColor:'#000'}, grid:{vertLines:{color:'#eee'}, horzLines:{color:'#eee'}}});
-let lineSeries = chart.addLineSeries();
+let chart;
+let lineSeries;
+function initChart() {
+  const chartContainer = document.getElementById('chart');
+  chartContainer.innerHTML = ''; // پاک کردن قبل از init
+  chart = LightweightCharts.createChart(chartContainer, {
+    width: chartContainer.clientWidth,
+    height: 300,
+    layout: { textColor: '#000', background: { type: 'solid', color: '#fff' } },
+    grid: { vertLines: { color: '#eee' }, horzLines: { color: '#eee' } },
+    rightPriceScale: { borderColor: '#ccc' },
+    timeScale: { borderColor: '#ccc' }
+  });
+  lineSeries = chart.addLineSeries();
+}
+initChart();
+
+// آپدیت نمودار با id واقعی
 function updateChart(symbol){
   const id = coinMap[symbol];
   if(!id) return;
   fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=7`)
     .then(res=>res.json())
     .then(data=>{
-      const prices = data.prices.map(p=>({time:Math.floor(p[0]/1000), value:p[1]}));
+      if(!data.prices) return;
+      const prices = data.prices.map(p=>({ time: Math.floor(p[0]/1000), value: p[1] }));
       lineSeries.setData(prices);
-    });
+      chart.timeScale().fitContent();
+    })
+    .catch(err=>console.log('Chart fetch error', err));
 }
+
+// Responsive
+window.addEventListener('resize', ()=>{ 
+  if(chart) chart.resize(document.getElementById('chart').clientWidth, 300); 
+});
 
 // Responsive chart
 window.addEventListener('resize', ()=>{ chart.resize(window.innerWidth*0.9,300); });
