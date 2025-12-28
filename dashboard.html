@@ -2,63 +2,85 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Live Crypto Dashboard - Ourbitx</title>
+  <title>Dashboard</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Roboto', sans-serif;
       margin: 0;
-      background-color: #f5f6fa;
+      background-color: #f8f9fa;
     }
     header {
-      background-color: #2f3640;
+      background-color: #1a1a2e;
       color: #fff;
-      padding: 10px 20px;
+      padding: 15px 30px;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 20px;
+      margin: 0;
     }
     header nav a {
       color: #fff;
-      margin-left: 15px;
+      margin-left: 20px;
       text-decoration: none;
+      font-weight: 500;
     }
     .container {
-      padding: 20px;
+      padding: 30px;
     }
     .balance-card {
       background-color: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
     }
-    .crypto-table {
+    .balance-card h2 {
+      margin-top: 0;
+    }
+    .links a {
+      display: inline-block;
+      margin-right: 15px;
+      padding: 8px 15px;
+      background-color: #4b49ac;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: 0.2s;
+    }
+    .links a:hover {
+      background-color: #3a3690;
+    }
+    table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
       background-color: #fff;
-      border-radius: 8px;
+      border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .crypto-table th, .crypto-table td {
-      padding: 12px 15px;
+    th, td {
+      padding: 15px;
       text-align: left;
     }
-    .crypto-table th {
-      background-color: #2f3640;
+    th {
+      background-color: #1a1a2e;
       color: #fff;
+      font-weight: 500;
     }
-    .crypto-table tr:nth-child(even) {
-      background-color: #f2f2f2;
+    tr:nth-child(even) {
+      background-color: #f1f1f1;
     }
-    .price-up { color: green; }
-    .price-down { color: red; }
+    .price-up { color: green; font-weight: bold; }
+    .price-down { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Ourbitx Live Dashboard</h1>
+    <h1>Dashboard</h1>
     <nav>
       <a href="markets.html">Markets</a>
       <a href="wallet.html">Wallet</a>
@@ -68,14 +90,19 @@
   </header>
 
   <div class="container">
-
     <div class="balance-card">
       <h2>Welcome!</h2>
       <p>Your demo balance: $<span id="balance">10000</span></p>
+      <div class="links">
+        <a href="markets.html">Go to Markets</a>
+        <a href="wallet.html">Go to Wallet</a>
+        <a href="trade.html">Start Trading</a>
+        <a href="kyc.html">Complete KYC</a>
+      </div>
     </div>
 
-    <h2>Live Cryptocurrency Prices</h2>
-    <table class="crypto-table">
+    <h2>Cryptocurrency Prices</h2>
+    <table>
       <thead>
         <tr>
           <th>Symbol</th>
@@ -83,55 +110,24 @@
           <th>24h Change</th>
         </tr>
       </thead>
-      <tbody id="crypto-body">
+      <tbody>
         <tr>
-          <td colspan="3">Loading...</td>
+          <td>BTC</td>
+          <td>$29,000</td>
+          <td class="price-up">+2.5%</td>
+        </tr>
+        <tr>
+          <td>ETH</td>
+          <td>$1,850</td>
+          <td class="price-down">-1.2%</td>
+        </tr>
+        <tr>
+          <td>APL</td>
+          <td>$0.35</td>
+          <td class="price-up">+0.8%</td>
         </tr>
       </tbody>
     </table>
   </div>
-
-  <script>
-    const cryptoBody = document.getElementById("crypto-body");
-
-    async function fetchPrices() {
-      try {
-        const res = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,apl&vs_currencies=usd&include_24hr_change=true"
-        );
-        const data = await res.json();
-
-        cryptoBody.innerHTML = `
-          <tr>
-            <td>BTC</td>
-            <td>$${data.bitcoin.usd.toLocaleString()}</td>
-            <td class="${data.bitcoin.usd_24h_change >= 0 ? 'price-up' : 'price-down'}">
-              ${data.bitcoin.usd_24h_change.toFixed(2)}%
-            </td>
-          </tr>
-          <tr>
-            <td>ETH</td>
-            <td>$${data.ethereum.usd.toLocaleString()}</td>
-            <td class="${data.ethereum.usd_24h_change >= 0 ? 'price-up' : 'price-down'}">
-              ${data.ethereum.usd_24h_change.toFixed(2)}%
-            </td>
-          </tr>
-          <tr>
-            <td>APL</td>
-            <td>$${data.apl.usd.toLocaleString()}</td>
-            <td class="${data.apl.usd_24h_change >= 0 ? 'price-up' : 'price-down'}">
-              ${data.apl.usd_24h_change.toFixed(2)}%
-            </td>
-          </tr>
-        `;
-      } catch (error) {
-        cryptoBody.innerHTML = `<tr><td colspan="3">Error loading data</td></tr>`;
-        console.error("Fetch error:", error);
-      }
-    }
-
-    fetchPrices();               
-    setInterval(fetchPrices, 30000); // بروزرسانی هر ۳۰ ثانیه
-  </script>
 </body>
 </html>
