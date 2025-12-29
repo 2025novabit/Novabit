@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Profile | Novabit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:Roboto,sans-serif;
+  background:#f4f6fa;
+}
+
+/* HEADER */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* PROFILE PANEL */
+#profilePanel{
+  position:fixed;
+  top:0;
+  right:0;
+  width:33%;
+  max-width:360px;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  overflow-y:auto;
+}
+
+.profile-item{
+  margin:15px 0;
+}
+.profile-item label{
+  font-size:12px;
+  color:#777;
+}
+.profile-item span{
+  display:block;
+  font-size:15px;
+  font-weight:500;
+  margin-top:5px;
+}
+
+.logoutBtn{
+  width:100%;
+  margin-top:30px;
+  padding:10px;
+  background:#e74c3c;
+  border:none;
+  color:#fff;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:#1a1a2e;
+  display:flex;
+  justify-content:space-around;
+  padding:10px 0;
+}
+.bottom-nav a{
+  color:#fff;
+  text-decoration:none;
+  font-size:14px;
+}
+.bottom-nav a.active{
+  color:#4b49ac;
+}
+</style>
+</head>
+
+<body onload="requireLogin(); loadProfile();">
+
+<header>
+  <h2>Profile</h2>
+</header>
+
+<div id="profilePanel">
+  <h3>User Information</h3>
+
+  <div class="profile-item">
+    <label>First Name</label>
+    <span id="p_firstname">—</span>
+  </div>
+
+  <div class="profile-item">
+    <label>Last Name</label>
+    <span id="p_lastname">—</span>
+  </div>
+
+  <div class="profile-item">
+    <label>Email</label>
+    <span id="p_email">—</span>
+  </div>
+
+  <div class="profile-item">
+    <label>Country</label>
+    <span id="p_country">—</span>
+  </div>
+
+  <div class="profile-item">
+    <label>City</label>
+    <span id="p_city">—</span>
+  </div>
+
+  <div class="profile-item">
+    <label>Address</label>
+    <span id="p_address">—</span>
+  </div>
+
+  <div class="profile-item">
+    <label>Account Type</label>
+    <span>Demo</span>
+  </div>
+
+  <button class="logoutBtn" onclick="logout()">Logout</button>
+</div>
+
+<div class="bottom-nav">
+  <a href="dashboard.html">Home</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="market.html">Market</a>
+  <a href="trade.html">Trade</a>
+  <a href="profile.html" class="active">Profile</a>
+</div>
+
+<script src="demo.js"></script>
+</body>
+</html>
