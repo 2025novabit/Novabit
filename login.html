@@ -1,21 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Login - Novabit</title>
-</head>
-<body>
-  <h2>Login to Novabit</h2>
-  <form id="loginForm">
-    <input type="email" id="email" placeholder="Email" required />
-    <button type="submit">Login</button>
-  </form>
-  <script>
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      alert('Demo Login Successful for ' + document.getElementById('email').value);
-      window.location.href = "dashboard.html";
-    });
-  </script>
-</body>
-</html>
+localStorage.setItem("demoUser", JSON.stringify({
+  firstName:"Ali",
+  lastName:"Ahmadi",
+  email:"demo@novabit.com",
+  country:"Afghanistan",
+  city:"Kabul",
+  address:"Demo Street 12",
+  wallet:{ USD:10000 },
+  trades:[]
+}));
