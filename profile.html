@@ -10,6 +10,7 @@ body{
   margin:0;
   font-family:Roboto,sans-serif;
   background:#f4f6fa;
+  padding-bottom:60px;
 }
 
 /* HEADER */
@@ -30,11 +31,11 @@ header button{
   cursor:pointer;
 }
 
-/* PROFILE PANEL */
-#profilePanel{
+/* SIDE PANEL */
+#sidePanel{
   position:fixed;
   top:0;
-  right:0;
+  right:-400px;
   width:33%;
   max-width:360px;
   height:100%;
@@ -42,6 +43,21 @@ header button{
   box-shadow:-3px 0 10px rgba(0,0,0,.2);
   padding:20px;
   overflow-y:auto;
+  transition:right 0.3s;
+  z-index:100;
+}
+#sidePanel.active{right:0;}
+
+#sidePanel h2{
+  margin-top:0;
+}
+
+#sidePanel a{
+  display:block;
+  margin:10px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
 }
 
 .profile-item{
@@ -75,41 +91,47 @@ header button{
 
 <header>
   <h2>Profile</h2>
+  <button onclick="togglePanel()">Menu</button>
 </header>
 
-<div id="profilePanel">
-  <h3>User Information</h3>
+<!-- SIDE PANEL -->
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
+  <h2>Menu</h2>
+  <a href="#">Profile</a>
+  <a href="#">KYC</a>
+  <a href="#">Change Password</a>
+  <a href="#">2FA Settings</a>
+  <a href="#">Fees</a>
+  <a href="#">Referral</a>
 
+  <hr>
+
+  <h3>User Information</h3>
   <div class="profile-item">
     <label>First Name</label>
     <span id="p_firstname">—</span>
   </div>
-
   <div class="profile-item">
     <label>Last Name</label>
     <span id="p_lastname">—</span>
   </div>
-
   <div class="profile-item">
     <label>Email</label>
     <span id="p_email">—</span>
   </div>
-
   <div class="profile-item">
     <label>Country</label>
     <span id="p_country">—</span>
   </div>
-
   <div class="profile-item">
     <label>City</label>
     <span id="p_city">—</span>
   </div>
-
   <div class="profile-item">
     <label>Address</label>
     <span id="p_address">—</span>
   </div>
-
   <div class="profile-item">
     <label>Account Type</label>
     <span>Demo</span>
@@ -118,16 +140,18 @@ header button{
   <button class="logoutBtn" onclick="logout()">Logout</button>
 </div>
 
-<script src="demo.js"></script>
 <script>
-// Mock functions for demo purposes
-function requireLogin() {
-  // اگر کاربر لاگین نکرده باشد، Redirect یا هشدار
+// Toggle Side Panel
+function togglePanel(){
+  document.getElementById('sidePanel').classList.toggle('active');
+}
+
+// Demo functions
+function requireLogin(){
   console.log("Check login (demo mode)");
 }
 
-function loadProfile() {
-  // داده‌های دمو برای نمایش
+function loadProfile(){
   document.getElementById('p_firstname').innerText = "John";
   document.getElementById('p_lastname').innerText = "Doe";
   document.getElementById('p_email').innerText = "john.doe@example.com";
@@ -136,7 +160,7 @@ function loadProfile() {
   document.getElementById('p_address').innerText = "123 Demo Street";
 }
 
-function logout() {
+function logout(){
   alert("Logged out (demo mode)");
 }
 </script>
