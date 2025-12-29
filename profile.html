@@ -68,25 +68,6 @@ header button{
   border-radius:5px;
   cursor:pointer;
 }
-
-/* BOTTOM NAV */
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  background:#1a1a2e;
-  display:flex;
-  justify-content:space-around;
-  padding:10px 0;
-}
-.bottom-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-size:14px;
-}
-.bottom-nav a.active{
-  color:#4b49ac;
-}
 </style>
 </head>
 
@@ -137,14 +118,28 @@ header button{
   <button class="logoutBtn" onclick="logout()">Logout</button>
 </div>
 
-<div class="bottom-nav">
-  <a href="dashboard.html">Home</a>
-  <a href="wallet.html">Wallet</a>
-  <a href="market.html">Market</a>
-  <a href="trade.html">Trade</a>
-  <a href="profile.html" class="active">Profile</a>
-</div>
-
 <script src="demo.js"></script>
+<script>
+// Mock functions for demo purposes
+function requireLogin() {
+  // اگر کاربر لاگین نکرده باشد، Redirect یا هشدار
+  console.log("Check login (demo mode)");
+}
+
+function loadProfile() {
+  // داده‌های دمو برای نمایش
+  document.getElementById('p_firstname').innerText = "John";
+  document.getElementById('p_lastname').innerText = "Doe";
+  document.getElementById('p_email').innerText = "john.doe@example.com";
+  document.getElementById('p_country').innerText = "USA";
+  document.getElementById('p_city').innerText = "New York";
+  document.getElementById('p_address').innerText = "123 Demo Street";
+}
+
+function logout() {
+  alert("Logged out (demo mode)");
+}
+</script>
+
 </body>
 </html>
