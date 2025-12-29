@@ -155,7 +155,17 @@ function toggleStar(symbol,price,change,el){
   else{starredCoins.push({symbol,price,change}); el.classList.add('active');}
   saveStars(); renderStarredMarket();
 }
-</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Page</title>
+</head>
 
+<body onload="requireLogin()">
+
+  <!-- PAGE CONTENT -->
+
+  <script src="demo.js"></script>
 </body>
 </html>
