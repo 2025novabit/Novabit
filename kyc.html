@@ -31,6 +31,29 @@ header button{
   cursor:pointer;
 }
 
+/* SIDE PANEL */
+#sidePanel{
+  position:fixed;
+  top:0;
+  right:-400px;
+  width:33%;
+  max-width:320px;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  transition:right .3s;
+  z-index:100;
+}
+#sidePanel.active{right:0;}
+#sidePanel a{
+  display:block;
+  margin:12px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
+}
+
 /* MAIN */
 .container{
   padding:20px;
@@ -65,10 +88,7 @@ input, select{
   border-radius:5px;
   font-size:14px;
 }
-
-input[type=file]{
-  padding:6px;
-}
+input[type=file]{padding:6px;}
 
 button.submit{
   width:100%;
@@ -91,30 +111,6 @@ button.submit{
 }
 .pending{background:#fff3cd;color:#856404;}
 .approved{background:#d4edda;color:#155724;}
-
-/* SIDE PANEL */
-#sidePanel{
-  position:fixed;
-  top:0;
-  right:-400px;
-  width:33%;
-  max-width:320px;
-  height:100%;
-  background:#fff;
-  box-shadow:-3px 0 10px rgba(0,0,0,.2);
-  padding:20px;
-  transition:right .3s;
-  z-index:100;
-}
-#sidePanel.active{right:0;}
-
-#sidePanel a{
-  display:block;
-  margin:12px 0;
-  color:#1a1a2e;
-  text-decoration:none;
-  font-weight:500;
-}
 </style>
 </head>
 
@@ -196,7 +192,7 @@ function loadCountries(){
   countrySelect.innerHTML = '<option value="">Select Country</option>'; // clear
   if(typeof countries !== 'undefined' && countries.length>0){
     countries.forEach(c=>{
-      let o=document.createElement('option');
+      const o=document.createElement('option');
       o.value=c;
       o.textContent=c;
       countrySelect.appendChild(o);
@@ -231,14 +227,15 @@ function submitKYC(){
 
 /* Load KYC */
 function loadKYC(){
-  loadCountries(); // Load list first
+  loadCountries();
   const kyc=JSON.parse(localStorage.getItem('kycData'));
   const box=document.getElementById('kycStatus');
   if(!kyc){
     box.innerHTML='<div class="status pending">KYC not submitted</div>';
     return;
   }
-  box.innerHTML=`<div class="status pending">Status: ${kyc.status}</div>`;
+  const statusClass = kyc.status==='Approved'?'approved':'pending';
+  box.innerHTML=`<div class="status ${statusClass}">Status: ${kyc.status}</div>`;
   firstName.value=kyc.firstName||'';
   lastName.value=kyc.lastName||'';
   countrySelect.value=kyc.country||'';
