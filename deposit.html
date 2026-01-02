@@ -5,7 +5,6 @@
 <title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- فایل‌های coins.js و wallets.js -->
 <script src="coins.js"></script>
 <script src="wallets.js"></script>
 
@@ -28,6 +27,15 @@ header {
   margin: 20px auto;
   padding: 0 20px;
 }
+.search-box {
+  margin-bottom: 15px;
+}
+.search-box input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
 .coin-list {
   display: grid;
   grid-template-columns: repeat(auto-fill,minmax(100px,1fr));
@@ -43,7 +51,7 @@ header {
   transition: 0.2s;
 }
 .coin:hover { border-color: #4b49ac; }
-.coin img { width: 32px; height: 32px; }
+.coin img { width: 32px; height: 32px; margin-bottom: 5px; }
 .deposit-panel {
   position: fixed;
   top: 0;
@@ -74,17 +82,15 @@ header {
   border-radius: 6px;
   word-break: break-all;
   margin: 10px 0;
-  cursor: pointer;
 }
-.address-box:hover { background: #e2e2e2; }
-select, input[type=number], input[type=text] {
+select, input[type=number] {
   width: 100%;
   padding: 10px;
   margin: 8px 0;
   border-radius: 6px;
   border: 1px solid #ccc;
 }
-.submit-btn {
+.submit-btn, .copy-btn {
   width: 100%;
   padding: 12px;
   background: #4b49ac;
@@ -93,6 +99,7 @@ select, input[type=number], input[type=text] {
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
+  margin-top: 5px;
 }
 .notice {
   background: #fff3cd;
@@ -110,6 +117,12 @@ select, input[type=number], input[type=text] {
 </header>
 
 <div class="container">
+  <!-- جستجو -->
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search coin...">
+  </div>
+
+  <!-- لیست ارزها -->
   <div class="coin-list" id="coinList"></div>
 </div>
 
@@ -121,12 +134,11 @@ select, input[type=number], input[type=text] {
   <label>Network:</label>
   <select id="networkSelect"></select>
 
-  <div class="address-box" id="walletAddress" onclick="copyAddress()"></div>
+  <div class="address-box" id="walletAddress"></div>
+  <button class="copy-btn" onclick="copyAddress()">Copy Address</button>
 
   <input type="number" placeholder="Amount" id="amount">
-  <input type="text" placeholder="Transaction Hash (TXID)" id="txid">
-
-  <button class="submit-btn">Submit Deposit</button>
+  <button class="submit-btn">Submit</button>
 
   <div class="notice">⚠️ Deposit will be credited after manual confirmation.</div>
 </div>
@@ -134,13 +146,23 @@ select, input[type=number], input[type=text] {
 <script>
 // --- نمایش لیست ارزها ---
 const coinList = document.getElementById('coinList');
-COINS.forEach(c => {
-  let div = document.createElement('div');
-  div.className = "coin";
-  div.innerHTML = `<img src="${c.icon}"><div>${c.symbol}</div>`;
-  div.onclick = () => openDepositPanel(c.symbol);
-  coinList.appendChild(div);
-});
+const searchInput = document.getElementById('searchInput');
+
+function renderCoins(filter="") {
+  coinList.innerHTML = "";
+  COINS.filter(c => c.symbol.toLowerCase().includes(filter.toLowerCase()) || c.name.toLowerCase().includes(filter.toLowerCase()))
+       .forEach(c => {
+    let div = document.createElement('div');
+    div.className = "coin";
+    div.innerHTML = `<img src="${c.icon}" alt="${c.symbol}"><div>${c.symbol}</div>`;
+    div.onclick = () => openDepositPanel(c.symbol);
+    coinList.appendChild(div);
+  });
+}
+
+// جستجو
+searchInput.addEventListener('input', ()=>renderCoins(searchInput.value));
+renderCoins();
 
 // --- پنجره واریز ---
 const depositPanel = document.getElementById('depositPanel');
@@ -165,7 +187,7 @@ function openDepositPanel(symbol) {
 }
 
 // تغییر آدرس وقتی شبکه انتخاب شد
-networkSelect.addEventListener('change',()=>{
+networkSelect.addEventListener('change', ()=>{
   const symbol = panelCoinTitle.innerText.match(/\((.*)\)/)[1];
   const wallet = WALLET_ADDRESSES[symbol];
   const net = wallet.networks.find(n=>n.network===networkSelect.value);
