@@ -5,8 +5,8 @@
 <title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="coins.js"></script>
-<script src="wallets.js"></script>
+<script src="coins.js" defer></script>
+<script src="wallets.js" defer></script>
 
 <style>
 body {margin:0;font-family:Roboto,Arial,sans-serif;background:#f5f6fa;}
@@ -64,59 +64,67 @@ header {background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:1
 </div>
 
 <script>
-const coinList = document.getElementById('coinList');
-const searchInput = document.getElementById('searchInput');
-const depositModal = document.getElementById('depositModal');
-const modalCoinName = document.getElementById('modalCoinName');
-const networkSelect = document.getElementById('networkSelect');
-const walletAddress = document.getElementById('walletAddress');
+window.onload = function() {
+  const coinList = document.getElementById('coinList');
+  const searchInput = document.getElementById('searchInput');
+  const depositModal = document.getElementById('depositModal');
+  const modalCoinName = document.getElementById('modalCoinName');
+  const networkSelect = document.getElementById('networkSelect');
+  const walletAddress = document.getElementById('walletAddress');
 
-function renderCoins(filter='') {
-  coinList.innerHTML='';
-  COINS.forEach(c=>{
-    if(filter && !c.symbol.toLowerCase().includes(filter) && !c.name.toLowerCase().includes(filter)) return;
-    let div = document.createElement('div');
-    div.className="coin";
-    div.innerHTML=`<img src="${c.icon}" alt="${c.symbol}"><div>${c.symbol}</div>`;
-    div.onclick=()=>openModal(c.symbol,c.name);
-    coinList.appendChild(div);
-  });
-}
+  function renderCoins(filter='') {
+    coinList.innerHTML='';
+    COINS.forEach(c=>{
+      if(filter && !c.symbol.toLowerCase().includes(filter) && !c.name.toLowerCase().includes(filter)) return;
+      let div = document.createElement('div');
+      div.className="coin";
+      div.innerHTML=`<img src="${c.icon}" alt="${c.symbol}"><div>${c.symbol}</div>`;
+      div.onclick=()=>openModal(c.symbol,c.name);
+      coinList.appendChild(div);
+    });
+  }
 
-function openModal(symbol,name){
-  const wallet=WALLET_ADDRESSES[symbol];
-  if(!wallet){alert("Wallet not configured for this coin"); return;}
-  modalCoinName.innerText=`${name} (${symbol})`;
-  networkSelect.innerHTML='';
-  wallet.networks.forEach(n=>{
-    let opt=document.createElement('option');
-    opt.value=n;
-    opt.innerText=n;
-    networkSelect.appendChild(opt);
-  });
-  walletAddress.innerText=wallet.address;
-  depositModal.classList.add('active');
-}
+  function openModal(symbol,name){
+    const wallet=WALLET_ADDRESSES[symbol];
+    if(!wallet){alert("Wallet not configured for this coin"); return;}
+    modalCoinName.innerText=`${name} (${symbol})`;
+    networkSelect.innerHTML='';
+    wallet.networks.forEach(n=>{
+      let opt=document.createElement('option');
+      opt.value=n;
+      opt.innerText=n;
+      networkSelect.appendChild(opt);
+    });
+    walletAddress.innerText=wallet.address;
+    depositModal.classList.add('active');
+  }
 
-function closeModal(){
-  depositModal.classList.remove('active');
-  document.getElementById('amount').value='';
-  document.getElementById('txid').value='';
-}
+  function closeModal(){
+    depositModal.classList.remove('active');
+    document.getElementById('amount').value='';
+    document.getElementById('txid').value='';
+  }
 
-function submitDeposit(){
-  alert("Deposit submitted (demo). Manual confirmation required.");
-  closeModal();
-}
+  function submitDeposit(){
+    alert("Deposit submitted (demo). Manual confirmation required.");
+    closeModal();
+  }
 
-function copyAddress(){
-  navigator.clipboard.writeText(walletAddress.innerText);
-  alert("Address copied: " + walletAddress.innerText);
-}
+  function copyAddress(){
+    navigator.clipboard.writeText(walletAddress.innerText);
+    alert("Address copied: " + walletAddress.innerText);
+  }
 
-searchInput.addEventListener('input',()=>renderCoins(searchInput.value.toLowerCase()));
+  searchInput.addEventListener('input',()=>renderCoins(searchInput.value.toLowerCase()));
 
-renderCoins();
+  // Make these functions global
+  window.openModal=openModal;
+  window.closeModal=closeModal;
+  window.submitDeposit=submitDeposit;
+  window.copyAddress=copyAddress;
+
+  renderCoins();
+};
 </script>
 
 </body>
