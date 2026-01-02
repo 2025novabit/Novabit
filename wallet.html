@@ -20,7 +20,7 @@ header h1{margin:0;font-size:20px;}
 .card h2{margin-top:0;}
 .total-balance{font-size:32px;font-weight:bold;margin:10px 0 20px;}
 button{padding:10px 20px;margin-right:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:500;}
-button:hover{background:#3a3690;}
+button:disabled{background:#999;cursor:not-allowed;}
 .table-container{max-height:400px;overflow:auto;margin-top:10px;}
 table{width:100%;border-collapse:collapse;}
 th,td{padding:10px;font-size:14px;text-align:left;}
@@ -31,7 +31,7 @@ tr:nth-child(even){background:#f1f1f1;}
 .bottom-nav a.active{color:#4b49ac;}
 </style>
 </head>
-<body>
+<body onload="check2FA();">
 
 <header>
   <h1>Wallet</h1>
@@ -48,6 +48,7 @@ tr:nth-child(even){background:#f1f1f1;}
   <a href="fee.html">Fee</a>
   <a href="referral.html">Referral</a>
 </div>
+
 <div class="container">
 
 <!-- TOTAL BALANCE -->
@@ -55,7 +56,8 @@ tr:nth-child(even){background:#f1f1f1;}
   <h2>Total Balance</h2>
   <div class="total-balance" id="totalBalance">$0.00</div>
   <button>Deposit</button>
-  <button>Withdraw</button>
+  <button id="withdrawBtn" onclick="withdraw()">Withdraw</button>
+  <div id="withdrawNote" style="margin-top:10px;color:#e74c3c;font-weight:500;"></div>
 </div>
 
 <!-- ASSETS -->
@@ -113,10 +115,32 @@ tr:nth-child(even){background:#f1f1f1;}
 
 <script>
 // Menu Toggle
-const sideMenu = document.getElementById('sideMenu');
-function toggleMenu(){ sideMenu.classList.toggle('active'); }
+function toggleMenu(){
+  document.getElementById('sideMenu').classList.toggle('active');
+}
 
-// Demo Wallet - Top 100 Coins with balance 0
+/* ---------- 2FA LOGIC ---------- */
+function check2FA(){
+  const enabled = localStorage.getItem('demo2fa_enabled') === 'true';
+  const btn = document.getElementById('withdrawBtn');
+  const note = document.getElementById('withdrawNote');
+
+  if(!enabled){
+    btn.disabled = true;
+    note.innerText = "Withdraw locked: Enable 2FA to withdraw";
+  } else {
+    btn.disabled = false;
+    note.innerText = "";
+  }
+}
+
+function withdraw(){
+  const code = Math.floor(100000 + Math.random()*900000);
+  localStorage.setItem('demo_withdraw_code', code);
+  alert("Demo Withdraw Code sent (for test): " + code);
+}
+
+/* ---------- WALLET DATA ---------- */
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(res => res.json())
 .then(data => {
@@ -125,17 +149,12 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
   let totalUSD = 0;
 
   data.forEach(coin => {
-    const symbol = coin.symbol.toUpperCase();
-    const balance = 0;
-    const value = 0;
-    totalUSD += value;
-
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${symbol}</td>
+      <td>${coin.symbol.toUpperCase()}</td>
       <td>$${coin.current_price.toLocaleString()}</td>
-      <td>${balance.toFixed(4)}</td>
-      <td>$${value.toFixed(2)}</td>
+      <td>0.0000</td>
+      <td>$0.00</td>
     `;
     tbody.appendChild(tr);
   });
