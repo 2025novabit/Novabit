@@ -14,26 +14,99 @@ body{
   font-family:Roboto,Arial,sans-serif;
   background:#f5f6fa;
 }
+
+/* Header */
 header{
   background:#1a1a2e;
   color:#fff;
   padding:15px;
   text-align:center;
   font-size:18px;
-  position:sticky;
-  top:0;
 }
+
+/* Layout */
 .container{
-  max-width:600px;
+  max-width:1100px;
   margin:20px auto;
   padding:0 20px;
 }
-.card{
+
+/* Search */
+.search-box input{
+  width:100%;
+  padding:12px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:16px;
+  margin-bottom:15px;
+}
+
+/* Coin List */
+.coin-list{
   background:#fff;
-  padding:25px;
   border-radius:12px;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  overflow:hidden;
 }
+
+.coin-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px;
+  border-bottom:1px solid #eee;
+  cursor:pointer;
+  transition:0.2s;
+}
+.coin-row:hover{background:#f1f1f9}
+
+.coin-left{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.coin-left img{
+  width:32px;
+  height:32px;
+}
+.coin-symbol{
+  font-weight:600;
+}
+.coin-name{
+  font-size:13px;
+  color:#666;
+}
+.coin-balance{
+  font-weight:600;
+}
+
+/* Withdraw Panel */
+.withdraw-panel{
+  position:fixed;
+  top:0;
+  right:-420px;
+  width:400px;
+  max-width:95%;
+  height:100%;
+  background:#fff;
+  box-shadow:-2px 0 15px rgba(0,0,0,0.25);
+  padding:25px;
+  transition:0.3s;
+  z-index:100;
+  overflow-y:auto;
+}
+.withdraw-panel.active{right:0}
+
+.close-btn{
+  background:#e74c3c;
+  color:#fff;
+  border:none;
+  padding:8px 12px;
+  border-radius:5px;
+  cursor:pointer;
+  margin-bottom:15px;
+}
+
 label{
   font-weight:500;
   margin-top:15px;
@@ -47,7 +120,8 @@ select,input{
   border:1px solid #ccc;
   font-size:15px;
 }
-button{
+
+.submit-btn{
   width:100%;
   margin-top:20px;
   padding:14px;
@@ -56,10 +130,9 @@ button{
   border:none;
   border-radius:8px;
   font-size:16px;
-  font-weight:500;
   cursor:pointer;
 }
-button:hover{background:#3a3690}
+
 .notice{
   background:#fff3cd;
   padding:12px;
@@ -68,14 +141,6 @@ button:hover{background:#3a3690}
   font-size:14px;
   color:#856404;
 }
-.success{
-  background:#d4edda;
-  color:#155724;
-  padding:12px;
-  border-radius:8px;
-  margin-top:15px;
-  display:none;
-}
 </style>
 </head>
 <body>
@@ -83,81 +148,105 @@ button:hover{background:#3a3690}
 <header>Withdraw</header>
 
 <div class="container">
-  <div class="card">
 
-    <label>Select Coin</label>
-    <select id="coinSelect"></select>
+  <!-- Search -->
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search coin...">
+  </div>
 
-    <label>Network</label>
-    <select id="networkSelect"></select>
+  <!-- Coin List -->
+  <div class="coin-list" id="coinList"></div>
 
-    <label>Recipient Address</label>
-    <input type="text" id="toAddress" placeholder="Enter destination address">
+</div>
 
-    <label>Amount</label>
-    <input type="number" id="amount" placeholder="0.00">
+<!-- Withdraw Panel -->
+<div class="withdraw-panel" id="withdrawPanel">
+  <button class="close-btn" onclick="closePanel()">Close</button>
 
-    <button onclick="submitWithdraw()">Submit Withdraw</button>
+  <h3 id="panelTitle"></h3>
+  <div id="panelBalance" style="margin-bottom:10px;font-weight:500;"></div>
 
-    <div class="notice">
-      ⚠️ Withdrawals are processed manually.<br>
-      Please ensure the address and network are correct.
-    </div>
+  <label>Network</label>
+  <select id="networkSelect"></select>
 
-    <div class="success" id="successMsg">
-      ✅ Withdraw request submitted successfully.<br>
-      Status: Pending manual review.
-    </div>
+  <label>Withdraw Address</label>
+  <input type="text" id="toAddress" placeholder="Enter destination address">
 
+  <label>Amount</label>
+  <input type="number" id="amount" placeholder="0.00">
+
+  <button class="submit-btn">Submit Withdraw</button>
+
+  <div class="notice">
+    ⚠️ Withdraw requests are processed manually.
   </div>
 </div>
 
 <script>
-const coinSelect = document.getElementById('coinSelect');
+const coinList = document.getElementById('coinList');
+const searchInput = document.getElementById('searchInput');
+const withdrawPanel = document.getElementById('withdrawPanel');
+const panelTitle = document.getElementById('panelTitle');
+const panelBalance = document.getElementById('panelBalance');
 const networkSelect = document.getElementById('networkSelect');
-const successMsg = document.getElementById('successMsg');
 
-/* ---------- Load coins ---------- */
+/* ----- DEMO BALANCES ----- */
+const DEMO_BALANCE = {};
 COINS.forEach(c=>{
-  if(WALLET_ADDRESSES[c.symbol]){
-    let opt = document.createElement('option');
-    opt.value = c.symbol;
-    opt.innerText = c.symbol + " - " + c.name;
-    coinSelect.appendChild(opt);
-  }
+  DEMO_BALANCE[c.symbol] = (Math.random()*5).toFixed(4);
 });
 
-/* ---------- Load networks ---------- */
-function loadNetworks(){
-  networkSelect.innerHTML = "";
-  const wallet = WALLET_ADDRESSES[coinSelect.value];
-  wallet.networks.forEach(n=>{
-    let opt = document.createElement('option');
-    opt.value = n.network;
-    opt.innerText = n.network;
-    networkSelect.appendChild(opt);
+/* ----- Render Coins ----- */
+function renderCoins(filter=""){
+  coinList.innerHTML="";
+  COINS
+  .filter(c =>
+    c.symbol.toLowerCase().includes(filter.toLowerCase()) ||
+    c.name.toLowerCase().includes(filter.toLowerCase())
+  )
+  .forEach(c=>{
+    if(!WALLET_ADDRESSES[c.symbol]) return;
+
+    const row = document.createElement('div');
+    row.className="coin-row";
+    row.innerHTML=`
+      <div class="coin-left">
+        <img src="${c.icon}">
+        <div>
+          <div class="coin-symbol">${c.symbol}</div>
+          <div class="coin-name">${c.name}</div>
+        </div>
+      </div>
+      <div class="coin-balance">${DEMO_BALANCE[c.symbol]}</div>
+    `;
+    row.onclick=()=>openWithdraw(c.symbol);
+    coinList.appendChild(row);
   });
 }
-coinSelect.addEventListener('change', loadNetworks);
-loadNetworks();
 
-/* ---------- Submit Withdraw ---------- */
-function submitWithdraw(){
-  const coin = coinSelect.value;
-  const network = networkSelect.value;
-  const address = document.getElementById('toAddress').value;
-  const amount = document.getElementById('amount').value;
+searchInput.addEventListener('input',()=>renderCoins(searchInput.value));
+renderCoins();
 
-  if(!address || !amount){
-    alert("Please fill all fields");
-    return;
-  }
+/* ----- Open Withdraw ----- */
+function openWithdraw(symbol){
+  const wallet = WALLET_ADDRESSES[symbol];
+  panelTitle.innerText = symbol + " Withdraw";
+  panelBalance.innerText = "Available: " + DEMO_BALANCE[symbol];
 
-  console.log("WITHDRAW REQUEST", {
-    coin, network, address, amount
+  networkSelect.innerHTML="";
+  wallet.networks.forEach(n=>{
+    let opt=document.createElement('option');
+    opt.value=n.network;
+    opt.innerText=n.network;
+    networkSelect.appendChild(opt);
   });
 
-  successMsg.style.display = "block";
+  withdrawPanel.classList.add('active');
+}
+
+/* ----- Close Panel ----- */
+function closePanel(){
+  withdrawPanel.classList.remove('active');
 }
 </script>
 
