@@ -18,55 +18,69 @@ header {
   background: #1a1a2e;
   color: #fff;
   padding: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  font-size: 18px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 .container {
   max-width: 1000px;
   margin: 20px auto;
   padding: 0 20px;
 }
+
+/* جستجو */
 .search-box {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 .search-box input {
   width: 100%;
-  padding: 10px;
-  border-radius: 6px;
+  padding: 12px;
+  border-radius: 8px;
   border: 1px solid #ccc;
+  font-size: 16px;
 }
+
+/* لیست ارزها */
 .coin-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill,minmax(100px,1fr));
+  grid-template-columns: repeat(auto-fill,minmax(120px,1fr));
   gap: 15px;
 }
 .coin {
   background: #fff;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 10px;
   text-align: center;
-  padding: 10px;
+  padding: 15px 10px;
   cursor: pointer;
   transition: 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-.coin:hover { border-color: #4b49ac; }
-.coin img { width: 32px; height: 32px; margin-bottom: 5px; }
+.coin:hover { border-color: #4b49ac; box-shadow:0 4px 8px rgba(0,0,0,0.1);}
+.coin img { width: 48px; height: 48px; margin-bottom: 8px; }
+
+/* پنجره واریز */
 .deposit-panel {
   position: fixed;
   top: 0;
   right: -400px;
-  width: 350px;
+  width: 380px;
+  max-width: 90%;
   height: 100%;
   background: #fff;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.2);
-  padding: 20px;
-  transition: right 0.3s;
+  box-shadow: -2px 0 15px rgba(0,0,0,0.2);
+  padding: 25px;
+  transition: right 0.3s ease-in-out;
   z-index: 100;
   overflow-y: auto;
+  border-left: 1px solid #ddd;
 }
 .deposit-panel.active { right: 0; }
-.deposit-panel h3 { margin-top: 0; }
+.deposit-panel h3 { margin-top: 0; font-size: 20px; margin-bottom: 15px; }
 .close-btn {
   background: #e74c3c;
   color: #fff;
@@ -74,49 +88,39 @@ header {
   padding: 8px 12px;
   cursor: pointer;
   border-radius: 5px;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 .address-box {
   background: #f1f1f1;
-  padding: 10px;
+  padding: 12px;
   border-radius: 6px;
   word-break: break-all;
   margin: 10px 0;
-}
-select, input[type=number] {
-  width: 100%;
-  padding: 10px;
-  margin: 8px 0;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-.submit-btn, .copy-btn {
-  width: 100%;
-  padding: 12px;
-  background: #4b49ac;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  margin-top: 5px;
+  font-family: monospace;
 }
 .notice {
   background: #fff3cd;
   padding: 10px;
   border-radius: 6px;
-  margin-top: 10px;
+  margin-top: 15px;
   font-size: 14px;
+  color: #856404;
+  line-height: 1.4;
+}
+
+/* واکنش‌گرا */
+@media(max-width:768px){
+  .coin-list { grid-template-columns: repeat(auto-fill,minmax(100px,1fr)); }
+  .deposit-panel { width: 100%; }
 }
 </style>
 </head>
 <body>
 
-<header>
-  <h3>Deposit</h3>
-</header>
+<header>Deposit</header>
 
 <div class="container">
+
   <!-- جستجو -->
   <div class="search-box">
     <input type="text" id="searchInput" placeholder="Search coin...">
@@ -124,6 +128,7 @@ select, input[type=number] {
 
   <!-- لیست ارزها -->
   <div class="coin-list" id="coinList"></div>
+
 </div>
 
 <!-- پنجره سمت راست -->
