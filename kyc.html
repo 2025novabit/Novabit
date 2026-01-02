@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>KYC Verification | Novabit</title>
+<title>KYC | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -10,7 +10,6 @@ body{
   margin:0;
   font-family:Roboto,Arial,sans-serif;
   background:#f4f6fa;
-  padding-bottom:60px;
 }
 
 /* HEADER */
@@ -31,52 +30,6 @@ header button{
   cursor:pointer;
 }
 
-/* MAIN */
-.container{
-  padding:20px;
-  max-width:700px;
-  margin:auto;
-}
-
-.card{
-  background:#fff;
-  padding:20px;
-  border-radius:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,.1);
-}
-
-.field{
-  margin-bottom:15px;
-}
-.field label{
-  display:block;
-  font-size:13px;
-  margin-bottom:5px;
-  color:#555;
-}
-.field input,.field select{
-  width:100%;
-  padding:10px;
-  border:1px solid #ccc;
-  border-radius:5px;
-}
-
-.status{
-  margin-bottom:15px;
-  font-weight:bold;
-}
-
-button.submitBtn{
-  width:100%;
-  padding:12px;
-  background:#4b49ac;
-  border:none;
-  color:#fff;
-  border-radius:5px;
-  font-size:15px;
-  cursor:pointer;
-}
-
 /* SIDE PANEL */
 #sidePanel{
   position:fixed;
@@ -94,10 +47,61 @@ button.submitBtn{
 #sidePanel.active{right:0;}
 #sidePanel a{
   display:block;
-  margin:10px 0;
+  margin:12px 0;
   color:#1a1a2e;
   text-decoration:none;
   font-weight:500;
+}
+
+/* MAIN */
+.container{
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,.1);
+}
+.field{margin-bottom:15px;}
+.field label{
+  font-size:13px;
+  color:#555;
+  display:block;
+  margin-bottom:5px;
+}
+.field input,.field select{
+  width:100%;
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:5px;
+}
+.status{
+  margin-bottom:15px;
+  font-weight:bold;
+}
+.doc-option{
+  display:flex;
+  align-items:center;
+  margin-bottom:10px;
+}
+.doc-option img{
+  width:90px;
+  margin-left:10px;
+  border:1px solid #ccc;
+  border-radius:5px;
+}
+.submitBtn{
+  width:100%;
+  padding:12px;
+  background:#4b49ac;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+  font-size:15px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -115,9 +119,13 @@ button.submitBtn{
   <h3>Menu</h3>
   <a href="profile.html">Profile</a>
   <a href="kyc.html">KYC</a>
-  <a href="dashboard.html">Dashboard</a>
+  <a href="change-password.html">Change Password</a>
+  <a href="2fa.html">2FA Settings</a>
+  <a href="fees.html">Fees</a>
+  <a href="referral.html">Referral</a>
 </div>
 
+<!-- MAIN -->
 <div class="container">
 <div class="card">
 
@@ -140,16 +148,23 @@ button.submitBtn{
 
   <div class="field">
     <label>Document Type</label>
-    <select id="docType" onchange="changeDocType()">
-      <option value="">Select</option>
-      <option value="passport">Passport</option>
-      <option value="national_id">National ID</option>
-    </select>
+
+    <div class="doc-option">
+      <input type="radio" name="docType" value="passport" onchange="changeDocType()">
+      <span>Passport</span>
+      <img src="images/passport_sample.png" alt="Passport Sample">
+    </div>
+
+    <div class="doc-option">
+      <input type="radio" name="docType" value="national_id" onchange="changeDocType()">
+      <span>National ID / Tazkira</span>
+      <img src="images/id_sample.png" alt="ID Sample">
+    </div>
   </div>
 
   <!-- Passport -->
   <div class="field" id="passportUpload" style="display:none">
-    <label>Passport Image</label>
+    <label>Upload Passport</label>
     <input type="file" accept="image/*">
   </div>
 
@@ -170,8 +185,8 @@ button.submitBtn{
 </div>
 </div>
 
-<!-- JS FILES -->
-<script src="js/countries.js"></script>
+<!-- COUNTRY LIST -->
+<script src="countries.js"></script>
 
 <script>
 function togglePanel(){
@@ -179,17 +194,28 @@ function togglePanel(){
 }
 
 function initKYC(){
-  fillCountrySelect('countrySelect');
+  fillCountries();
   const kyc=JSON.parse(localStorage.getItem('kycData'));
   if(kyc){
     document.getElementById('kycStatus').innerText='Status: '+kyc.status;
   }
 }
 
+function fillCountries(){
+  const select=document.getElementById('countrySelect');
+  select.innerHTML='<option value="">Select Country</option>';
+  countries.forEach(c=>{
+    const opt=document.createElement('option');
+    opt.value=c.name;
+    opt.textContent=c.name;
+    select.appendChild(opt);
+  });
+}
+
 function changeDocType(){
-  const t=document.getElementById('docType').value;
-  document.getElementById('passportUpload').style.display=(t==='passport')?'block':'none';
-  document.getElementById('idUploads').style.display=(t==='national_id')?'block':'none';
+  const val=document.querySelector('input[name="docType"]:checked').value;
+  document.getElementById('passportUpload').style.display = val==='passport'?'block':'none';
+  document.getElementById('idUploads').style.display = val==='national_id'?'block':'none';
 }
 
 function submitKYC(){
@@ -197,7 +223,6 @@ function submitKYC(){
     firstName:firstName.value,
     lastName:lastName.value,
     country:countrySelect.value,
-    document:docType.value,
     status:'Pending',
     submittedAt:new Date().toISOString()
   };
