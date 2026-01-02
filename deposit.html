@@ -92,6 +92,13 @@ button{cursor:pointer}
   border-radius:6px;
   border:1px solid #ccc;
 }
+select{
+  width:100%;
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  margin-bottom:10px;
+}
 </style>
 </head>
 <body>
@@ -113,7 +120,10 @@ button{cursor:pointer}
   <div class="modal-content">
     <button class="close-btn" id="closeModal">Close</button>
     <h3 id="modalTitle"></h3>
-    <div><b>Network:</b> <span id="modalNetwork"></span></div>
+    <div>
+      <b>Network:</b>
+      <select id="networkSelect"></select>
+    </div>
     <div class="address-box" id="modalAddress"></div>
     <button class="copy-btn" id="copyBtn">Copy Address</button>
   </div>
@@ -129,13 +139,25 @@ const COINS = [
   {symbol:'DOT', name:'Polkadot', icon:'https://cryptologos.cc/logos/polkadot-new-dot-logo.png?v=022'}
 ];
 
-// نمونه ولت آدرس‌ها
+// نمونه ولت آدرس‌ها با چند شبکه
 const WALLET_ADDRESSES = {
-  BTC: {network:'Bitcoin', address:'#'},
-  ETH: {network:'Ethereum', address:'#'},
-  USDT: {network:'ERC20', address:'#'},
-  ADA: {network:'Cardano', address:'#'},
-  DOT: {network:'Polkadot', address:'#'}
+  BTC: [
+    {network:'Bitcoin', address:'#BTC1'},
+  ],
+  ETH: [
+    {network:'Ethereum', address:'#ETH1'},
+  ],
+  USDT: [
+    {network:'ERC20', address:'#USDT1'},
+    {network:'TRC20', address:'#USDT2'},
+    {network:'BEP20', address:'#USDT3'},
+  ],
+  ADA: [
+    {network:'Cardano', address:'#ADA1'}
+  ],
+  DOT: [
+    {network:'Polkadot', address:'#DOT1'}
+  ]
 };
 
 // موجودی کاربر برای دمو
@@ -175,21 +197,40 @@ function renderCoins(list){
 // ----- Modal -----
 const modal = document.getElementById('depositModal');
 const modalTitle = document.getElementById('modalTitle');
-const modalNetwork = document.getElementById('modalNetwork');
 const modalAddress = document.getElementById('modalAddress');
+const networkSelect = document.getElementById('networkSelect');
 const closeModalBtn = document.getElementById('closeModal');
 const copyBtn = document.getElementById('copyBtn');
 
 function openModal(symbol,name){
-  if(!WALLET_ADDRESSES[symbol] || !WALLET_ADDRESSES[symbol].address){
+  if(!WALLET_ADDRESSES[symbol] || WALLET_ADDRESSES[symbol].length===0){
     alert('Wallet address not set');
     return;
   }
+
+  // نمایش Modal
   modal.style.display='flex';
   modalTitle.innerText = `${name} (${symbol})`;
-  modalNetwork.innerText = WALLET_ADDRESSES[symbol].network;
-  modalAddress.innerText = WALLET_ADDRESSES[symbol].address;
+
+  // پر کردن شبکه‌ها
+  networkSelect.innerHTML='';
+  WALLET_ADDRESSES[symbol].forEach((n,i)=>{
+    const opt = document.createElement('option');
+    opt.value=i;
+    opt.innerText = n.network;
+    networkSelect.appendChild(opt);
+  });
+
+  // نمایش آدرس شبکه اول پیشفرض
+  modalAddress.innerText = WALLET_ADDRESSES[symbol][0].address;
 }
+
+// وقتی شبکه تغییر کرد، آدرس هم عوض شود
+networkSelect.addEventListener('change',()=>{
+  const symbol = modalTitle.innerText.split(' ')[1].replace(/[()]/g,'');
+  const selected = WALLET_ADDRESSES[symbol][networkSelect.value];
+  modalAddress.innerText = selected.address;
+});
 
 closeModalBtn.onclick = ()=> modal.style.display='none';
 window.onclick = e=>{if(e.target==modal) modal.style.display='none';}
