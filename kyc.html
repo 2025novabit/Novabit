@@ -193,6 +193,7 @@ function togglePanel(){
 
 /* Load countries */
 function loadCountries(){
+  countrySelect.innerHTML = '<option value="">Select Country</option>'; // clear
   if(typeof countries !== 'undefined' && countries.length>0){
     countries.forEach(c=>{
       let o=document.createElement('option');
@@ -230,7 +231,7 @@ function submitKYC(){
 
 /* Load KYC */
 function loadKYC(){
-  loadCountries();
+  loadCountries(); // Load list first
   const kyc=JSON.parse(localStorage.getItem('kycData'));
   const box=document.getElementById('kycStatus');
   if(!kyc){
