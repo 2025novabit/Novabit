@@ -4,148 +4,99 @@
 <meta charset="UTF-8">
 <title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<script src="coins.js" defer></script>
-<script src="wallets.js" defer></script>
-
+<script src="coins.js"></script>
+<script src="wallets.js"></script>
 <style>
-body{margin:0;font-family:Roboto,Arial,sans-serif;background:#f5f6fa;}
-header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
-header h3{margin:0;}
-button{cursor:pointer;}
-.container{padding:20px;max-width:1000px;margin:auto;}
-.search-box input{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;margin-bottom:15px;font-size:14px;}
-.coin-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;}
-.coin{border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center;cursor:pointer;background:#fff;transition:0.2s;}
-.coin:hover{border-color:#4b49ac;box-shadow:0 4px 8px rgba(0,0,0,0.1);}
-.coin img{width:32px;height:32px;margin-bottom:5px;}
-
-/* Modal */
-.modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;}
-.modal-bg.active{display:flex;}
-.modal{background:#fff;border-radius:10px;padding:20px;max-width:400px;width:90%;box-shadow:0 6px 20px rgba(0,0,0,0.2);position:relative;}
-.modal h3{text-align:center;margin-top:0;}
-.modal select,.modal input{width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:14px;}
-.modal .address-box{background:#f1f1f1;padding:10px;border-radius:6px;word-break:break-all;margin:10px 0;cursor:pointer;}
-.modal button{width:100%;padding:12px;background:#4b49ac;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:500;margin-top:10px;}
-.modal .close-btn{position:absolute;top:10px;right:10px;background:#e74c3c;color:#fff;border:none;border-radius:5px;padding:5px 10px;cursor:pointer;}
-.notice{background:#fff3cd;padding:10px;border-radius:6px;margin-top:10px;font-size:14px;text-align:center;}
-
-/* Right Side Panel */
-#sidePanel{position:fixed;top:0;right:-400px;width:300px;height:100%;background:#fff;box-shadow:-2px 0 6px rgba(0,0,0,.2);transition:right 0.3s;padding:20px;z-index:999;}
-#sidePanel.active{right:0;}
-#sidePanel h2{margin-top:0;}
-#sidePanel a{display:block;margin:15px 0;color:#1a1a2e;text-decoration:none;font-weight:500;}
-#sidePanel button{background:#e74c3c;color:#fff;border:none;padding:8px 12px;border-radius:5px;cursor:pointer;margin-bottom:15px;}
+body{margin:0;font-family:Roboto,Arial;background:#f5f6fa;}
+header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center;}
+.container{padding:20px;max-width:900px;margin:auto;}
+.coin-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;margin-top:20px;}
+.coin{border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center;cursor:pointer;}
+.coin:hover{border-color:#4b49ac;}
+.coin img{width:32px;height:32px;}
+.deposit-modal{position:fixed;top:0;right:-400px;width:350px;height:100%;background:#fff;box-shadow:-3px 0 10px rgba(0,0,0,.2);padding:20px;transition:right .3s;z-index:200;}
+.deposit-modal.active{right:0;}
+.deposit-modal h3{margin-top:0;}
+.deposit-modal select,input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ccc;}
+.deposit-modal .address-box{background:#f1f1f1;padding:10px;border-radius:6px;word-break:break-all;margin:10px 0;cursor:pointer;}
+.deposit-modal button{width:100%;padding:12px;background:#4b49ac;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-top:10px;}
+.close-btn{background:#e74c3c;margin-bottom:15px;}
 </style>
 </head>
 <body>
 
 <header>
   <h3>Deposit</h3>
-  <button onclick="togglePanel()">Menu</button>
 </header>
 
-<!-- Right Side Panel -->
-<div id="sidePanel">
-  <button onclick="togglePanel()">Close</button>
-  <h2>Menu</h2>
-  <a href="profile.html">Profile</a>
-  <a href="kyc.html">KYC</a>
-  <a href="changepassword.html">Change Password</a>
-  <a href="2fa.html">2FA Settings</a>
-  <a href="fee.html">Fee</a>
-  <a href="referral.html">Referral</a>
-</div>
-
 <div class="container">
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Search coin by symbol or name">
-  </div>
-
+  <h3>Select Coin</h3>
   <div class="coin-list" id="coinList"></div>
 </div>
 
 <!-- Deposit Modal -->
-<div class="modal-bg" id="depositModal">
-  <div class="modal">
-    <button class="close-btn" onclick="closeModal()">×</button>
-    <h3 id="modalCoinName">Coin</h3>
-
-    <label for="networkSelect">Select Network:</label>
-    <select id="networkSelect"></select>
-
-    <div class="address-box" id="walletAddress" onclick="copyAddress()">Click to copy address</div>
-
-    <input type="number" id="amount" placeholder="Amount">
-    <input type="text" id="txid" placeholder="Transaction Hash (TXID)">
-
-    <button onclick="submitDeposit()">Submit Deposit</button>
-
-    <div class="notice">
-      ⚠️ Deposit will be credited after manual confirmation.
-    </div>
-  </div>
+<div class="deposit-modal" id="depositModal">
+  <button class="close-btn" onclick="closeModal()">Close</button>
+  <h3 id="modalCoinName"></h3>
+  <label>Network:</label>
+  <select id="networkSelect"></select>
+  <label>Wallet Address:</label>
+  <div class="address-box" id="walletAddress" onclick="copyAddress()"></div>
+  <label>Amount:</label>
+  <input type="number" placeholder="Amount" id="amount">
+  <label>Transaction Hash (TXID):</label>
+  <input type="text" placeholder="TXID" id="txid">
+  <button onclick="submitDeposit()">Submit Deposit</button>
 </div>
 
 <script>
-const coinList = document.getElementById('coinList');
-const searchInput = document.getElementById('searchInput');
-const depositModal = document.getElementById('depositModal');
-const modalCoinName = document.getElementById('modalCoinName');
-const networkSelect = document.getElementById('networkSelect');
-const walletAddress = document.getElementById('walletAddress');
-const sidePanel = document.getElementById('sidePanel');
+const coinList=document.getElementById('coinList');
+const depositModal=document.getElementById('depositModal');
+const modalCoinName=document.getElementById('modalCoinName');
+const networkSelect=document.getElementById('networkSelect');
+const walletAddress=document.getElementById('walletAddress');
 
-function togglePanel(){ sidePanel.classList.toggle('active'); }
+// لیست ارزها
+COINS.forEach(c=>{
+  const div=document.createElement('div');
+  div.className="coin";
+  div.innerHTML=`<img src="${c.icon}"><div>${c.symbol}</div>`;
+  div.onclick=()=>openModal(c.symbol,c.name);
+  coinList.appendChild(div);
+});
 
-function renderCoins(filter=''){
-  coinList.innerHTML='';
-  COINS.forEach(c=>{
-    if(filter && !c.symbol.toLowerCase().includes(filter) && !c.name.toLowerCase().includes(filter)) return;
-    const div=document.createElement('div');
-    div.className="coin";
-    div.innerHTML=`<img src="${c.icon}" alt="${c.symbol}"><div>${c.symbol}</div>`;
-    div.onclick=()=>openModal(c.symbol,c.name);
-    coinList.appendChild(div);
-  });
-}
-
+// باز کردن پنجره
 function openModal(symbol,name){
   const wallet=WALLET_ADDRESSES[symbol];
-  if(!wallet){ alert("Wallet not configured for this coin"); return;}
+  if(!wallet){ alert("Wallet not configured for this coin"); return; }
   modalCoinName.innerText=`${name} (${symbol})`;
-
-  networkSelect.innerHTML='';
+  walletAddress.innerText=wallet.address;
+  networkSelect.innerHTML="";
   wallet.networks.forEach(n=>{
     const opt=document.createElement('option');
     opt.value=n; opt.innerText=n;
     networkSelect.appendChild(opt);
   });
-
-  walletAddress.innerText=wallet.address;
   depositModal.classList.add('active');
 }
 
-function closeModal(){
-  depositModal.classList.remove('active');
-  document.getElementById('amount').value='';
-  document.getElementById('txid').value='';
-}
+// بستن پنجره
+function closeModal(){ depositModal.classList.remove('active'); }
 
-function submitDeposit(){
-  alert("Deposit submitted (demo). Manual confirmation required.");
-  closeModal();
-}
-
+// کپی آدرس
 function copyAddress(){
   navigator.clipboard.writeText(walletAddress.innerText);
-  alert("Address copied: " + walletAddress.innerText);
+  alert("Address copied!");
 }
 
-searchInput.addEventListener('input',()=>renderCoins(searchInput.value.toLowerCase()));
-
-window.onload=()=>renderCoins();
+// دمو ارسال واریز
+function submitDeposit(){
+  const amount=document.getElementById('amount').value;
+  const txid=document.getElementById('txid').value;
+  if(!amount||!txid){ alert("Enter amount and TXID"); return; }
+  alert("Deposit submitted (demo). Pending manual confirmation.");
+  closeModal();
+}
 </script>
 
 </body>
