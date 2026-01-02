@@ -141,11 +141,21 @@ const qrCanvas = document.getElementById('qrCode');
 const walletAddressBox = document.getElementById('walletAddress');
 const copyBtn = document.getElementById('copyBtn');
 
-// مرتب‌سازی: ابتدا ارزهایی که آدرس دارند
+// نمونه موجودی کاربر (برای دمو)
+const USER_BALANCES = {
+  BTC: 0.5,
+  ETH: 0,
+  USDT: 100,
+  ADA: 0,
+  DOT: 10,
+  XRP: 0
+};
+
+// مرتب‌سازی: ابتدا ارزهایی که موجودی > 0
 function getOrderedCoins() {
-  let coinsWithAddress = COINS.filter(c => WALLET_ADDRESSES[c.symbol] && WALLET_ADDRESSES[c.symbol].address);
-  let coinsWithoutAddress = COINS.filter(c => !WALLET_ADDRESSES[c.symbol] || !WALLET_ADDRESSES[c.symbol].address);
-  return [...coinsWithAddress, ...coinsWithoutAddress];
+  let coinsWithBalance = COINS.filter(c => USER_BALANCES[c.symbol] > 0);
+  let coinsWithoutBalance = COINS.filter(c => !USER_BALANCES[c.symbol] || USER_BALANCES[c.symbol] === 0);
+  return [...coinsWithBalance, ...coinsWithoutBalance];
 }
 
 // رندر لیست ارزها
@@ -157,6 +167,7 @@ function renderCoins(list){
     div.innerHTML = `
       <img src="${c.icon}">
       <div>${c.symbol}</div>
+      ${USER_BALANCES[c.symbol] > 0 ? `<div style="font-size:12px;color:green;">Balance: ${USER_BALANCES[c.symbol]}</div>` : ''}
     `;
     div.onclick = ()=>selectCoin(c.symbol,c.name);
     coinList.appendChild(div);
