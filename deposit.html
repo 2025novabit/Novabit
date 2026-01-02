@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="coins.js"></script>
+<script src="wallets.js"></script>
 
 <style>
 body {margin:0;font-family:Roboto,Arial,sans-serif;background:#f5f6fa;}
@@ -11,27 +13,28 @@ header {background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:
 header h3 {margin:0;}
 button {cursor:pointer;border:none;border-radius:5px;}
 .container {padding:20px;max-width:900px;margin:auto;position:relative;}
+.card {background:#fff;padding:20px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:20px;}
 input {width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ccc;}
 .coin-list {display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;margin-top:10px;}
-.coin {border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center;cursor:pointer;background:#fff;transition:0.2s;}
-.coin:hover {border-color:#4b49ac;transform:translateY(-2px);}
+.coin {border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center;cursor:pointer;}
+.coin:hover {border-color:#4b49ac;}
 .coin img {width:32px;height:32px;margin-bottom:5px;}
 .hidden {display:none;}
-#depositModal {position:fixed;top:0;right:-400px;width:33%;max-width:350px;height:100%;background:#fff;box-shadow:-2px 0 6px rgba(0,0,0,0.2);transition:right 0.3s;padding:20px;z-index:200;overflow-y:auto;}
+#depositModal {position:fixed;top:0;right:-400px;width:33%;max-width:350px;height:100%;background:#fff;box-shadow:-2px 0 6px rgba(0,0,0,0.2);transition:right 0.3s;padding:20px;z-index:200;}
 #depositModal.active {right:0;}
-#depositModal h3 {margin-top:0;margin-bottom:15px;}
+#depositModal h3 {margin-top:0;}
 #closeModal {background:#e74c3c;color:#fff;padding:8px 12px;margin-bottom:15px;width:100%;cursor:pointer;}
 .select-network {width:100%;padding:8px;margin:10px 0;border-radius:6px;border:1px solid #ccc;}
-.address-box{background:#f1f1f1;padding:10px;border-radius:6px;word-break:break-all;margin:10px 0;font-family:monospace;}
-.copy-btn{background:#4b49ac;color:#fff;padding:10px;width:100%;margin-top:10px;cursor:pointer;border-radius:6px;}
-.notice{background:#fff3cd;padding:10px;border-radius:6px;margin-top:10px;font-size:14px;}
-#searchInput{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px;}
+.copy-btn {background:#4b49ac;color:#fff;padding:10px;width:100%;margin-top:10px;cursor:pointer;}
+.notice {background:#fff3cd;padding:10px;border-radius:6px;margin-top:10px;font-size:14px;}
+#searchInput {width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px;}
 </style>
 </head>
 <body>
 
 <header>
   <h3>Deposit</h3>
+  <button onclick="toggleSideMenu()">Menu</button>
 </header>
 
 <div class="container">
@@ -42,7 +45,7 @@ input {width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #
   <div class="coin-list" id="coinList"></div>
 </div>
 
-<!-- Deposit Modal -->
+<!-- Deposit Modal (Right Side Panel) -->
 <div id="depositModal">
   <button id="closeModal" onclick="closeDeposit()">Close</button>
   <h3 id="coinTitle"></h3>
@@ -59,42 +62,6 @@ input {width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #
 </div>
 
 <script>
-// ---------- Coins ----------
-const COINS = [
-  { symbol: "BTC", name: "Bitcoin", icon: "https://cryptoicons.org/api/icon/btc/64" },
-  { symbol: "ETH", name: "Ethereum", icon: "https://cryptoicons.org/api/icon/eth/64" },
-  { symbol: "USDT", name: "Tether", icon: "https://cryptoicons.org/api/icon/usdt/64" },
-  { symbol: "BNB", name: "Binance Coin", icon: "https://cryptoicons.org/api/icon/bnb/64" },
-  { symbol: "ADA", name: "Cardano", icon: "https://cryptoicons.org/api/icon/ada/64" }
-  // ... ادامه 100 ارز
-];
-
-// ---------- Wallet Addresses ----------
-const WALLET_ADDRESSES = {
-  BTC: { 
-    networks: ["BTC"], 
-    addresses: { "BTC": "1BitcoinAddressDemo1234567890" } 
-  },
-  ETH: { 
-    networks: ["ERC20","BEP20","Polygon"], 
-    addresses: { "ERC20": "0xEthereumAddressDemo12345", "BEP20": "0xBEP20AddressDemo", "Polygon": "0xPolygonAddressDemo" } 
-  },
-  USDT: { 
-    networks: ["ERC20","TRC20","BEP20"], 
-    addresses: { "ERC20": "0xUSDTERC20Address", "TRC20": "TUSDTTRCAddress", "BEP20": "0xUSDTBEPAddress" } 
-  },
-  BNB: { 
-    networks: ["BEP2","BEP20"], 
-    addresses: { "BEP2": "bnb1DemoAddress", "BEP20": "0xBNBAddressDemo" } 
-  },
-  ADA: { 
-    networks: ["ADA"], 
-    addresses: { "ADA": "addr1qDemoAddress" } 
-  }
-  // ... ادامه 100 ارز
-};
-
-// ---------- Render Coins ----------
 const coinList = document.getElementById('coinList');
 const depositModal = document.getElementById('depositModal');
 const coinTitle = document.getElementById('coinTitle');
@@ -102,10 +69,10 @@ const networkSelect = document.getElementById('networkSelect');
 const walletAddress = document.getElementById('walletAddress');
 const searchInput = document.getElementById('searchInput');
 
+// Render Coins
 function renderCoins() {
   coinList.innerHTML = '';
   COINS.forEach(c => {
-    if(!WALLET_ADDRESSES[c.symbol]) return; // فقط ارزهایی که آدرس دارند
     let div = document.createElement('div');
     div.className = 'coin';
     div.innerHTML = `<img src="${c.icon}" alt="${c.symbol}"><div>${c.symbol}</div>`;
@@ -114,6 +81,7 @@ function renderCoins() {
   });
 }
 
+// Filter Coins
 function filterCoins() {
   let filter = searchInput.value.toUpperCase();
   document.querySelectorAll('.coin-list .coin').forEach(coin => {
@@ -122,12 +90,12 @@ function filterCoins() {
   });
 }
 
-// ---------- Deposit Modal ----------
+// Open Deposit Modal
 function openDeposit(symbol, name) {
   const wallets = WALLET_ADDRESSES[symbol];
   if(!wallets) { alert('Wallet address not set'); return; }
   coinTitle.innerText = `${name} (${symbol})`;
-
+  
   networkSelect.innerHTML = '';
   wallets.networks.forEach(net => {
     let opt = document.createElement('option');
@@ -136,6 +104,7 @@ function openDeposit(symbol, name) {
     networkSelect.appendChild(opt);
   });
 
+  // Show first network address
   walletAddress.innerText = wallets.addresses[wallets.networks[0]];
 
   networkSelect.onchange = () => {
@@ -146,10 +115,12 @@ function openDeposit(symbol, name) {
   depositModal.classList.add('active');
 }
 
+// Close Modal
 function closeDeposit() {
   depositModal.classList.remove('active');
 }
 
+// Copy Address
 function copyAddress() {
   navigator.clipboard.writeText(walletAddress.innerText)
     .then(()=> alert('Address copied!'))
