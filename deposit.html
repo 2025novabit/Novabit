@@ -9,131 +9,24 @@
 <script src="wallets.js"></script>
 
 <style>
-body {
-  margin:0;
-  font-family:Roboto,Arial,sans-serif;
-  background:#f5f6fa;
-}
-
-header {
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px;
-  text-align:center;
-  font-size:18px;
-  font-weight:500;
-}
-
-.container {
-  padding:20px;
-  max-width:1000px;
-  margin:auto;
-}
-
-.search-box input {
-  width:100%;
-  padding:10px;
-  border-radius:6px;
-  border:1px solid #ccc;
-  margin-bottom:15px;
-  font-size:14px;
-}
-
-.coin-list {
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:15px;
-}
-
-.coin {
-  border:1px solid #ddd;
-  border-radius:8px;
-  padding:10px;
-  text-align:center;
-  cursor:pointer;
-  transition:0.2s;
-  background:#fff;
-}
-.coin:hover {
-  border-color:#4b49ac;
-  box-shadow:0 4px 8px rgba(0,0,0,0.1);
-}
-
-.coin img {
-  width:32px;
-  height:32px;
-  margin-bottom:5px;
-}
-
+body {margin:0;font-family:Roboto,Arial,sans-serif;background:#f5f6fa;}
+header {background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px;font-weight:500;}
+.container {padding:20px;max-width:1000px;margin:auto;}
+.search-box input {width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;margin-bottom:15px;font-size:14px;}
+.coin-list {display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;}
+.coin {border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center;cursor:pointer;background:#fff;transition:0.2s;}
+.coin:hover {border-color:#4b49ac;box-shadow:0 4px 8px rgba(0,0,0,0.1);}
+.coin img {width:32px;height:32px;margin-bottom:5px;}
 /* Modal */
-.modal-bg {
-  display:none;
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background:rgba(0,0,0,0.5);
-  z-index:1000;
-  justify-content:center;
-  align-items:center;
-}
-.modal-bg.active {
-  display:flex;
-}
-.modal {
-  background:#fff;
-  border-radius:10px;
-  padding:20px;
-  max-width:400px;
-  width:90%;
-  box-shadow:0 6px 20px rgba(0,0,0,0.2);
-  position:relative;
-}
-.modal h3 {
-  margin-top:0;
-  text-align:center;
-}
-.modal select, .modal input {
-  width:100%;
-  padding:10px;
-  margin:10px 0;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-.modal .address-box {
-  background:#f1f1f1;
-  padding:10px;
-  border-radius:6px;
-  word-break:break-all;
-  margin:10px 0;
-}
-.modal button {
-  width:100%;
-  padding:12px;
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:500;
-}
-.modal .close-btn {
-  position:absolute;
-  top:10px;
-  right:10px;
-  background:#e74c3c;
-  color:#fff;
-  border:none;
-  border-radius:5px;
-  padding:5px 10px;
-  cursor:pointer;
-}
-.notice {
-  background:#fff3cd;
-  padding:10px;
-  border-radius:6px;
-  margin-top:10px;
-  font-size:14px;
-}
+.modal-bg {display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;}
+.modal-bg.active {display:flex;}
+.modal {background:#fff;border-radius:10px;padding:20px;max-width:400px;width:90%;box-shadow:0 6px 20px rgba(0,0,0,0.2);position:relative;}
+.modal h3 {margin-top:0;text-align:center;}
+.modal select, .modal input {width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;}
+.modal .address-box {background:#f1f1f1;padding:10px;border-radius:6px;word-break:break-all;margin:10px 0;cursor:pointer;}
+.modal button {width:100%;padding:12px;background:#4b49ac;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:500;}
+.modal .close-btn {position:absolute;top:10px;right:10px;background:#e74c3c;color:#fff;border:none;border-radius:5px;padding:5px 10px;cursor:pointer;}
+.notice {background:#fff3cd;padding:10px;border-radius:6px;margin-top:10px;font-size:14px;text-align:center;}
 </style>
 </head>
 <body>
@@ -141,13 +34,11 @@ header {
 <header>Deposit</header>
 
 <div class="container">
-
 <div class="search-box">
   <input type="text" id="searchInput" placeholder="Search coin by symbol or name">
 </div>
 
 <div class="coin-list" id="coinList"></div>
-
 </div>
 
 <!-- Modal -->
@@ -159,7 +50,7 @@ header {
     <label for="networkSelect">Select Network:</label>
     <select id="networkSelect"></select>
 
-    <div class="address-box" id="walletAddress"></div>
+    <div class="address-box" id="walletAddress" onclick="copyAddress()"></div>
 
     <input type="number" id="amount" placeholder="Amount">
     <input type="text" id="txid" placeholder="Transaction Hash (TXID)">
@@ -167,7 +58,7 @@ header {
     <button onclick="submitDeposit()">Submit Deposit</button>
 
     <div class="notice">
-      ⚠️ Deposit will be credited after manual confirmation.
+      ⚠️ Deposit will be credited after manual confirmation. Click address to copy.
     </div>
   </div>
 </div>
@@ -181,32 +72,29 @@ const networkSelect = document.getElementById('networkSelect');
 const walletAddress = document.getElementById('walletAddress');
 
 function renderCoins(filter='') {
-  coinList.innerHTML = '';
+  coinList.innerHTML='';
   COINS.forEach(c=>{
     if(filter && !c.symbol.toLowerCase().includes(filter) && !c.name.toLowerCase().includes(filter)) return;
     let div = document.createElement('div');
-    div.className = "coin";
-    div.innerHTML = `<img src="${c.icon}" alt="${c.symbol}"><div>${c.symbol}</div>`;
-    div.onclick = ()=>openModal(c.symbol,c.name);
+    div.className="coin";
+    div.innerHTML=`<img src="${c.icon}" alt="${c.symbol}"><div>${c.symbol}</div>`;
+    div.onclick=()=>openModal(c.symbol,c.name);
     coinList.appendChild(div);
   });
 }
 
 function openModal(symbol,name){
-  const wallet = WALLET_ADDRESSES[symbol];
-  if(!wallet){
-    alert("Wallet not configured for this coin");
-    return;
-  }
-  modalCoinName.innerText = `${name} (${symbol})`;
-  networkSelect.innerHTML = '';
+  const wallet=WALLET_ADDRESSES[symbol];
+  if(!wallet){alert("Wallet not configured for this coin"); return;}
+  modalCoinName.innerText=`${name} (${symbol})`;
+  networkSelect.innerHTML='';
   wallet.networks.forEach(n=>{
-    let opt = document.createElement('option');
-    opt.value = n;
-    opt.innerText = n;
+    let opt=document.createElement('option');
+    opt.value=n;
+    opt.innerText=n;
     networkSelect.appendChild(opt);
   });
-  walletAddress.innerText = wallet.address;
+  walletAddress.innerText=wallet.address;
   depositModal.classList.add('active');
 }
 
@@ -219,6 +107,11 @@ function closeModal(){
 function submitDeposit(){
   alert("Deposit submitted (demo). Manual confirmation required.");
   closeModal();
+}
+
+function copyAddress(){
+  navigator.clipboard.writeText(walletAddress.innerText);
+  alert("Address copied: " + walletAddress.innerText);
 }
 
 searchInput.addEventListener('input',()=>renderCoins(searchInput.value.toLowerCase()));
