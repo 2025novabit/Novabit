@@ -4,23 +4,103 @@
 <meta charset="UTF-8">
 <title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- فایل‌های coins.js و wallets.js -->
 <script src="coins.js"></script>
 <script src="wallets.js"></script>
+
 <style>
-body{margin:0;font-family:Roboto,Arial;background:#f5f6fa;}
-header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center;}
-.container{padding:20px;max-width:900px;margin:auto;}
-.coin-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;margin-top:20px;}
-.coin{border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center;cursor:pointer;}
-.coin:hover{border-color:#4b49ac;}
-.coin img{width:32px;height:32px;}
-.deposit-modal{position:fixed;top:0;right:-400px;width:350px;height:100%;background:#fff;box-shadow:-3px 0 10px rgba(0,0,0,.2);padding:20px;transition:right .3s;z-index:200;}
-.deposit-modal.active{right:0;}
-.deposit-modal h3{margin-top:0;}
-.deposit-modal select,input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ccc;}
-.deposit-modal .address-box{background:#f1f1f1;padding:10px;border-radius:6px;word-break:break-all;margin:10px 0;cursor:pointer;}
-.deposit-modal button{width:100%;padding:12px;background:#4b49ac;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-top:10px;}
-.close-btn{background:#e74c3c;margin-bottom:15px;}
+body {
+  margin: 0;
+  font-family: Roboto, Arial, sans-serif;
+  background: #f5f6fa;
+}
+header {
+  background: #1a1a2e;
+  color: #fff;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.container {
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+.coin-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(100px,1fr));
+  gap: 15px;
+}
+.coin {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: center;
+  padding: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.coin:hover { border-color: #4b49ac; }
+.coin img { width: 32px; height: 32px; }
+.deposit-panel {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 350px;
+  height: 100%;
+  background: #fff;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.2);
+  padding: 20px;
+  transition: right 0.3s;
+  z-index: 100;
+  overflow-y: auto;
+}
+.deposit-panel.active { right: 0; }
+.deposit-panel h3 { margin-top: 0; }
+.close-btn {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+.address-box {
+  background: #f1f1f1;
+  padding: 10px;
+  border-radius: 6px;
+  word-break: break-all;
+  margin: 10px 0;
+  cursor: pointer;
+}
+.address-box:hover { background: #e2e2e2; }
+select, input[type=number], input[type=text] {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: #4b49ac;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.notice {
+  background: #fff3cd;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 10px;
+  font-size: 14px;
+}
 </style>
 </head>
 <body>
@@ -30,72 +110,78 @@ header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:s
 </header>
 
 <div class="container">
-  <h3>Select Coin</h3>
   <div class="coin-list" id="coinList"></div>
 </div>
 
-<!-- Deposit Modal -->
-<div class="deposit-modal" id="depositModal">
-  <button class="close-btn" onclick="closeModal()">Close</button>
-  <h3 id="modalCoinName"></h3>
+<!-- پنجره سمت راست -->
+<div class="deposit-panel" id="depositPanel">
+  <button class="close-btn" onclick="closeDepositPanel()">Close</button>
+  <h3 id="panelCoinTitle"></h3>
+
   <label>Network:</label>
   <select id="networkSelect"></select>
-  <label>Wallet Address:</label>
+
   <div class="address-box" id="walletAddress" onclick="copyAddress()"></div>
-  <label>Amount:</label>
+
   <input type="number" placeholder="Amount" id="amount">
-  <label>Transaction Hash (TXID):</label>
-  <input type="text" placeholder="TXID" id="txid">
-  <button onclick="submitDeposit()">Submit Deposit</button>
+  <input type="text" placeholder="Transaction Hash (TXID)" id="txid">
+
+  <button class="submit-btn">Submit Deposit</button>
+
+  <div class="notice">⚠️ Deposit will be credited after manual confirmation.</div>
 </div>
 
 <script>
-const coinList=document.getElementById('coinList');
-const depositModal=document.getElementById('depositModal');
-const modalCoinName=document.getElementById('modalCoinName');
-const networkSelect=document.getElementById('networkSelect');
-const walletAddress=document.getElementById('walletAddress');
-
-// لیست ارزها
-COINS.forEach(c=>{
-  const div=document.createElement('div');
-  div.className="coin";
-  div.innerHTML=`<img src="${c.icon}"><div>${c.symbol}</div>`;
-  div.onclick=()=>openModal(c.symbol,c.name);
+// --- نمایش لیست ارزها ---
+const coinList = document.getElementById('coinList');
+COINS.forEach(c => {
+  let div = document.createElement('div');
+  div.className = "coin";
+  div.innerHTML = `<img src="${c.icon}"><div>${c.symbol}</div>`;
+  div.onclick = () => openDepositPanel(c.symbol);
   coinList.appendChild(div);
 });
 
-// باز کردن پنجره
-function openModal(symbol,name){
-  const wallet=WALLET_ADDRESSES[symbol];
-  if(!wallet){ alert("Wallet not configured for this coin"); return; }
-  modalCoinName.innerText=`${name} (${symbol})`;
-  walletAddress.innerText=wallet.address;
-  networkSelect.innerHTML="";
-  wallet.networks.forEach(n=>{
-    const opt=document.createElement('option');
-    opt.value=n; opt.innerText=n;
-    networkSelect.appendChild(opt);
+// --- پنجره واریز ---
+const depositPanel = document.getElementById('depositPanel');
+const panelCoinTitle = document.getElementById('panelCoinTitle');
+const networkSelect = document.getElementById('networkSelect');
+const walletAddress = document.getElementById('walletAddress');
+
+function openDepositPanel(symbol) {
+  const wallet = WALLET_ADDRESSES[symbol];
+  if(!wallet) { alert("Wallet not set for this coin"); return; }
+
+  panelCoinTitle.innerText = wallet.name + " (" + symbol + ")";
+  networkSelect.innerHTML = "";
+  wallet.networks.forEach(net => {
+    let option = document.createElement('option');
+    option.value = net.network;
+    option.innerText = net.network;
+    networkSelect.appendChild(option);
   });
-  depositModal.classList.add('active');
+  walletAddress.innerText = wallet.networks[0].address;
+  depositPanel.classList.add('active');
 }
+
+// تغییر آدرس وقتی شبکه انتخاب شد
+networkSelect.addEventListener('change',()=>{
+  const symbol = panelCoinTitle.innerText.match(/\((.*)\)/)[1];
+  const wallet = WALLET_ADDRESSES[symbol];
+  const net = wallet.networks.find(n=>n.network===networkSelect.value);
+  walletAddress.innerText = net.address;
+});
 
 // بستن پنجره
-function closeModal(){ depositModal.classList.remove('active'); }
-
-// کپی آدرس
-function copyAddress(){
-  navigator.clipboard.writeText(walletAddress.innerText);
-  alert("Address copied!");
+function closeDepositPanel() {
+  depositPanel.classList.remove('active');
 }
 
-// دمو ارسال واریز
-function submitDeposit(){
-  const amount=document.getElementById('amount').value;
-  const txid=document.getElementById('txid').value;
-  if(!amount||!txid){ alert("Enter amount and TXID"); return; }
-  alert("Deposit submitted (demo). Pending manual confirmation.");
-  closeModal();
+// کپی آدرس
+function copyAddress() {
+  navigator.clipboard.writeText(walletAddress.innerText).then(()=>{
+    alert("Address copied: " + walletAddress.innerText);
+  });
 }
 </script>
 
