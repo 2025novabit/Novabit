@@ -43,14 +43,39 @@ button{cursor:pointer}
 
 .hidden{display:none}
 
-input{
+.modal{
+  position:fixed;
+  top:0;
+  left:0;
   width:100%;
-  padding:10px;
-  margin:8px 0;
-  border-radius:6px;
-  border:1px solid #ccc
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:1000;
 }
-
+.modal-content{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  width:90%;
+  max-width:400px;
+  text-align:center;
+  position:relative;
+}
+.modal-content h3{margin-top:0}
+.close-btn{
+  position:absolute;
+  top:10px;
+  right:10px;
+  background:#e74c3c;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+  padding:5px 10px;
+  cursor:pointer;
+}
 .address-box{
   background:#f1f1f1;
   padding:10px;
@@ -59,19 +84,16 @@ input{
   margin:10px 0;
   font-weight:500;
 }
-
-.notice{
-  background:#fff3cd;
-  padding:10px;
-  border-radius:6px;
-  margin-top:10px;
-  font-size:14px
-}
-
-.search-box{
+.copy-btn{
+  padding:8px 12px;
+  background:#4b49ac;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  font-weight:500;
   margin-bottom:10px;
 }
-
 .qr-container{
   text-align:center;
   margin:10px 0;
@@ -81,15 +103,12 @@ input{
   height:150px;
 }
 
-.copy-btn{
-  padding:8px 12px;
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
-  font-weight:500;
-  margin-top:5px;
+.search-box{
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
 </style>
 </head>
@@ -107,39 +126,40 @@ input{
   <div class="coin-list" id="coinList"></div>
 </div>
 
-<div class="card hidden" id="depositBox" style="margin-top:20px">
-  <h3 id="coinTitle"></h3>
-
-  <div><b>Network:</b> <span id="network"></span></div>
-
-  <div class="address-box" id="walletAddress"></div>
-
-  <div class="qr-container">
-    <canvas id="qrCode"></canvas>
-  </div>
-
-  <button class="copy-btn" id="copyBtn">Copy Address</button>
-
-  <input type="number" placeholder="Amount" id="amount">
-  <input type="text" placeholder="Transaction Hash (TXID)" id="txid">
-
-  <button style="width:100%;padding:12px;background:#4b49ac;color:#fff;border:none;border-radius:6px;margin-top:10px">
-    Submit Deposit
-  </button>
-
-  <div class="notice">
-    ⚠️ Deposit will be credited after manual confirmation.
-  </div>
 </div>
 
+<!-- Modal -->
+<div class="modal" id="depositModal">
+  <div class="modal-content">
+    <button class="close-btn" id="closeModal">Close</button>
+    <h3 id="modalTitle"></h3>
+    <div><b>Network:</b> <span id="modalNetwork"></span></div>
+    <div class="address-box" id="modalAddress"></div>
+    <div class="qr-container">
+      <canvas id="modalQR"></canvas>
+    </div>
+    <button class="copy-btn" id="copyBtn">Copy Address</button>
+    <input type="number" placeholder="Amount" id="amount" style="width:100%;padding:10px;margin-top:10px;border-radius:6px;border:1px solid #ccc">
+    <input type="text" placeholder="Transaction Hash (TXID)" id="txid" style="width:100%;padding:10px;margin-top:10px;border-radius:6px;border:1px solid #ccc">
+    <button style="width:100%;padding:12px;background:#4b49ac;color:#fff;border:none;border-radius:6px;margin-top:10px">
+      Submit Deposit
+    </button>
+    <div class="notice">
+      ⚠️ Deposit will be credited after manual confirmation.
+    </div>
+  </div>
 </div>
 
 <script>
 const coinList = document.getElementById('coinList');
-const depositBox = document.getElementById('depositBox');
 const searchInput = document.getElementById('coinSearch');
-const qrCanvas = document.getElementById('qrCode');
-const walletAddressBox = document.getElementById('walletAddress');
+
+const modal = document.getElementById('depositModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalNetwork = document.getElementById('modalNetwork');
+const modalAddress = document.getElementById('modalAddress');
+const modalQR = document.getElementById('modalQR');
+const closeModalBtn = document.getElementById('closeModal');
 const copyBtn = document.getElementById('copyBtn');
 
 // نمونه موجودی کاربر (برای دمو)
@@ -170,28 +190,34 @@ function renderCoins(list){
       <div>${c.symbol}</div>
       ${USER_BALANCES[c.symbol] > 0 ? `<div style="font-size:12px;color:green;">Balance: ${USER_BALANCES[c.symbol]}</div>` : ''}
     `;
-    div.onclick = ()=>selectCoin(c.symbol,c.name);
+    div.onclick = ()=>openModal(c.symbol,c.name);
     coinList.appendChild(div);
   });
 }
 
-// انتخاب ارز
-function selectCoin(symbol,name){
+// باز کردن پنجره Modal
+function openModal(symbol,name){
   if(!WALLET_ADDRESSES[symbol] || !WALLET_ADDRESSES[symbol].address){
     alert("Wallet address not set for this coin");
     return;
   }
-  depositBox.classList.remove('hidden');
-  document.getElementById('coinTitle').innerText = name + " ("+symbol+")";
-  document.getElementById('network').innerText = WALLET_ADDRESSES[symbol].network;
-  walletAddressBox.innerText = WALLET_ADDRESSES[symbol].address;
+  modal.style.display = "flex";
+  modalTitle.innerText = name + " ("+symbol+")";
+  modalNetwork.innerText = WALLET_ADDRESSES[symbol].network;
+  modalAddress.innerText = WALLET_ADDRESSES[symbol].address;
 
   // QR Code
   new QRious({
-    element: qrCanvas,
+    element: modalQR,
     value: WALLET_ADDRESSES[symbol].address,
     size: 150
   });
+}
+
+// بستن پنجره
+closeModalBtn.onclick = ()=> modal.style.display = "none";
+window.onclick = function(e){
+  if(e.target == modal) modal.style.display = "none";
 }
 
 // جستجو
@@ -203,7 +229,7 @@ searchInput.addEventListener('input',()=>{
 
 // کپی آدرس
 copyBtn.addEventListener('click',()=>{
-  navigator.clipboard.writeText(walletAddressBox.innerText)
+  navigator.clipboard.writeText(modalAddress.innerText)
     .then(()=>alert('Address copied!'))
     .catch(()=>alert('Copy failed'));
 });
