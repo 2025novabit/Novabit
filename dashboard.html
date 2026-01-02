@@ -199,8 +199,16 @@ tr:nth-child(even) { background-color: #f1f1f1; }
     <h2>Welcome!</h2>
     <p>Deposit. Trade. Grow. 🚀<br>
     Start now and take control of your financial future!</p>
-    <button>Deposit</button>
-    <button>Referral</button>
+    <div style="display:flex;gap:10px;margin-bottom:20px;">
+    <button onclick="window.location.href='wallet.html'"
+      style="flex:1;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:6px;font-weight:500;cursor:pointer;">
+      Deposit
+    </button>
+
+    <button onclick="window.location.href='referral.html'"
+      style="flex:1;padding:10px;background:#1a1a2e;color:#fff;border:none;border-radius:6px;font-weight:500;cursor:pointer;">
+      Referral
+    </button>
   </div>
 
   <!-- Tabs -->
