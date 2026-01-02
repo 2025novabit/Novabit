@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Referral | Novabit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:Roboto,Arial,sans-serif;
+  background:#f4f6fa;
+}
+
+/* HEADER */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* SIDE PANEL */
+#sidePanel{
+  position:fixed;
+  top:0;
+  right:-400px;
+  width:33%;
+  max-width:360px;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  overflow-y:auto;
+  transition:right 0.3s;
+  z-index:100;
+}
+#sidePanel.active{right:0;}
+#sidePanel a{
+  display:block;
+  margin:12px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
+}
+
+/* CONTAINER */
+.container{
+  padding:25px;
+}
+.card{
+  background:#fff;
+  padding:25px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,.1);
+  margin-bottom:20px;
+}
+.card h2{margin-top:0;}
+input{
+  width:100%;
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:5px;
+  margin-bottom:15px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+th,td{
+  border:1px solid #ddd;
+  padding:8px;
+  text-align:left;
+}
+th{
+  background:#1a1a2e;
+  color:#fff;
+}
+.status{
+  margin-top:10px;
+  font-weight:500;
+}
+button.copyBtn{
+  padding:8px 15px;
+  background:#4b49ac;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+button.copyBtn:hover{background:#3a3690;}
+</style>
+</head>
+
+<body onload="loadReferral();">
+
+<header>
+  <h2>Referral Program</h2>
+  <button onclick="togglePanel()">Menu</button>
+</header>
+
+<!-- SIDE PANEL -->
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;margin-bottom:15px;cursor:pointer;">Close</button>
+  <h3>Menu</h3>
+  <a href="profile.html">Profile</a>
+  <a href="kyc.html">KYC</a>
+  <a href="changepassword.html">Change Password</a>
+  <a href="2fa.html">2FA Settings</a>
+  <a href="fee.html">Fees</a>
+  <a href="referral.html"><strong>Referral</strong></a>
+</div>
+
+<div class="container">
+  <div class="card">
+    <h2>Your Referral Link</h2>
+    <input type="text" id="refLink" readonly>
+    <button class="copyBtn" onclick="copyLink()">Copy Link</button>
+
+    <div class="status" id="refStats">
+      Total Invited: 0 | KYC Completed: 0
+    </div>
+
+    <h2>Invited Users</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>KYC Status</th>
+        </tr>
+      </thead>
+      <tbody id="refTable">
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// Toggle side panel
+function togglePanel(){
+  document.getElementById('sidePanel').classList.toggle('active');
+}
+
+// Demo referral link
+const userId = "demoUser123"; // در حالت واقعی از Firebase
+const demoReferralLink = window.location.origin + "/signup.html?ref=" + userId;
+
+// Copy link
+function copyLink(){
+  const input = document.getElementById('refLink');
+  input.select();
+  input.setSelectionRange(0,99999);
+  document.execCommand('copy');
+  alert("Referral link copied!");
+}
+
+// Load referral data
+function loadReferral(){
+  document.getElementById('refLink').value = demoReferralLink;
+
+  // demo data - localStorage
+  let referrals = JSON.parse(localStorage.getItem('referrals') || '[]');
+
+  const table = document.getElementById('refTable');
+  table.innerHTML = '';
+
+  let kycCount = 0;
+  referrals.forEach(u=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${u.firstname}</td>
+      <td>${u.lastname}</td>
+      <td>${u.kycCompleted ? "Completed" : "Pending"}</td>
+    `;
+    table.appendChild(tr);
+    if(u.kycCompleted) kycCount++;
+  });
+
+  document.getElementById('refStats').innerText =
+    `Total Invited: ${referrals.length} | KYC Completed: ${kycCount}`;
+}
+
+// Demo function to add invited user (برای تست دمو)
+function addDemoReferral(firstname, lastname, kycCompleted){
+  let referrals = JSON.parse(localStorage.getItem('referrals') || '[]');
+  referrals.push({firstname, lastname, kycCompleted});
+  localStorage.setItem('referrals', JSON.stringify(referrals));
+}
+
+// مثال دمو
+if(!localStorage.getItem('referrals')){
+  addDemoReferral("Alice","Smith",true);
+  addDemoReferral("Bob","Johnson",false);
+  addDemoReferral("Charlie","Brown",true);
+  loadReferral();
+}
+</script>
+
+</body>
+</html>
