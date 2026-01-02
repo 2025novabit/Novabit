@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Change Password | Novabit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  margin:0;
+  font-family: Roboto,sans-serif;
+  background:#f4f6fa;
+  padding-bottom:0;
+}
+
+/* HEADER */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* SIDE PANEL */
+#sidePanel{
+  position:fixed;
+  top:0;
+  right:-400px;
+  width:33%;
+  max-width:33%;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  overflow-y:auto;
+  transition:right 0.3s;
+  z-index:100;
+}
+#sidePanel.active{right:0;}
+#sidePanel h2{margin-top:0;}
+#sidePanel a{
+  display:block;
+  margin:10px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
+}
+
+/* FORM */
+.container{
+  padding:20px;
+}
+.form-card{
+  background:#fff;
+  padding:25px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom:30px;
+}
+.form-card h2{margin-top:0;margin-bottom:20px;}
+.form-group{margin-bottom:15px;}
+.form-group label{
+  display:block;
+  font-size:13px;
+  color:#555;
+  margin-bottom:5px;
+}
+.form-group input{
+  width:100%;
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:5px;
+  font-size:14px;
+}
+
+/* PASSWORD STRENGTH */
+#strengthMsg{
+  font-size:13px;
+  margin-top:5px;
+}
+
+/* SUBMIT BUTTON */
+button.submitBtn{
+  padding:12px 20px;
+  background:#4b49ac;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  font-weight:500;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h2>Change Password</h2>
+  <button onclick="togglePanel()">Menu</button>
+</header>
+
+<!-- SIDE PANEL -->
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
+  <h2>Menu</h2>
+  <a href="profile.html">Profile</a>
+  <a href="kyc.html">KYC</a>
+  <a href="changepassword.html" class="active">Change Password</a>
+  <a href="#">2FA Settings</a>
+  <a href="#">Fees</a>
+  <a href="#">Referral</a>
+</div>
+
+<div class="container">
+  <div class="form-card">
+    <h2>Set New Password</h2>
+    <div class="form-group">
+      <label>New Password</label>
+      <input type="password" id="newPassword" placeholder="Enter new password" oninput="checkStrength()">
+      <div id="strengthMsg"></div>
+    </div>
+    <div class="form-group">
+      <label>Confirm New Password</label>
+      <input type="password" id="confirmPassword" placeholder="Confirm new password">
+    </div>
+    <button class="submitBtn" onclick="changePassword()">Change Password</button>
+  </div>
+</div>
+
+<script>
+// Toggle Side Panel
+function togglePanel(){
+  document.getElementById('sidePanel').classList.toggle('active');
+}
+
+// Simple SHA-256 hash function for demo (Web Crypto API)
+async function hashPassword(password){
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// Check password strength
+function checkStrength(){
+  const pass = document.getElementById('newPassword').value;
+  const msg = document.getElementById('strengthMsg');
+  let strength = "";
+  if(pass.length < 6) strength = "Weak (min 6 chars)";
+  else if(/[A-Z]/.test(pass) && /[0-9]/.test(pass) && /[!@#$%^&*]/.test(pass)) strength = "Strong";
+  else strength = "Medium (use uppercase, numbers, symbols)";
+  msg.innerText = strength;
+}
+
+// Change password function
+async function changePassword(){
+  const newPass = document.getElementById('newPassword').value;
+  const confirmPass = document.getElementById('confirmPassword').value;
+
+  if(!newPass || !confirmPass){
+    alert("Please fill both fields.");
+    return;
+  }
+  if(newPass !== confirmPass){
+    alert("Passwords do not match!");
+    return;
+  }
+
+  const hashed = await hashPassword(newPass);
+  localStorage.setItem('demoPassword', hashed);
+  alert("Password changed successfully (demo).");
+  document.getElementById('newPassword').value = "";
+  document.getElementById('confirmPassword').value = "";
+  document.getElementById('strengthMsg').innerText = "";
+}
+</script>
+
+</body>
+</html>
