@@ -190,7 +190,27 @@ tr:nth-child(even) { background-color: #f1f1f1; }
   <a href="fee.html">Fees</a>
   <a href="referral.html">Referral</a>
 </div>
+  <!-- دکمه Deposit -->
+  <button id="depositBtn" style="width:100%;margin-top:10px;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;">Deposit</button>
+</div>
 
+<script>
+// Toggle Side Panel
+function togglePanel(){
+  document.getElementById('sidePanel').classList.toggle('active');
+}
+
+// دکمه Deposit عملیاتی شود
+document.getElementById('depositBtn').onclick = function(){
+    window.location.href = "wallet.html";
+}
+
+// Referral لینک که قبلاً <a> بود، همچنان فعال است
+document.getElementById('referralLink').onclick = function(e){
+    // اینجا می‌توان کد اضافی گذاشت، در حال حاضر لینک مستقیم است
+    window.location.href = "referral.html";
+}
+</script>
 <div class="container">
   <!-- Balance Card -->
   <div class="balance-card">
