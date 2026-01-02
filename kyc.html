@@ -1,24 +1,229 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>KYC - Novabit</title>
+<meta charset="UTF-8">
+<title>KYC Verification | Novabit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:Roboto,sans-serif;
+  background:#f4f6fa;
+}
+
+/* HEADER */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* MAIN */
+.container{
+  padding:20px;
+}
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,.1);
+  max-width:700px;
+}
+
+.form-group{
+  margin-bottom:15px;
+}
+.form-group label{
+  display:block;
+  font-size:13px;
+  color:#555;
+  margin-bottom:5px;
+}
+.form-group input,
+.form-group select{
+  width:100%;
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:5px;
+  font-size:14px;
+}
+
+.upload-box{
+  border:2px dashed #bbb;
+  padding:20px;
+  text-align:center;
+  border-radius:8px;
+  background:#fafafa;
+}
+.upload-box input{
+  display:none;
+}
+.upload-box label{
+  cursor:pointer;
+  color:#4b49ac;
+  font-weight:500;
+}
+
+.status{
+  margin-top:10px;
+  font-size:13px;
+  color:green;
+}
+
+.submitBtn{
+  margin-top:20px;
+  padding:12px;
+  width:100%;
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  border-radius:5px;
+  font-size:15px;
+  cursor:pointer;
+}
+
+/* SIDE PANEL */
+#sidePanel{
+  position:fixed;
+  top:0;
+  right:-400px;
+  width:33%;
+  max-width:360px;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  transition:right 0.3s;
+  z-index:100;
+}
+#sidePanel.active{right:0;}
+
+#sidePanel h2{margin-top:0;}
+#sidePanel a{
+  display:block;
+  margin:12px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
+}
+
+.logoutBtn{
+  width:100%;
+  margin-top:30px;
+  padding:10px;
+  background:#e74c3c;
+  border:none;
+  color:#fff;
+  border-radius:5px;
+  cursor:pointer;
+}
+</style>
 </head>
-<body>
-  <h2>KYC Form (Demo)</h2>
-  <form id="kycForm">
-    <input type="text" placeholder="Full Name" required />
-    <input type="text" placeholder="Country" required />
-    <input type="file" required />
-    <button type="submit">Submit</button>
-  </form>
-  <script>
-    document.getElementById('kycForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      alert('KYC submitted in DEMO mode!');
-      window.location.href = "dashboard.html";
-    });
-  </script>
-  <a href="dashboard.html">Back to Dashboard</a>
+
+<body onload="requireLogin();">
+
+<header>
+  <h2>KYC Verification</h2>
+  <button onclick="togglePanel()">Menu</button>
+</header>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+  <div class="card">
+    <h3>Identity Information</h3>
+
+    <div class="form-group">
+      <label>First Name</label>
+      <input type="text" id="firstName" value="John">
+    </div>
+
+    <div class="form-group">
+      <label>Last Name</label>
+      <input type="text" id="lastName" value="Doe">
+    </div>
+
+    <div class="form-group">
+      <label>Date of Birth</label>
+      <input type="date" id="dob">
+    </div>
+
+    <div class="form-group">
+      <label>Country</label>
+      <input type="text" id="country" value="USA">
+    </div>
+
+    <div class="form-group">
+      <label>Document Type</label>
+      <select id="docType">
+        <option value="">Select Document</option>
+        <option value="passport">Passport</option>
+        <option value="idcard">National ID Card</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Upload Document</label>
+      <div class="upload-box">
+        <input type="file" id="docUpload" onchange="handleUpload(this)">
+        <label for="docUpload">Click to upload document</label>
+        <div id="uploadStatus" class="status"></div>
+      </div>
+    </div>
+
+    <button class="submitBtn" onclick="submitKYC()">Submit KYC (Demo)</button>
+  </div>
+</div>
+
+<!-- SIDE PANEL -->
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
+  <h2>Menu</h2>
+  <a href="profile.html">Profile</a>
+  <a href="kyc.html">KYC</a>
+  <a href="#">Change Password</a>
+  <a href="#">2FA Settings</a>
+  <a href="#">Fees</a>
+  <a href="#">Referral</a>
+
+  <button class="logoutBtn" onclick="logout()">Logout</button>
+</div>
+
+<script>
+function togglePanel(){
+  document.getElementById('sidePanel').classList.toggle('active');
+}
+
+function handleUpload(input){
+  if(input.files.length > 0){
+    document.getElementById('uploadStatus').innerText =
+      "Uploaded: " + input.files[0].name + " (Demo)";
+  }
+}
+
+function submitKYC(){
+  alert("KYC Submitted (Demo Only)\nNo real data uploaded.");
+}
+
+function requireLogin(){
+  console.log("Demo login check");
+}
+
+function logout(){
+  alert("Logged out (demo)");
+}
+</script>
+
 </body>
 </html>
