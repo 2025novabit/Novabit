@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Deposit | Novabit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="coins.js"></script>
+<script src="wallets.js"></script>
+
+<style>
+body{margin:0;font-family:Roboto,Arial;background:#f5f6fa}
+header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:space-between}
+button{cursor:pointer}
+
+.container{padding:20px;max-width:900px;margin:auto}
+
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,.1)
+}
+
+.coin-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  gap:15px;
+  margin-top:20px
+}
+
+.coin{
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:10px;
+  text-align:center;
+  cursor:pointer;
+}
+.coin:hover{border-color:#4b49ac}
+
+.coin img{width:32px;height:32px}
+
+.hidden{display:none}
+
+input{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:6px;
+  border:1px solid #ccc
+}
+
+.address-box{
+  background:#f1f1f1;
+  padding:10px;
+  border-radius:6px;
+  word-break:break-all;
+  margin:10px 0
+}
+
+.notice{
+  background:#fff3cd;
+  padding:10px;
+  border-radius:6px;
+  margin-top:10px;
+  font-size:14px
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h3>Deposit</h3>
+</header>
+
+<div class="container">
+
+<div class="card">
+  <h3>Select Coin</h3>
+  <div class="coin-list" id="coinList"></div>
+</div>
+
+<div class="card hidden" id="depositBox" style="margin-top:20px">
+  <h3 id="coinTitle"></h3>
+
+  <div><b>Network:</b> <span id="network"></span></div>
+
+  <div class="address-box" id="walletAddress"></div>
+
+  <input type="number" placeholder="Amount" id="amount">
+  <input type="text" placeholder="Transaction Hash (TXID)" id="txid">
+
+  <button style="width:100%;padding:12px;background:#4b49ac;color:#fff;border:none;border-radius:6px">
+    Submit Deposit
+  </button>
+
+  <div class="notice">
+    ⚠️ Deposit will be credited after manual confirmation.
+  </div>
+</div>
+
+</div>
+
+<script>
+const coinList = document.getElementById('coinList');
+const depositBox = document.getElementById('depositBox');
+
+COINS.forEach(c=>{
+  let div = document.createElement('div');
+  div.className = "coin";
+  div.innerHTML = `
+    <img src="${c.icon}">
+    <div>${c.symbol}</div>
+  `;
+  div.onclick = ()=>selectCoin(c.symbol,c.name);
+  coinList.appendChild(div);
+});
+
+function selectCoin(symbol,name){
+  if(!WALLET_ADDRESSES[symbol]){
+    alert("Wallet address not set for this coin");
+    return;
+  }
+  depositBox.classList.remove('hidden');
+  document.getElementById('coinTitle').innerText = name + " ("+symbol+")";
+  document.getElementById('network').innerText = WALLET_ADDRESSES[symbol].network;
+  document.getElementById('walletAddress').innerText = WALLET_ADDRESSES[symbol].address;
+}
+</script>
+
+</body>
+</html>
