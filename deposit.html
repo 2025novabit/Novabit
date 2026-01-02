@@ -4,44 +4,58 @@
 <meta charset="UTF-8">
 <title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body{margin:0;font-family:Roboto,Arial;background:#f5f6fa}
-header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center}
+header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 5px rgba(0,0,0,.2)}
+h3{margin:0;font-weight:500}
 button{cursor:pointer}
 
-.container{padding:20px;max-width:900px;margin:auto}
+.container{padding:20px;max-width:1000px;margin:auto}
 
 .card{
   background:#fff;
   padding:20px;
-  border-radius:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,.1)
+  border-radius:12px;
+  box-shadow:0 6px 12px rgba(0,0,0,.1);
+  margin-bottom:20px;
 }
 
 .coin-list{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
   gap:15px;
-  margin-top:10px
+  margin-top:15px;
+  max-height:400px;
+  overflow-y:auto;
+  padding-right:5px;
 }
 
 .coin{
   border:1px solid #ddd;
-  border-radius:8px;
-  padding:10px;
+  border-radius:10px;
+  padding:12px;
   text-align:center;
   cursor:pointer;
+  background:#fff;
+  transition:0.3s;
 }
-.coin:hover{border-color:#4b49ac}
+.coin:hover{
+  border-color:#4b49ac;
+  box-shadow:0 4px 10px rgba(0,0,0,.15);
+}
 
-.coin img{width:32px;height:32px}
+.coin img{width:36px;height:36px;margin-bottom:5px}
 
+.balance-label{
+  font-size:12px;color:green;margin-top:5px;
+}
+
+/* Modal */
 .modal{
   position:fixed;
   top:0; left:0;
   width:100%; height:100%;
-  background:rgba(0,0,0,0.5);
+  background:rgba(0,0,0,0.6);
   display:none;
   justify-content:center;
   align-items:center;
@@ -49,12 +63,13 @@ button{cursor:pointer}
 }
 .modal-content{
   background:#fff;
-  padding:20px;
-  border-radius:10px;
+  padding:25px;
+  border-radius:12px;
   width:90%;
   max-width:400px;
   text-align:center;
   position:relative;
+  box-shadow:0 8px 20px rgba(0,0,0,.2);
 }
 .close-btn{
   position:absolute;
@@ -74,13 +89,14 @@ button{cursor:pointer}
   word-break:break-all;
   margin:10px 0;
   font-weight:500;
+  font-size:14px;
 }
 .copy-btn{
-  padding:8px 12px;
+  padding:10px 16px;
   background:#4b49ac;
   color:#fff;
   border:none;
-  border-radius:5px;
+  border-radius:6px;
   cursor:pointer;
   font-weight:500;
   margin-bottom:10px;
@@ -91,6 +107,7 @@ button{cursor:pointer}
   margin-bottom:10px;
   border-radius:6px;
   border:1px solid #ccc;
+  font-size:14px;
 }
 select{
   width:100%;
@@ -98,6 +115,7 @@ select{
   border-radius:6px;
   border:1px solid #ccc;
   margin-bottom:10px;
+  font-size:14px;
 }
 </style>
 </head>
@@ -120,8 +138,7 @@ select{
   <div class="modal-content">
     <button class="close-btn" id="closeModal">Close</button>
     <h3 id="modalTitle"></h3>
-    <div>
-      <b>Network:</b>
+    <div><b>Network:</b>
       <select id="networkSelect"></select>
     </div>
     <div class="address-box" id="modalAddress"></div>
@@ -130,7 +147,7 @@ select{
 </div>
 
 <script>
-// ----- نمونه داده‌ها -----
+// ----- Sample Data -----
 const COINS = [
   {symbol:'BTC', name:'Bitcoin', icon:'https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=022'},
   {symbol:'ETH', name:'Ethereum', icon:'https://cryptologos.cc/logos/ethereum-eth-logo.png?v=022'},
@@ -139,28 +156,18 @@ const COINS = [
   {symbol:'DOT', name:'Polkadot', icon:'https://cryptologos.cc/logos/polkadot-new-dot-logo.png?v=022'}
 ];
 
-// نمونه ولت آدرس‌ها با چند شبکه
 const WALLET_ADDRESSES = {
-  BTC: [
-    {network:'Bitcoin', address:'#BTC1'},
-  ],
-  ETH: [
-    {network:'Ethereum', address:'#ETH1'},
-  ],
+  BTC: [{network:'Bitcoin', address:'#BTC1'}],
+  ETH: [{network:'Ethereum', address:'#ETH1'}],
   USDT: [
     {network:'ERC20', address:'#USDT1'},
     {network:'TRC20', address:'#USDT2'},
     {network:'BEP20', address:'#USDT3'},
   ],
-  ADA: [
-    {network:'Cardano', address:'#ADA1'}
-  ],
-  DOT: [
-    {network:'Polkadot', address:'#DOT1'}
-  ]
+  ADA: [{network:'Cardano', address:'#ADA1'}],
+  DOT: [{network:'Polkadot', address:'#DOT1'}]
 };
 
-// موجودی کاربر برای دمو
 const USER_BALANCES = {
   BTC: 0.5,
   ETH: 0,
@@ -169,7 +176,7 @@ const USER_BALANCES = {
   DOT: 10
 };
 
-// ----- رندر لیست -----
+// ----- Render Coin List -----
 const coinList = document.getElementById('coinList');
 const searchInput = document.getElementById('coinSearch');
 
@@ -182,12 +189,12 @@ function getOrderedCoins(){
 function renderCoins(list){
   coinList.innerHTML='';
   list.forEach(c=>{
-    const div = document.createElement('div');
+    const div=document.createElement('div');
     div.className='coin';
     div.innerHTML=`
       <img src="${c.icon}">
       <div>${c.symbol}</div>
-      ${USER_BALANCES[c.symbol]>0?`<div style="font-size:12px;color:green;">Balance: ${USER_BALANCES[c.symbol]}</div>`:''}
+      ${USER_BALANCES[c.symbol]>0?`<div class="balance-label">Balance: ${USER_BALANCES[c.symbol]}</div>`:''}
     `;
     div.onclick=()=>openModal(c.symbol,c.name);
     coinList.appendChild(div);
@@ -195,63 +202,55 @@ function renderCoins(list){
 }
 
 // ----- Modal -----
-const modal = document.getElementById('depositModal');
-const modalTitle = document.getElementById('modalTitle');
-const modalAddress = document.getElementById('modalAddress');
-const networkSelect = document.getElementById('networkSelect');
-const closeModalBtn = document.getElementById('closeModal');
-const copyBtn = document.getElementById('copyBtn');
+const modal=document.getElementById('depositModal');
+const modalTitle=document.getElementById('modalTitle');
+const modalAddress=document.getElementById('modalAddress');
+const networkSelect=document.getElementById('networkSelect');
+const closeModalBtn=document.getElementById('closeModal');
+const copyBtn=document.getElementById('copyBtn');
 
 function openModal(symbol,name){
   if(!WALLET_ADDRESSES[symbol] || WALLET_ADDRESSES[symbol].length===0){
     alert('Wallet address not set');
     return;
   }
-
-  // نمایش Modal
   modal.style.display='flex';
-  modalTitle.innerText = `${name} (${symbol})`;
+  modalTitle.innerText=`${name} (${symbol})`;
 
-  // پر کردن شبکه‌ها
   networkSelect.innerHTML='';
   WALLET_ADDRESSES[symbol].forEach((n,i)=>{
-    const opt = document.createElement('option');
+    const opt=document.createElement('option');
     opt.value=i;
-    opt.innerText = n.network;
+    opt.innerText=n.network;
     networkSelect.appendChild(opt);
   });
 
-  // نمایش آدرس شبکه اول پیشفرض
-  modalAddress.innerText = WALLET_ADDRESSES[symbol][0].address;
+  modalAddress.innerText=WALLET_ADDRESSES[symbol][0].address;
 }
 
-// وقتی شبکه تغییر کرد، آدرس هم عوض شود
 networkSelect.addEventListener('change',()=>{
-  const symbol = modalTitle.innerText.split(' ')[1].replace(/[()]/g,'');
-  const selected = WALLET_ADDRESSES[symbol][networkSelect.value];
-  modalAddress.innerText = selected.address;
+  const symbol=modalTitle.innerText.split(' ')[1].replace(/[()]/g,'');
+  const selected=WALLET_ADDRESSES[symbol][networkSelect.value];
+  modalAddress.innerText=selected.address;
 });
 
-closeModalBtn.onclick = ()=> modal.style.display='none';
-window.onclick = e=>{if(e.target==modal) modal.style.display='none';}
+closeModalBtn.onclick=()=>modal.style.display='none';
+window.onclick=e=>{if(e.target==modal) modal.style.display='none';}
 
-// ----- Copy -----
 copyBtn.onclick=()=> {
   navigator.clipboard.writeText(modalAddress.innerText)
     .then(()=>alert('Address copied!'))
     .catch(()=>alert('Copy failed'));
 }
 
-// ----- Search -----
 searchInput.addEventListener('input',()=>{
-  const term = searchInput.value.toLowerCase();
-  const filtered = getOrderedCoins().filter(c=>c.symbol.toLowerCase().includes(term) || c.name.toLowerCase().includes(term));
+  const term=searchInput.value.toLowerCase();
+  const filtered=getOrderedCoins().filter(c=>c.symbol.toLowerCase().includes(term) || c.name.toLowerCase().includes(term));
   renderCoins(filtered);
 });
 
 // ----- Initial Render -----
 renderCoins(getOrderedCoins());
 </script>
-
 </body>
 </html>
