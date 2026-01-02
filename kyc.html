@@ -135,21 +135,21 @@ button.submitBtn{
   <a href="profile.html">Profile</a>
   <a href="kyc.html" class="active">KYC</a>
   <a href="changepassword.html">Change Password</a>
-  <a href="#">2FA Settings</a>
-  <a href="#">Fees</a>
-  <a href="#">Referral</a>
+  <a href="2fasettings.html">2FA Settings</a>
+  <a href="fees.html">Fees</a>
+  <a href="referral.html">Referral</a>
 </div>
 
 <div class="container">
   <div class="form-card">
     <h2>KYC Form</h2>
     <div class="form-group">
-      <label>Full Name</label>
-      <input type="text" id="fullname" placeholder="John Doe">
+      <label>First Name</label>
+      <input type="text" id="firstName" placeholder="John">
     </div>
     <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="email" placeholder="john.doe@example.com">
+      <label>Last Name</label>
+      <input type="text" id="lastName" placeholder="Doe">
     </div>
     <div class="form-group">
       <label>Date of Birth</label>
@@ -209,8 +209,8 @@ function loadKYC(){
   toggleUploads();
   const kyc = JSON.parse(localStorage.getItem('kycData') || '{}');
   if(Object.keys(kyc).length){
-    document.getElementById('fullname').value = kyc.fullname || '';
-    document.getElementById('email').value = kyc.email || '';
+    document.getElementById('firstName').value = kyc.firstName || '';
+    document.getElementById('lastName').value = kyc.lastName || '';
     document.getElementById('dob').value = kyc.dob || '';
     document.getElementById('countrySelect').value = kyc.country || '';
     if(kyc.docType) document.querySelector(`input[name="docType"][value="${kyc.docType}"]`).checked = true;
@@ -222,8 +222,8 @@ function loadKYC(){
 
 // Save KYC to localStorage
 function saveKYC(){
-  const fullname = document.getElementById('fullname').value;
-  const email = document.getElementById('email').value;
+  const firstName = document.getElementById('firstName').value;
+  const lastName = document.getElementById('lastName').value;
   const dob = document.getElementById('dob').value;
   const country = document.getElementById('countrySelect').value;
   const docType = document.querySelector('input[name="docType"]:checked').value;
@@ -231,7 +231,7 @@ function saveKYC(){
   const docUpload1 = document.getElementById('docUpload1').files[0];
   const docUpload2 = document.getElementById('docUpload2').files[0];
 
-  if(!fullname || !email || !dob || !country || !docNumber || !docUpload1){
+  if(!firstName || !lastName || !dob || !country || !docNumber || !docUpload1){
     alert("Please fill all required fields and upload at least one document.");
     return;
   }
@@ -241,7 +241,7 @@ function saveKYC(){
   }
 
   const kycData = {
-    fullname,email,dob,country,docType,docNumber,
+    firstName,lastName,dob,country,docType,docNumber,
     status:"Pending"
   };
   localStorage.setItem('kycData', JSON.stringify(kycData));
