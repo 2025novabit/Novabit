@@ -5,10 +5,6 @@
 <title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="coins.js"></script>
-<script src="wallets.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-
 <style>
 body{margin:0;font-family:Roboto,Arial;background:#f5f6fa}
 header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center}
@@ -41,14 +37,10 @@ button{cursor:pointer}
 
 .coin img{width:32px;height:32px}
 
-.hidden{display:none}
-
 .modal{
   position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
+  top:0; left:0;
+  width:100%; height:100%;
   background:rgba(0,0,0,0.5);
   display:none;
   justify-content:center;
@@ -64,7 +56,6 @@ button{cursor:pointer}
   text-align:center;
   position:relative;
 }
-.modal-content h3{margin-top:0}
 .close-btn{
   position:absolute;
   top:10px;
@@ -94,15 +85,6 @@ button{cursor:pointer}
   font-weight:500;
   margin-bottom:10px;
 }
-.qr-container{
-  text-align:center;
-  margin:10px 0;
-}
-.qr-container canvas{
-  width:150px;
-  height:150px;
-}
-
 .search-box{
   width:100%;
   padding:10px;
@@ -119,13 +101,11 @@ button{cursor:pointer}
 </header>
 
 <div class="container">
-
-<div class="card">
-  <h3>Select Coin</h3>
-  <input type="text" id="coinSearch" class="search-box" placeholder="Search coin...">
-  <div class="coin-list" id="coinList"></div>
-</div>
-
+  <div class="card">
+    <h3>Select Coin</h3>
+    <input type="text" id="coinSearch" class="search-box" placeholder="Search coin...">
+    <div class="coin-list" id="coinList"></div>
+  </div>
 </div>
 
 <!-- Modal -->
@@ -135,106 +115,100 @@ button{cursor:pointer}
     <h3 id="modalTitle"></h3>
     <div><b>Network:</b> <span id="modalNetwork"></span></div>
     <div class="address-box" id="modalAddress"></div>
-    <div class="qr-container">
-      <canvas id="modalQR"></canvas>
-    </div>
     <button class="copy-btn" id="copyBtn">Copy Address</button>
-    <input type="number" placeholder="Amount" id="amount" style="width:100%;padding:10px;margin-top:10px;border-radius:6px;border:1px solid #ccc">
-    <input type="text" placeholder="Transaction Hash (TXID)" id="txid" style="width:100%;padding:10px;margin-top:10px;border-radius:6px;border:1px solid #ccc">
-    <button style="width:100%;padding:12px;background:#4b49ac;color:#fff;border:none;border-radius:6px;margin-top:10px">
-      Submit Deposit
-    </button>
-    <div class="notice">
-      ⚠️ Deposit will be credited after manual confirmation.
-    </div>
   </div>
 </div>
 
 <script>
-const coinList = document.getElementById('coinList');
-const searchInput = document.getElementById('coinSearch');
+// ----- نمونه داده‌ها -----
+const COINS = [
+  {symbol:'BTC', name:'Bitcoin', icon:'https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=022'},
+  {symbol:'ETH', name:'Ethereum', icon:'https://cryptologos.cc/logos/ethereum-eth-logo.png?v=022'},
+  {symbol:'USDT', name:'Tether', icon:'https://cryptologos.cc/logos/tether-usdt-logo.png?v=022'},
+  {symbol:'ADA', name:'Cardano', icon:'https://cryptologos.cc/logos/cardano-ada-logo.png?v=022'},
+  {symbol:'DOT', name:'Polkadot', icon:'https://cryptologos.cc/logos/polkadot-new-dot-logo.png?v=022'}
+];
 
-const modal = document.getElementById('depositModal');
-const modalTitle = document.getElementById('modalTitle');
-const modalNetwork = document.getElementById('modalNetwork');
-const modalAddress = document.getElementById('modalAddress');
-const modalQR = document.getElementById('modalQR');
-const closeModalBtn = document.getElementById('closeModal');
-const copyBtn = document.getElementById('copyBtn');
+// نمونه ولت آدرس‌ها
+const WALLET_ADDRESSES = {
+  BTC: {network:'Bitcoin', address:'#'},
+  ETH: {network:'Ethereum', address:'#'},
+  USDT: {network:'ERC20', address:'#'},
+  ADA: {network:'Cardano', address:'#'},
+  DOT: {network:'Polkadot', address:'#'}
+};
 
-// نمونه موجودی کاربر (برای دمو)
+// موجودی کاربر برای دمو
 const USER_BALANCES = {
   BTC: 0.5,
   ETH: 0,
   USDT: 100,
   ADA: 0,
-  DOT: 10,
-  XRP: 0
+  DOT: 10
 };
 
-// مرتب‌سازی: ابتدا ارزهایی که موجودی > 0
-function getOrderedCoins() {
-  let coinsWithBalance = COINS.filter(c => USER_BALANCES[c.symbol] > 0);
-  let coinsWithoutBalance = COINS.filter(c => !USER_BALANCES[c.symbol] || USER_BALANCES[c.symbol] === 0);
-  return [...coinsWithBalance, ...coinsWithoutBalance];
+// ----- رندر لیست -----
+const coinList = document.getElementById('coinList');
+const searchInput = document.getElementById('coinSearch');
+
+function getOrderedCoins(){
+  const withBalance = COINS.filter(c=>USER_BALANCES[c.symbol]>0);
+  const withoutBalance = COINS.filter(c=>!USER_BALANCES[c.symbol] || USER_BALANCES[c.symbol]===0);
+  return [...withBalance, ...withoutBalance];
 }
 
-// رندر لیست ارزها
 function renderCoins(list){
-  coinList.innerHTML = '';
+  coinList.innerHTML='';
   list.forEach(c=>{
-    let div = document.createElement('div');
-    div.className = "coin";
-    div.innerHTML = `
+    const div = document.createElement('div');
+    div.className='coin';
+    div.innerHTML=`
       <img src="${c.icon}">
       <div>${c.symbol}</div>
-      ${USER_BALANCES[c.symbol] > 0 ? `<div style="font-size:12px;color:green;">Balance: ${USER_BALANCES[c.symbol]}</div>` : ''}
+      ${USER_BALANCES[c.symbol]>0?`<div style="font-size:12px;color:green;">Balance: ${USER_BALANCES[c.symbol]}</div>`:''}
     `;
-    div.onclick = ()=>openModal(c.symbol,c.name);
+    div.onclick=()=>openModal(c.symbol,c.name);
     coinList.appendChild(div);
   });
 }
 
-// باز کردن پنجره Modal
+// ----- Modal -----
+const modal = document.getElementById('depositModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalNetwork = document.getElementById('modalNetwork');
+const modalAddress = document.getElementById('modalAddress');
+const closeModalBtn = document.getElementById('closeModal');
+const copyBtn = document.getElementById('copyBtn');
+
 function openModal(symbol,name){
   if(!WALLET_ADDRESSES[symbol] || !WALLET_ADDRESSES[symbol].address){
-    alert("Wallet address not set for this coin");
+    alert('Wallet address not set');
     return;
   }
-  modal.style.display = "flex";
-  modalTitle.innerText = name + " ("+symbol+")";
+  modal.style.display='flex';
+  modalTitle.innerText = `${name} (${symbol})`;
   modalNetwork.innerText = WALLET_ADDRESSES[symbol].network;
   modalAddress.innerText = WALLET_ADDRESSES[symbol].address;
-
-  // QR Code
-  new QRious({
-    element: modalQR,
-    value: WALLET_ADDRESSES[symbol].address,
-    size: 150
-  });
 }
 
-// بستن پنجره
-closeModalBtn.onclick = ()=> modal.style.display = "none";
-window.onclick = function(e){
-  if(e.target == modal) modal.style.display = "none";
+closeModalBtn.onclick = ()=> modal.style.display='none';
+window.onclick = e=>{if(e.target==modal) modal.style.display='none';}
+
+// ----- Copy -----
+copyBtn.onclick=()=> {
+  navigator.clipboard.writeText(modalAddress.innerText)
+    .then(()=>alert('Address copied!'))
+    .catch(()=>alert('Copy failed'));
 }
 
-// جستجو
+// ----- Search -----
 searchInput.addEventListener('input',()=>{
   const term = searchInput.value.toLowerCase();
   const filtered = getOrderedCoins().filter(c=>c.symbol.toLowerCase().includes(term) || c.name.toLowerCase().includes(term));
   renderCoins(filtered);
 });
 
-// کپی آدرس
-copyBtn.addEventListener('click',()=>{
-  navigator.clipboard.writeText(modalAddress.innerText)
-    .then(()=>alert('Address copied!'))
-    .catch(()=>alert('Copy failed'));
-});
-
-// رندر اولیه
+// ----- Initial Render -----
 renderCoins(getOrderedCoins());
 </script>
 
