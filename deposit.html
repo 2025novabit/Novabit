@@ -13,7 +13,6 @@ body{margin:0;font-family:Roboto,Arial,sans-serif;background:#f5f6fa;}
 header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
 header h3{margin:0;}
 button{cursor:pointer;}
-
 .container{padding:20px;max-width:1000px;margin:auto;}
 .search-box input{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;margin-bottom:15px;font-size:14px;}
 .coin-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;}
@@ -71,12 +70,12 @@ button{cursor:pointer;}
 <div class="modal-bg" id="depositModal">
   <div class="modal">
     <button class="close-btn" onclick="closeModal()">×</button>
-    <h3 id="modalCoinName"></h3>
+    <h3 id="modalCoinName">Coin</h3>
 
     <label for="networkSelect">Select Network:</label>
     <select id="networkSelect"></select>
 
-    <div class="address-box" id="walletAddress" onclick="copyAddress()"></div>
+    <div class="address-box" id="walletAddress" onclick="copyAddress()">Click to copy address</div>
 
     <input type="number" id="amount" placeholder="Amount">
     <input type="text" id="txid" placeholder="Transaction Hash (TXID)">
@@ -84,7 +83,7 @@ button{cursor:pointer;}
     <button onclick="submitDeposit()">Submit Deposit</button>
 
     <div class="notice">
-      ⚠️ Deposit will be credited after manual confirmation. Click address to copy.
+      ⚠️ Deposit will be credited after manual confirmation.
     </div>
   </div>
 </div>
@@ -104,7 +103,7 @@ function renderCoins(filter=''){
   coinList.innerHTML='';
   COINS.forEach(c=>{
     if(filter && !c.symbol.toLowerCase().includes(filter) && !c.name.toLowerCase().includes(filter)) return;
-    let div=document.createElement('div');
+    const div=document.createElement('div');
     div.className="coin";
     div.innerHTML=`<img src="${c.icon}" alt="${c.symbol}"><div>${c.symbol}</div>`;
     div.onclick=()=>openModal(c.symbol,c.name);
@@ -116,13 +115,14 @@ function openModal(symbol,name){
   const wallet=WALLET_ADDRESSES[symbol];
   if(!wallet){ alert("Wallet not configured for this coin"); return;}
   modalCoinName.innerText=`${name} (${symbol})`;
+
   networkSelect.innerHTML='';
   wallet.networks.forEach(n=>{
-    let opt=document.createElement('option');
-    opt.value=n;
-    opt.innerText=n;
+    const opt=document.createElement('option');
+    opt.value=n; opt.innerText=n;
     networkSelect.appendChild(opt);
   });
+
   walletAddress.innerText=wallet.address;
   depositModal.classList.add('active');
 }
