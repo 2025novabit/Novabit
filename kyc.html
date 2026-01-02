@@ -30,13 +30,74 @@ header button{
   cursor:pointer;
 }
 
+/* MAIN */
+.container{
+  padding:20px;
+  max-width:600px;
+  margin:auto;
+}
+
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,.1);
+  margin-bottom:20px;
+}
+
+.card h2{
+  margin-top:0;
+}
+
+/* FORM */
+label{
+  font-size:13px;
+  color:#555;
+  display:block;
+  margin-top:15px;
+}
+input, select{
+  width:100%;
+  padding:10px;
+  margin-top:5px;
+  border:1px solid #ccc;
+  border-radius:5px;
+  font-size:14px;
+}
+
+input[type=file]{
+  padding:6px;
+}
+
+button.submit{
+  width:100%;
+  margin-top:25px;
+  padding:12px;
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  font-size:15px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+/* STATUS */
+.status{
+  padding:10px;
+  border-radius:6px;
+  font-size:14px;
+  margin-bottom:15px;
+}
+.pending{background:#fff3cd;color:#856404;}
+.approved{background:#d4edda;color:#155724;}
+
 /* SIDE PANEL */
 #sidePanel{
   position:fixed;
   top:0;
   right:-400px;
   width:33%;
-  max-width:360px;
+  max-width:320px;
   height:100%;
   background:#fff;
   box-shadow:-3px 0 10px rgba(0,0,0,.2);
@@ -45,6 +106,7 @@ header button{
   z-index:100;
 }
 #sidePanel.active{right:0;}
+
 #sidePanel a{
   display:block;
   margin:12px 0;
@@ -52,140 +114,68 @@ header button{
   text-decoration:none;
   font-weight:500;
 }
-
-/* MAIN */
-.container{
-  max-width:700px;
-  margin:auto;
-  padding:20px;
-}
-.card{
-  background:#fff;
-  padding:20px;
-  border-radius:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,.1);
-}
-.field{margin-bottom:15px;}
-.field label{
-  font-size:13px;
-  color:#555;
-  display:block;
-  margin-bottom:5px;
-}
-.field input,.field select{
-  width:100%;
-  padding:10px;
-  border:1px solid #ccc;
-  border-radius:5px;
-}
-.status{
-  margin-bottom:15px;
-  font-weight:bold;
-}
-.doc-option{
-  display:flex;
-  align-items:center;
-  margin-bottom:10px;
-}
-.doc-option img{
-  width:90px;
-  margin-left:10px;
-  border:1px solid #ccc;
-  border-radius:5px;
-}
-.submitBtn{
-  width:100%;
-  padding:12px;
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  border-radius:5px;
-  font-size:15px;
-  cursor:pointer;
-}
 </style>
 </head>
 
-<body onload="initKYC()">
+<body onload="loadKYC()">
 
 <header>
-  <h3>KYC Verification</h3>
+  <h2>KYC Verification</h2>
   <button onclick="togglePanel()">Menu</button>
 </header>
 
 <!-- SIDE PANEL -->
 <div id="sidePanel">
-  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;border:none;padding:8px 12px;border-radius:5px">Close</button>
-  <h3>Menu</h3>
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;border:none;padding:8px 12px;border-radius:5px;margin-bottom:15px;">Close</button>
+  <h3>Account</h3>
   <a href="profile.html">Profile</a>
-  <a href="kyc.html">KYC</a>
-  <a href="change-password.html">Change Password</a>
-  <a href="2fa.html">2FA Settings</a>
-  <a href="fees.html">Fees</a>
-  <a href="referral.html">Referral</a>
+  <a href="kyc.html"><b>KYC Verification</b></a>
+  <a href="#">Change Password</a>
+  <a href="#">2FA Settings</a>
+  <a href="#">Fees</a>
+  <a href="#">Referral</a>
 </div>
 
-<!-- MAIN -->
 <div class="container">
-<div class="card">
 
-  <div class="status" id="kycStatus">Status: Not Submitted</div>
+  <div id="kycStatus"></div>
 
-  <div class="field">
+  <div class="card">
+    <h2>Personal Information</h2>
+
     <label>First Name</label>
-    <input type="text" id="firstName">
-  </div>
+    <input id="firstName">
 
-  <div class="field">
     <label>Last Name</label>
-    <input type="text" id="lastName">
-  </div>
+    <input id="lastName">
 
-  <div class="field">
     <label>Country</label>
-    <select id="countrySelect"></select>
-  </div>
+    <select id="country"></select>
 
-  <div class="field">
     <label>Document Type</label>
+    <select id="docType" onchange="toggleDoc()">
+      <option value="">Select</option>
+      <option value="passport">Passport</option>
+      <option value="idcard">National ID</option>
+    </select>
 
-    <div class="doc-option">
-      <input type="radio" name="docType" value="passport" onchange="changeDocType()">
-      <span>Passport</span>
-      <img src="images/passport_sample.png" alt="Passport Sample">
-    </div>
-
-    <div class="doc-option">
-      <input type="radio" name="docType" value="national_id" onchange="changeDocType()">
-      <span>National ID / Tazkira</span>
-      <img src="images/id_sample.png" alt="ID Sample">
-    </div>
-  </div>
-
-  <!-- Passport -->
-  <div class="field" id="passportUpload" style="display:none">
-    <label>Upload Passport</label>
-    <input type="file" accept="image/*">
-  </div>
-
-  <!-- National ID -->
-  <div id="idUploads" style="display:none">
-    <div class="field">
-      <label>ID Front</label>
+    <div id="passportUpload" style="display:none">
+      <label>Passport Image</label>
       <input type="file" accept="image/*">
     </div>
-    <div class="field">
+
+    <div id="idUpload" style="display:none">
+      <label>ID Front</label>
+      <input type="file" accept="image/*">
       <label>ID Back</label>
       <input type="file" accept="image/*">
     </div>
+
+    <button class="submit" onclick="submitKYC()">Submit KYC</button>
   </div>
 
-  <button class="submitBtn" onclick="submitKYC()">Submit KYC</button>
-
-</div>
 </div>
 
-<!-- COUNTRY LIST -->
 <script src="countries.js"></script>
 
 <script>
@@ -193,42 +183,55 @@ function togglePanel(){
   document.getElementById('sidePanel').classList.toggle('active');
 }
 
-function initKYC(){
-  fillCountries();
-  const kyc=JSON.parse(localStorage.getItem('kycData'));
-  if(kyc){
-    document.getElementById('kycStatus').innerText='Status: '+kyc.status;
-  }
-}
-
-function fillCountries(){
-  const select=document.getElementById('countrySelect');
-  select.innerHTML='<option value="">Select Country</option>';
+/* Countries */
+function loadCountries(){
+  const select=document.getElementById('country');
   countries.forEach(c=>{
-    const opt=document.createElement('option');
-    opt.value=c.name;
-    opt.textContent=c.name;
-    select.appendChild(opt);
+    let o=document.createElement('option');
+    o.value=c;
+    o.textContent=c;
+    select.appendChild(o);
   });
 }
 
-function changeDocType(){
-  const val=document.querySelector('input[name="docType"]:checked').value;
-  document.getElementById('passportUpload').style.display = val==='passport'?'block':'none';
-  document.getElementById('idUploads').style.display = val==='national_id'?'block':'none';
+/* Document toggle */
+function toggleDoc(){
+  document.getElementById('passportUpload').style.display='none';
+  document.getElementById('idUpload').style.display='none';
+  if(docType.value==='passport') passportUpload.style.display='block';
+  if(docType.value==='idcard') idUpload.style.display='block';
 }
 
+/* Save KYC */
 function submitKYC(){
   const data={
     firstName:firstName.value,
     lastName:lastName.value,
-    country:countrySelect.value,
+    country:country.value,
+    docType:docType.value,
     status:'Pending',
-    submittedAt:new Date().toISOString()
+    submitted:new Date().toISOString()
   };
   localStorage.setItem('kycData',JSON.stringify(data));
-  document.getElementById('kycStatus').innerText='Status: Pending';
-  alert('KYC Submitted (Demo)');
+  loadKYC();
+  alert('KYC submitted (Demo)');
+}
+
+/* Load KYC */
+function loadKYC(){
+  loadCountries();
+  const kyc=JSON.parse(localStorage.getItem('kycData'));
+  const box=document.getElementById('kycStatus');
+  if(!kyc){
+    box.innerHTML='<div class="status pending">KYC not submitted</div>';
+    return;
+  }
+  box.innerHTML=`<div class="status pending">Status: ${kyc.status}</div>`;
+  firstName.value=kyc.firstName||'';
+  lastName.value=kyc.lastName||'';
+  country.value=kyc.country||'';
+  docType.value=kyc.docType||'';
+  toggleDoc();
 }
 </script>
 
