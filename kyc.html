@@ -10,6 +10,7 @@ body{
   margin:0;
   font-family:Roboto,Arial,sans-serif;
   background:#f4f6fa;
+  padding-bottom:60px;
 }
 
 /* HEADER */
@@ -117,7 +118,7 @@ button.submit{
 </style>
 </head>
 
-<body onload="loadKYC()">
+<body>
 
 <header>
   <h2>KYC Verification</h2>
@@ -176,28 +177,38 @@ button.submit{
 
 </div>
 
+<!-- Countries list -->
 <script src="countries.js"></script>
 
 <script>
+const countrySelect = document.getElementById('country');
+const docType = document.getElementById('docType');
+const passportUpload = document.getElementById('passportUpload');
+const idUpload = document.getElementById('idUpload');
+
+/* SIDE PANEL */
 function togglePanel(){
   document.getElementById('sidePanel').classList.toggle('active');
 }
 
-/* Countries */
+/* Load countries */
 function loadCountries(){
-  const select=document.getElementById('country');
-  countries.forEach(c=>{
-    let o=document.createElement('option');
-    o.value=c;
-    o.textContent=c;
-    select.appendChild(o);
-  });
+  if(typeof countries !== 'undefined' && countries.length>0){
+    countries.forEach(c=>{
+      let o=document.createElement('option');
+      o.value=c;
+      o.textContent=c;
+      countrySelect.appendChild(o);
+    });
+  } else {
+    console.error('Countries not loaded!');
+  }
 }
 
 /* Document toggle */
 function toggleDoc(){
-  document.getElementById('passportUpload').style.display='none';
-  document.getElementById('idUpload').style.display='none';
+  passportUpload.style.display='none';
+  idUpload.style.display='none';
   if(docType.value==='passport') passportUpload.style.display='block';
   if(docType.value==='idcard') idUpload.style.display='block';
 }
@@ -229,10 +240,15 @@ function loadKYC(){
   box.innerHTML=`<div class="status pending">Status: ${kyc.status}</div>`;
   firstName.value=kyc.firstName||'';
   lastName.value=kyc.lastName||'';
-  country.value=kyc.country||'';
+  countrySelect.value=kyc.country||'';
   docType.value=kyc.docType||'';
   toggleDoc();
 }
+
+/* Initialize */
+window.addEventListener('DOMContentLoaded',()=>{
+  loadKYC();
+});
 </script>
 
 </body>
