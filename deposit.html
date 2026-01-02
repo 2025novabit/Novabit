@@ -5,6 +5,7 @@
 <title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- External coin and wallet data -->
 <script src="coins.js" defer></script>
 <script src="wallets.js" defer></script>
 
@@ -17,14 +18,15 @@ header {background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:1
 .coin {border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center;cursor:pointer;background:#fff;transition:0.2s;}
 .coin:hover {border-color:#4b49ac;box-shadow:0 4px 8px rgba(0,0,0,0.1);}
 .coin img {width:32px;height:32px;margin-bottom:5px;}
+
 /* Modal */
 .modal-bg {display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;}
 .modal-bg.active {display:flex;}
 .modal {background:#fff;border-radius:10px;padding:20px;max-width:400px;width:90%;box-shadow:0 6px 20px rgba(0,0,0,0.2);position:relative;}
 .modal h3 {margin-top:0;text-align:center;}
-.modal select, .modal input {width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;}
+.modal select, .modal input {width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:14px;}
 .modal .address-box {background:#f1f1f1;padding:10px;border-radius:6px;word-break:break-all;margin:10px 0;cursor:pointer;}
-.modal button {width:100%;padding:12px;background:#4b49ac;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:500;}
+.modal button {width:100%;padding:12px;background:#4b49ac;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:500;margin-top:10px;}
 .modal .close-btn {position:absolute;top:10px;right:10px;background:#e74c3c;color:#fff;border:none;border-radius:5px;padding:5px 10px;cursor:pointer;}
 .notice {background:#fff3cd;padding:10px;border-radius:6px;margin-top:10px;font-size:14px;text-align:center;}
 </style>
@@ -34,11 +36,11 @@ header {background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:1
 <header>Deposit</header>
 
 <div class="container">
-<div class="search-box">
-  <input type="text" id="searchInput" placeholder="Search coin by symbol or name">
-</div>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search coin by symbol or name">
+  </div>
 
-<div class="coin-list" id="coinList"></div>
+  <div class="coin-list" id="coinList"></div>
 </div>
 
 <!-- Modal -->
