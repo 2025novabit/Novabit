@@ -47,9 +47,7 @@ header button{
   z-index:100;
 }
 #sidePanel.active{right:0;}
-#sidePanel h2{
-  margin-top:0;
-}
+#sidePanel h2{margin-top:0;}
 #sidePanel a{
   display:block;
   margin:10px 0;
@@ -59,6 +57,9 @@ header button{
 }
 
 /* FORM */
+.container{
+  padding:20px;
+}
 form{ background:#fff;padding:20px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);}
 form h3{margin-top:0;margin-bottom:15px;}
 form label{display:block;margin-top:10px;font-size:13px;color:#555;}
@@ -86,6 +87,8 @@ form button{
 #kycStatus{
   margin-top:15px;
   font-weight:bold;
+  font-size:14px;
+  color:#333;
 }
 
 /* LOGOUT */
@@ -120,6 +123,11 @@ img.preview{margin-top:10px;width:100%;border:1px solid #ccc;border-radius:5px;}
   font-size:14px;
 }
 .bottom-nav a.active{color:#4b49ac;}
+
+/* RESPONSIVE */
+@media (max-width:768px){
+  #sidePanel{width:70%;}
+}
 </style>
 </head>
 
@@ -188,35 +196,34 @@ img.preview{margin-top:10px;width:100%;border:1px solid #ccc;border-radius:5px;}
 
 <script src="countries.js"></script>
 <script>
-const countrySelect = document.getElementById('kycCountry');
-const kycForm = document.getElementById('kycForm');
-const kycStatus = document.getElementById('kycStatus');
-
+// Toggle Side Panel
 function togglePanel(){
   document.getElementById('sidePanel').classList.toggle('active');
 }
 
+// Demo login
 function requireLogin(){
   console.log("Check login (demo mode)");
 }
 
-// Load countries from countries.js
+// Load countries
 function loadCountries(){
+  const select = document.getElementById('kycCountry');
   if(Array.isArray(countries)){
     countries.forEach(c=>{
       const opt = document.createElement('option');
       opt.value = c.name;
       opt.textContent = c.name;
-      countrySelect.appendChild(opt);
+      select.appendChild(opt);
     });
   }
 }
 
 // Show upload fields
 function showDocInputs(){
-  const docType = document.getElementById('kycDocType').value;
-  document.getElementById('passportUpload').style.display = (docType==='passport') ? 'block' : 'none';
-  document.getElementById('idcardUpload').style.display = (docType==='idcard') ? 'block' : 'none';
+  const type = document.getElementById('kycDocType').value;
+  document.getElementById('passportUpload').style.display = (type==='passport')?'block':'none';
+  document.getElementById('idcardUpload').style.display = (type==='idcard')?'block':'none';
 }
 
 // Image previews
@@ -235,7 +242,7 @@ previewImage('idFront','idFrontPreview');
 previewImage('idBack','idBackPreview');
 
 // Submit KYC
-kycForm.onsubmit = e=>{
+document.getElementById('kycForm').onsubmit = e=>{
   e.preventDefault();
   const data = {
     name: document.getElementById('kycName').value,
@@ -252,7 +259,7 @@ kycForm.onsubmit = e=>{
   alert("KYC Submitted! Status: Pending");
 }
 
-// Load KYC if exists
+// Load KYC
 function loadKYC(){
   const data = JSON.parse(localStorage.getItem('kycData') || '{}');
   if(Object.keys(data).length){
@@ -266,13 +273,13 @@ function loadKYC(){
       document.getElementById('idFrontPreview').src = data.idFront || '';
       document.getElementById('idBackPreview').src = data.idBack || '';
     }
-    kycStatus.textContent = "KYC Status: " + (data.status || 'Pending');
+    document.getElementById('kycStatus').textContent = "KYC Status: " + (data.status || 'Pending');
   } else {
-    kycStatus.textContent = "KYC Status: Not submitted";
+    document.getElementById('kycStatus').textContent = "KYC Status: Not submitted";
   }
 }
 
-// Disable trade if KYC pending
+// Disable Trade if KYC not approved
 function checkTradeAccess(){
   const data = JSON.parse(localStorage.getItem('kycData') || '{}');
   if(!data.status || data.status !== 'Approved'){
