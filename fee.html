@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fees | Novabit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:Roboto,Arial,sans-serif;
+  background:#f4f6fa;
+}
+
+/* HEADER */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* SIDE PANEL */
+#sidePanel{
+  position:fixed;
+  top:0;
+  right:-400px;
+  width:33%;
+  max-width:360px;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  overflow-y:auto;
+  transition:right 0.3s;
+  z-index:100;
+}
+#sidePanel.active{right:0;}
+#sidePanel a{
+  display:block;
+  margin:12px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
+}
+
+/* CONTENT */
+.container{
+  padding:25px;
+}
+.card{
+  background:#fff;
+  padding:25px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,.1);
+}
+.card h2{margin-top:0;}
+
+.fee-list{
+  margin-top:20px;
+}
+.fee-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 0;
+  border-bottom:1px solid #eee;
+}
+.coin-info{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.coin-info img{
+  width:28px;
+  height:28px;
+}
+.coin-info span{
+  font-weight:500;
+}
+.fee{
+  font-weight:bold;
+  color:#4b49ac;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>Trading Fees</h2>
+  <button onclick="togglePanel()">Menu</button>
+</header>
+
+<!-- SIDE PANEL -->
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;margin-bottom:15px;cursor:pointer;">Close</button>
+  <h3>Menu</h3>
+  <a href="profile.html">Profile</a>
+  <a href="kyc.html">KYC</a>
+  <a href="changepassword.html">Change Password</a>
+  <a href="2fa.html">2FA Settings</a>
+  <a href="fee.html"><strong>Fees</strong></a>
+  <a href="referral.html">Referral</a>
+</div>
+
+<div class="container">
+  <div class="card">
+    <h2>Trading Fee Schedule (Demo)</h2>
+    <p>
+      Fees are applied per trade based on asset ranking.
+      This is a demo fee table.
+    </p>
+
+    <div class="fee-list" id="feeList">
+      Loading fees...
+    </div>
+  </div>
+</div>
+
+<script>
+// Toggle menu
+function togglePanel(){
+  document.getElementById('sidePanel').classList.toggle('active');
+}
+
+// Get fee by rank
+function getFeeByRank(rank){
+  if(rank <= 20) return "0.01%";
+  if(rank <= 50) return "0.02%";
+  return "0.03%";
+}
+
+// Fetch top 100 coins
+fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
+.then(res => res.json())
+.then(data => {
+  const list = document.getElementById('feeList');
+  list.innerHTML = '';
+
+  data.forEach((coin, index) => {
+    const rank = index + 1;
+    const fee = getFeeByRank(rank);
+
+    const div = document.createElement('div');
+    div.className = 'fee-item';
+    div.innerHTML = `
+      <div class="coin-info">
+        <img src="${coin.image}" alt="${coin.symbol}">
+        <span>${coin.symbol.toUpperCase()}</span>
+      </div>
+      <div class="fee">${fee}</div>
+    `;
+    list.appendChild(div);
+  });
+})
+.catch(()=>{
+  document.getElementById('feeList').innerText =
+    "Fee data not available (demo).";
+});
+</script>
+
+</body>
+</html>
