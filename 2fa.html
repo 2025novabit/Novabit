@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>2FA Settings | Novabit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:Roboto,Arial,sans-serif;
+  background:#f4f6fa;
+}
+
+/* HEADER */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* SIDE PANEL */
+#sidePanel{
+  position:fixed;
+  top:0;
+  right:-400px;
+  width:33%;
+  max-width:360px;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  overflow-y:auto;
+  transition:right 0.3s;
+  z-index:100;
+}
+#sidePanel.active{right:0;}
+#sidePanel a{
+  display:block;
+  margin:12px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
+}
+
+/* CONTENT */
+.container{
+  padding:25px;
+}
+.card{
+  background:#fff;
+  padding:25px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,.1);
+  max-width:480px;
+}
+.card h2{margin-top:0;}
+
+.form-group{
+  margin-bottom:15px;
+}
+.form-group label{
+  display:block;
+  font-size:13px;
+  margin-bottom:5px;
+  color:#555;
+}
+.form-group input{
+  width:100%;
+  padding:10px;
+  font-size:14px;
+  border:1px solid #ccc;
+  border-radius:5px;
+}
+
+button{
+  padding:12px 18px;
+  background:#4b49ac;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  font-weight:500;
+}
+button:disabled{
+  background:#999;
+  cursor:not-allowed;
+}
+
+.status{
+  margin-top:15px;
+  font-weight:500;
+}
+.success{color:green;}
+.error{color:red;}
+</style>
+</head>
+
+<body onload="load2FA();">
+
+<header>
+  <h2>2FA Settings</h2>
+  <button onclick="togglePanel()">Menu</button>
+</header>
+
+<!-- SIDE PANEL -->
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;margin-bottom:15px;cursor:pointer;">Close</button>
+  <h3>Menu</h3>
+  <a href="profile.html">Profile</a>
+  <a href="kyc.html">KYC</a>
+  <a href="changepassword.html">Change Password</a>
+  <a href="2fa.html"><strong>2FA Settings</strong></a>
+  <a href="fee.html">Fees</a>
+  <a href="referral.html">Referral</a>
+</div>
+
+<div class="container">
+  <div class="card">
+    <h2>Email Two-Factor Authentication</h2>
+
+    <p>
+      Enable 2FA to secure withdrawals and sensitive actions.
+      A verification code will be sent to your email.
+    </p>
+
+    <div class="form-group">
+      <button id="sendCodeBtn" onclick="sendCode()">Send Verification Code</button>
+    </div>
+
+    <div class="form-group">
+      <label>Enter 6-digit Code</label>
+      <input type="text" id="codeInput" placeholder="123456">
+    </div>
+
+    <button onclick="verifyCode()">Verify & Enable</button>
+
+    <div class="status" id="statusText"></div>
+  </div>
+</div>
+
+<script>
+// Toggle menu
+function togglePanel(){
+  document.getElementById('sidePanel').classList.toggle('active');
+}
+
+// Load status
+function load2FA(){
+  if(localStorage.getItem('demo2fa_enabled') === 'true'){
+    document.getElementById('statusText').innerHTML =
+      '<span class="success">2FA is already enabled ✅</span>';
+  }
+}
+
+// Send demo code
+function sendCode(){
+  const code = Math.floor(100000 + Math.random()*900000);
+  localStorage.setItem('demo2fa_code', code);
+  alert("Demo email code (for testing): " + code);
+  document.getElementById('statusText').innerHTML =
+    '<span>Verification code sent to your email (demo).</span>';
+}
+
+// Verify code
+function verifyCode(){
+  const input = document.getElementById('codeInput').value;
+  const realCode = localStorage.getItem('demo2fa_code');
+
+  if(input === realCode){
+    localStorage.setItem('demo2fa_enabled', 'true');
+    document.getElementById('statusText').innerHTML =
+      '<span class="success">2FA enabled successfully ✅</span>';
+  } else {
+    document.getElementById('statusText').innerHTML =
+      '<span class="error">Invalid code. Please try again.</span>';
+  }
+}
+</script>
+
+</body>
+</html>
