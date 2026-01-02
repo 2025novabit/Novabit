@@ -180,15 +180,14 @@ tr:nth-child(even) { background-color: #f1f1f1; }
   <button id="menuBtn" onclick="toggleMenu()">Menu</button>
 </header>
 
-<div id="sidePanel">
-  <button onclick="togglePanel()"
+<div id="sideMenu">
+  <button onclick="toggleMenu()"
     style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">
     Close
   </button>
 
   <h2>Menu</h2>
 
-  <!-- Deposit & Referral Buttons -->
   <div style="display:flex;gap:10px;margin-bottom:20px;">
     <button onclick="window.location.href='wallet.html'"
       style="flex:1;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:6px;font-weight:500;cursor:pointer;">
@@ -201,7 +200,6 @@ tr:nth-child(even) { background-color: #f1f1f1; }
     </button>
   </div>
 
-  <!-- Original Menu (UNCHANGED) -->
   <a href="profile.html">Profile</a>
   <a href="kyc.html">KYC</a>
   <a href="changepassword.html">Change Password</a>
