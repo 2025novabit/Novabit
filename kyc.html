@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <title>KYC | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="countries.js">
+<script src="countries.js"></script>
 <style>
 body {
   margin:0;
-  font-family: Roboto, sans-serif;
-  background: #f4f6fa;
-  padding-bottom:60px;
+  font-family: Roboto,sans-serif;
+  background:#f4f6fa;
+  padding-bottom:0; /* دکمه پایین حذف شد */
 }
 
 /* HEADER */
@@ -115,27 +115,6 @@ button.submitBtn{
   font-weight:500;
 }
 
-/* BOTTOM NAV */
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  background:#1a1a2e;
-  display:flex;
-  justify-content:space-around;
-  padding:10px 0;
-  z-index:20;
-}
-.bottom-nav a{
-  color:#fff;
-  text-decoration:none;
-  font-size:14px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-.bottom-nav a.active{color:#4b49ac;}
-
 /* RESPONSIVE */
 @media(max-width:768px){
   #sidePanel{width:100%;}
@@ -183,32 +162,23 @@ button.submitBtn{
       </select>
     </div>
     <div class="radio-group">
-      <label><input type="radio" name="docType" value="Passport" checked> Passport</label>
-      <label><input type="radio" name="docType" value="ID Card"> ID Card</label>
+      <label><input type="radio" name="docType" value="Passport" checked onchange="toggleUploads()"> Passport</label>
+      <label><input type="radio" name="docType" value="ID Card" onchange="toggleUploads()"> ID Card</label>
     </div>
     <div class="form-group">
       <label>Document Number</label>
       <input type="text" id="docNumber" placeholder="Enter Passport/ID Number">
     </div>
     <div class="upload-group">
-      <label>Upload Document</label>
+      <label>Upload Document(s)</label>
       <input type="file" id="docUpload1">
-      <input type="file" id="docUpload2">
+      <input type="file" id="docUpload2" style="display:none;">
     </div>
     <button class="submitBtn" onclick="saveKYC()">Submit KYC</button>
     <div class="status" id="kycStatus">Status: Pending</div>
   </div>
 </div>
 
-<div class="bottom-nav">
-  <a href="dashboard.html">Home</a>
-  <a href="wallet.html">Wallet</a>
-  <a href="market.html">Market</a>
-  <a href="trade.html">Trade</a>
-  <a href="kyc.html" class="active">KYC</a>
-</div>
-
-<script src="countries.js"></script>
 <script>
 // Toggle Side Panel
 function togglePanel(){
@@ -226,9 +196,17 @@ function populateCountries(){
   });
 }
 
+// Show/hide second upload based on document type
+function toggleUploads(){
+  const type = document.querySelector('input[name="docType"]:checked').value;
+  const upload2 = document.getElementById('docUpload2');
+  upload2.style.display = type === "Passport" ? "none" : "block";
+}
+
 // Load KYC from localStorage
 function loadKYC(){
   populateCountries();
+  toggleUploads();
   const kyc = JSON.parse(localStorage.getItem('kycData') || '{}');
   if(Object.keys(kyc).length){
     document.getElementById('fullname').value = kyc.fullname || '';
@@ -237,6 +215,7 @@ function loadKYC(){
     document.getElementById('countrySelect').value = kyc.country || '';
     if(kyc.docType) document.querySelector(`input[name="docType"][value="${kyc.docType}"]`).checked = true;
     document.getElementById('docNumber').value = kyc.docNumber || '';
+    toggleUploads();
     document.getElementById('kycStatus').innerText = "Status: " + (kyc.status || "Pending");
   }
 }
@@ -256,6 +235,10 @@ function saveKYC(){
     alert("Please fill all required fields and upload at least one document.");
     return;
   }
+  if(docType === "ID Card" && !docUpload2){
+    alert("Please upload both ID Card images.");
+    return;
+  }
 
   const kycData = {
     fullname,email,dob,country,docType,docNumber,
@@ -263,7 +246,7 @@ function saveKYC(){
   };
   localStorage.setItem('kycData', JSON.stringify(kycData));
   document.getElementById('kycStatus').innerText = "Status: Pending";
-  alert("KYC data saved (demo mode). Trade will be locked until approval.");
+  alert("KYC saved (demo). Trade locked until approval.");
 }
 </script>
 </body>
