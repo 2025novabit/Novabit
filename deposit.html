@@ -29,14 +29,20 @@ header {
   margin: 20px auto;
   padding: 0 20px;
 }
+
+/* جستجو */
+.search-box {
+  margin-bottom: 20px;
+}
 .search-box input {
   width: 100%;
   padding: 12px;
   border-radius: 8px;
   border: 1px solid #ccc;
   font-size: 16px;
-  margin-bottom: 20px;
 }
+
+/* لیست ارزها */
 .coin-list {
   display: grid;
   grid-template-columns: repeat(auto-fill,minmax(120px,1fr));
@@ -120,6 +126,8 @@ select, input[type=number] {
   color: #856404;
   line-height: 1.4;
 }
+
+/* واکنش‌گرا */
 @media(max-width:768px){
   .coin-list { grid-template-columns: repeat(auto-fill,minmax(100px,1fr)); }
   .deposit-panel { width: 100%; }
@@ -166,12 +174,11 @@ const searchInput = document.getElementById('searchInput');
 
 function renderCoins(filter="") {
   coinList.innerHTML = "";
-  COINS.filter(c => (c.symbol.toLowerCase().includes(filter.toLowerCase()) || c.name.toLowerCase().includes(filter.toLowerCase())))
+  COINS.filter(c => c.symbol.toLowerCase().includes(filter.toLowerCase()) || c.name.toLowerCase().includes(filter.toLowerCase()))
        .forEach(c => {
-    if(!WALLET_ADDRESSES[c.symbol]) return; // فقط ارزهایی که آدرس دارند
     let div = document.createElement('div');
     div.className = "coin";
-    div.innerHTML = `<img src="${c.icon}" alt="${c.symbol}"><div>${c.symbol}</div>`;
+    div.innerHTML = `<img src="${c.icon}" alt="${c.symbol}" onerror="this.src='https://via.placeholder.com/48'"><div>${c.symbol}</div>`;
     div.onclick = () => openDepositPanel(c.symbol);
     coinList.appendChild(div);
   });
@@ -191,24 +198,21 @@ function openDepositPanel(symbol) {
   const wallet = WALLET_ADDRESSES[symbol];
   if(!wallet) { alert("Wallet not set for this coin"); return; }
 
-  panelCoinTitle.innerText = `${symbol}`;
-
-  // شبکه ها
+  panelCoinTitle.innerText = wallet.name + " (" + symbol + ")";
   networkSelect.innerHTML = "";
-  wallet.networks.forEach(n => {
+  wallet.networks.forEach(net => {
     let option = document.createElement('option');
-    option.value = n.network;
-    option.innerText = n.network;
+    option.value = net.network;
+    option.innerText = net.network;
     networkSelect.appendChild(option);
   });
-
   walletAddress.innerText = wallet.networks[0].address;
   depositPanel.classList.add('active');
 }
 
 // تغییر آدرس وقتی شبکه انتخاب شد
 networkSelect.addEventListener('change', ()=>{
-  const symbol = panelCoinTitle.innerText;
+  const symbol = panelCoinTitle.innerText.match(/\((.*)\)/)[1];
   const wallet = WALLET_ADDRESSES[symbol];
   const net = wallet.networks.find(n=>n.network===networkSelect.value);
   walletAddress.innerText = net.address;
@@ -225,4 +229,7 @@ function copyAddress() {
     alert("Address copied: " + walletAddress.innerText);
   });
 }
-</script
+</script>
+
+</body>
+</html>
