@@ -142,11 +142,13 @@ const walletAddressBox = document.getElementById('walletAddress');
 const copyBtn = document.getElementById('copyBtn');
 
 // مرتب‌سازی: ابتدا ارزهایی که آدرس دارند
-let coinsWithAddress = COINS.filter(c => WALLET_ADDRESSES[c.symbol]);
-let coinsWithoutAddress = COINS.filter(c => !WALLET_ADDRESSES[c.symbol]);
-let allCoins = [...coinsWithAddress, ...coinsWithoutAddress];
+function getOrderedCoins() {
+  let coinsWithAddress = COINS.filter(c => WALLET_ADDRESSES[c.symbol] && WALLET_ADDRESSES[c.symbol].address);
+  let coinsWithoutAddress = COINS.filter(c => !WALLET_ADDRESSES[c.symbol] || !WALLET_ADDRESSES[c.symbol].address);
+  return [...coinsWithAddress, ...coinsWithoutAddress];
+}
 
-// رندر اولیه
+// رندر لیست ارزها
 function renderCoins(list){
   coinList.innerHTML = '';
   list.forEach(c=>{
@@ -163,7 +165,7 @@ function renderCoins(list){
 
 // انتخاب ارز
 function selectCoin(symbol,name){
-  if(!WALLET_ADDRESSES[symbol]){
+  if(!WALLET_ADDRESSES[symbol] || !WALLET_ADDRESSES[symbol].address){
     alert("Wallet address not set for this coin");
     return;
   }
@@ -173,7 +175,7 @@ function selectCoin(symbol,name){
   walletAddressBox.innerText = WALLET_ADDRESSES[symbol].address;
 
   // QR Code
-  const qr = new QRious({
+  new QRious({
     element: qrCanvas,
     value: WALLET_ADDRESSES[symbol].address,
     size: 150
@@ -183,7 +185,7 @@ function selectCoin(symbol,name){
 // جستجو
 searchInput.addEventListener('input',()=>{
   const term = searchInput.value.toLowerCase();
-  const filtered = allCoins.filter(c=>c.symbol.toLowerCase().includes(term) || c.name.toLowerCase().includes(term));
+  const filtered = getOrderedCoins().filter(c=>c.symbol.toLowerCase().includes(term) || c.name.toLowerCase().includes(term));
   renderCoins(filtered);
 });
 
@@ -194,7 +196,8 @@ copyBtn.addEventListener('click',()=>{
     .catch(()=>alert('Copy failed'));
 });
 
-renderCoins(allCoins);
+// رندر اولیه
+renderCoins(getOrderedCoins());
 </script>
 
 </body>
