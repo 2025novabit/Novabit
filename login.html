@@ -4,57 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login / Sign Up</title>
-  <!-- Supabase JS -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f2f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      width: 350px;
-      text-align: center;
-    }
-    h2 {
-      margin-bottom: 20px;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 5px;
-      background-color: #4caf50;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    #msg {
-      margin-top: 10px;
-      min-height: 20px;
-      color: red;
-      font-weight: bold;
-    }
+    body { font-family: Arial, sans-serif; background:#f0f2f5; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+    .container { background:#fff; padding:30px; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.1); width:350px; text-align:center; }
+    h2 { margin-bottom:20px; }
+    input { width:100%; padding:10px; margin:10px 0; border-radius:5px; border:1px solid #ccc; font-size:16px; }
+    button { width:100%; padding:10px; margin:10px 0; border:none; border-radius:5px; background:#4caf50; color:white; font-size:16px; cursor:pointer; }
+    button:hover { background:#45a049; }
+    #msg { margin-top:10px; min-height:20px; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -76,23 +34,20 @@
 
   const msg = document.getElementById('msg');
 
-  // ===== Sign Up Function =====
+  // ===== Sign Up =====
   async function signUp() {
     msg.style.color = 'red';
     msg.innerText = '';
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
 
-    if (!email || !password) {
-      msg.innerText = 'Please enter email and password';
-      return;
-    }
+    if (!email || !password) { msg.innerText = 'Enter email & password'; return; }
 
     try {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
 
-      // Insert user into "users" table with test balance
+      // Insert into users table
       await supabase.from('users').insert({
         id: data.user.id,
         email: email,
@@ -102,22 +57,17 @@
 
       msg.style.color = 'green';
       msg.innerText = 'Sign Up Successful ✅';
-    } catch (err) {
-      msg.innerText = err.message;
-    }
+    } catch (err) { msg.innerText = err.message; }
   }
 
-  // ===== Login Function =====
+  // ===== Login =====
   async function login() {
     msg.style.color = 'red';
     msg.innerText = '';
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
 
-    if (!email || !password) {
-      msg.innerText = 'Please enter email and password';
-      return;
-    }
+    if (!email || !password) { msg.innerText = 'Enter email & password'; return; }
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -125,11 +75,9 @@
 
       msg.style.color = 'green';
       msg.innerText = 'Login Successful ✅';
-      // Optionally redirect to dashboard
+      // Optionally: redirect to dashboard
       // window.location.href = 'dashboard.html';
-    } catch (err) {
-      msg.innerText = err.message;
-    }
+    } catch (err) { msg.innerText = err.message; }
   }
 </script>
 
