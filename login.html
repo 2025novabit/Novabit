@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login / Sign Up</title>
+  <!-- Supabase JS -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     body {
@@ -13,6 +14,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
     .container {
       background: #fff;
@@ -20,9 +22,9 @@
       border-radius: 10px;
       box-shadow: 0 0 15px rgba(0,0,0,0.1);
       width: 350px;
+      text-align: center;
     }
     h2 {
-      text-align: center;
       margin-bottom: 20px;
     }
     input {
@@ -31,6 +33,7 @@
       margin: 10px 0;
       border-radius: 5px;
       border: 1px solid #ccc;
+      font-size: 16px;
     }
     button {
       width: 100%;
@@ -47,9 +50,10 @@
       background-color: #45a049;
     }
     #msg {
-      text-align: center;
       margin-top: 10px;
+      min-height: 20px;
       color: red;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -57,8 +61,8 @@
 
 <div class="container">
   <h2>Login / Sign Up</h2>
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password">
+  <input type="email" id="email" placeholder="Email" required>
+  <input type="password" id="password" placeholder="Password" required>
   <button onclick="signUp()">Sign Up</button>
   <button onclick="login()">Login</button>
   <p id="msg"></p>
@@ -70,47 +74,62 @@
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ';
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+  const msg = document.getElementById('msg');
+
   // ===== Sign Up Function =====
   async function signUp() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    msg.style.color = 'red';
+    msg.innerText = '';
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
 
-    const { data, error } = await supabase.auth.signUp({ email, password });
-
-    if (error) {
-      document.getElementById('msg').innerText = error.message;
+    if (!email || !password) {
+      msg.innerText = 'Please enter email and password';
       return;
     }
 
-    // Add user to "users" table with initial balances
-    await supabase.from('users').insert({
-      id: data.user.id,
-      email: email,
-      usdt_balance: 1000,
-      btc_balance: 0
-    });
+    try {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
 
-    document.getElementById('msg').innerText = 'Sign Up Successful ✅';
+      // Insert user into "users" table with test balance
+      await supabase.from('users').insert({
+        id: data.user.id,
+        email: email,
+        usdt_balance: 1000,
+        btc_balance: 0
+      });
+
+      msg.style.color = 'green';
+      msg.innerText = 'Sign Up Successful ✅';
+    } catch (err) {
+      msg.innerText = err.message;
+    }
   }
 
   // ===== Login Function =====
   async function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    msg.style.color = 'red';
+    msg.innerText = '';
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password
-    });
-
-    if (error) {
-      document.getElementById('msg').innerText = error.message;
+    if (!email || !password) {
+      msg.innerText = 'Please enter email and password';
       return;
     }
 
-    document.getElementById('msg').innerText = 'Login Successful ✅';
-    // Redirect to dashboard (optional)
-    // window.location.href = 'dashboard.html';
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      msg.style.color = 'green';
+      msg.innerText = 'Login Successful ✅';
+      // Optionally redirect to dashboard
+      // window.location.href = 'dashboard.html';
+    } catch (err) {
+      msg.innerText = err.message;
+    }
   }
 </script>
 
