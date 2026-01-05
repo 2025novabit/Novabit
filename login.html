@@ -1,10 +1,75 @@
-localStorage.setItem("demoUser", JSON.stringify({
-  firstName:"Ali",
-  lastName:"Ahmadi",
-  email:"demo@novabit.com",
-  country:"Afghanistan",
-  city:"Kabul",
-  address:"Demo Street 12",
-  wallet:{ USD:10000 },
-  trades:[]
-}));
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ورود و ثبت‌نام</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 350px; }
+    h2 { text-align: center; margin-bottom: 20px; }
+    input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; }
+    button { width: 100%; padding: 10px; margin: 10px 0; border: none; border-radius: 5px; background: #4caf50; color: white; cursor: pointer; font-size: 16px; }
+    button:hover { background: #45a049; }
+    #msg { color: red; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>ثبت‌نام / ورود</h2>
+  <input type="email" id="email" placeholder="ایمیل">
+  <input type="password" id="password" placeholder="رمز عبور">
+  <button onclick="register()">ثبت‌نام</button>
+  <button onclick="login()">ورود</button>
+  <p id="msg"></p>
+</div>
+
+<script>
+  // ==== اتصال به Supabase ====
+  const supabaseUrl = 'https://gcqbwvuxfcsgxgxrolsz.supabase.co'; // URL پروژه خودت
+  const supabaseKey = 'YOUR_ANON_PUBLIC_KEY'; // کلید anon public
+  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+  // ==== ثبت‌نام کاربر ====
+  async function register() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      document.getElementById('msg').innerText = error.message;
+      return;
+    }
+
+    // اضافه کردن کاربر به جدول users با موجودی تست
+    await supabase.from('users').insert({
+      id: data.user.id,
+      email: email,
+      usdt_balance: 1000,
+      btc_balance: 0
+    });
+
+    document.getElementById('msg').innerText = 'ثبت‌نام انجام شد ✅';
+  }
+
+  // ==== ورود کاربر ====
+  async function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      document.getElementById('msg').innerText = error.message;
+      return;
+    }
+
+    document.getElementById('msg').innerText = 'ورود موفق ✅';
+    // بعد از ورود، می‌توان کاربر را به صفحه داشبورد هدایت کرد
+    // window.location.href = 'dashboard.html';
+  }
+</script>
+
+</body>
+</html>
