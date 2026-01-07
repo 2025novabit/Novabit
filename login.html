@@ -5,8 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login / Sign Up</title>
 
-<!-- Supabase JS -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+<!-- Supabase v2 -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  // ===== Supabase Initialization =====
+  const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  window.supabase = supabase; // دسترسی جهانی به supabase
+</script>
 
 <style>
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f8f9fa;display:flex;justify-content:center;align-items:center;height:100vh;}
@@ -53,8 +62,8 @@ button.submit-btn:hover{background:#3a3690;}
 <p id="msg"></p>
 </div>
 
-<script>
-// === لیست کامل کشورها ===
+<script type="module">
+// لیست کامل کشورها
 const countries = [
 "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria",
 "Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina",
@@ -79,8 +88,7 @@ const countries = [
 const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
   const opt = document.createElement('option');
-  opt.value = c;
-  opt.textContent = c;
+  opt.value = c; opt.textContent = c;
   countrySelect.appendChild(opt);
 });
 
@@ -91,34 +99,23 @@ const btnSignUp=document.getElementById('btnSignUp');
 const loginForm=document.getElementById('loginForm');
 const signupForm=document.getElementById('signupForm');
 
-btnLogin.addEventListener('click',()=>{
-  btnLogin.classList.add('active'); btnSignUp.classList.remove('active');
-  loginForm.style.display='flex'; signupForm.style.display='none'; msg.innerText='';
-});
-btnSignUp.addEventListener('click',()=>{
-  btnSignUp.classList.add('active'); btnLogin.classList.remove('active');
-  signupForm.style.display='flex'; loginForm.style.display='none'; msg.innerText='';
-});
+btnLogin.addEventListener('click',()=>{ btnLogin.classList.add('active'); btnSignUp.classList.remove('active'); loginForm.style.display='flex'; signupForm.style.display='none'; msg.innerText=''; });
+btnSignUp.addEventListener('click',()=>{ btnSignUp.classList.add('active'); btnLogin.classList.remove('active'); signupForm.style.display='flex'; loginForm.style.display='none'; msg.innerText=''; });
 
-// === Supabase ===
-const supabaseUrl = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-// Login
+// ===== Login =====
 document.getElementById('loginSubmit').addEventListener('click', async ()=>{
   const email=document.getElementById('loginEmail').value.trim();
   const password=document.getElementById('loginPassword').value.trim();
   if(!email||!password){ msg.innerText='Enter email & password'; return; }
   try{
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await window.supabase.auth.signInWithPassword({ email, password });
     if(error) throw error;
     msg.style.color='green'; msg.innerText='Login Successful ✅';
     window.location.href='dashboard.html';
   }catch(err){ msg.style.color='red'; msg.innerText=err.message; }
 });
 
-// Sign Up
+// ===== Sign Up =====
 document.getElementById('signupSubmit').addEventListener('click', async ()=>{
   const firstName=document.getElementById('signupFirstName').value.trim();
   const lastName=document.getElementById('signupLastName').value.trim();
@@ -129,10 +126,10 @@ document.getElementById('signupSubmit').addEventListener('click', async ()=>{
   if(!firstName||!lastName||!dob||!country||!email||!password){ msg.innerText='Please fill all fields'; return; }
 
   try{
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+    const { data: authData, error: authError } = await window.supabase.auth.signUp({ email, password });
     if(authError) throw authError;
 
-    await supabase.from('users').insert([{
+    await window.supabase.from('users').insert([{
       id: authData.user.id,
       email, first_name:firstName, last_name:lastName,
       dob, country, usdt_balance:1000, btc_balance:0
