@@ -160,7 +160,6 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ⚡ وصل توابع به window برای استفاده در onclick
 window.togglePanel = () => {
   document.getElementById('sidePanel').classList.toggle('active');
 };
@@ -173,6 +172,7 @@ window.logout = async () => {
 
 window.requireLogin = async () => {
   const { data: { session } } = await supabase.auth.getSession();
+  console.log("Session:", session);
   if(!session) window.location.href = "index.html";
 };
 
@@ -181,19 +181,25 @@ window.loadProfile = async () => {
   if(!session) return;
 
   const userId = session.user.id;
+  console.log("User ID:", userId);
+
   const { data, error } = await supabase
     .from('users')
     .select('first_name,last_name,email,country,dob')
     .eq('id', userId)
     .single();
 
-  if(error) { console.error(error); return; }
+  if(error) {
+    console.error("Error fetching user:", error);
+    return;
+  }
+  console.log("User Data:", data);
 
-  document.getElementById('p_firstname').innerText = data.first_name || '—';
-  document.getElementById('p_lastname').innerText = data.last_name || '—';
-  document.getElementById('p_email').innerText = data.email || '—';
-  document.getElementById('p_country').innerText = data.country || '—';
-  document.getElementById('p_dob').innerText = data.dob || '—';
+  document.getElementById('p_firstname').innerText = data?.first_name || '—';
+  document.getElementById('p_lastname').innerText = data?.last_name || '—';
+  document.getElementById('p_email').innerText = data?.email || '—';
+  document.getElementById('p_country').innerText = data?.country || '—';
+  document.getElementById('p_dob').innerText = data?.dob || '—';
 };
 </script>
 
