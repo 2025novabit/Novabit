@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login / Sign Up</title>
-
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
   import { countries } from './countries.js';
 
-  const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
-  window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabase = createClient(
+    'https://iecnioogmafgxwarmkxz.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA'
+  );
 
   window.populateCountries = () => {
     const countrySelect = document.getElementById('signupCountry');
@@ -48,14 +48,12 @@ button.submit-btn:hover{background:#3a3690;}
   <button id="btnSignUp">Sign Up</button>
 </div>
 
-<!-- Login Form -->
 <form id="loginForm" style="display:flex;">
 <input type="email" id="loginEmail" placeholder="Email">
 <input type="password" id="loginPassword" placeholder="Password">
 <button type="button" class="submit-btn" id="loginSubmit">Login</button>
 </form>
 
-<!-- Sign Up Form -->
 <form id="signupForm">
 <input type="text" id="signupFirstName" placeholder="First Name">
 <input type="text" id="signupLastName" placeholder="Last Name">
@@ -72,7 +70,6 @@ button.submit-btn:hover{background:#3a3690;}
 <script type="module">
 const supabase = window.supabase;
 const msg = document.getElementById('msg');
-
 const btnLogin = document.getElementById('btnLogin');
 const btnSignUp = document.getElementById('btnSignUp');
 const loginForm = document.getElementById('loginForm');
@@ -116,11 +113,11 @@ document.getElementById('signupSubmit').addEventListener('click', async ()=>{
   try{
     const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
     if(authError) throw authError;
-    await supabase.from('users').insert({
+    await supabase.from('users').insert([{
       id: authData.user.id,
       email, first_name:firstName, last_name:lastName,
       dob, country, usdt_balance:1000, btc_balance:0
-    });
+    }]);
     msg.style.color='green'; msg.innerText='Sign Up Successful ✅. You can now login.';
   }catch(err){ msg.style.color='red'; msg.innerText=err.message; }
 });
