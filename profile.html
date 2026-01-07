@@ -11,8 +11,6 @@ body{
   font-family:Roboto,sans-serif;
   background:#f4f6fa;
 }
-
-/* HEADER */
 header{
   background:#1a1a2e;
   color:#fff;
@@ -29,12 +27,9 @@ header button{
   border-radius:5px;
   cursor:pointer;
 }
-
-/* MAIN CONTENT */
 .container{
   padding:20px;
 }
-
 .card{
   background:#fff;
   padding:20px;
@@ -42,8 +37,6 @@ header button{
   box-shadow:0 4px 8px rgba(0,0,0,.1);
   max-width:600px;
 }
-
-/* PROFILE INFO */
 .profile-item{
   margin:15px 0;
 }
@@ -57,8 +50,6 @@ header button{
   font-weight:500;
   margin-top:5px;
 }
-
-/* SIDE PANEL */
 #sidePanel{
   position:fixed;
   top:0;
@@ -73,7 +64,6 @@ header button{
   z-index:100;
 }
 #sidePanel.active{right:0;}
-
 #sidePanel h2{margin-top:0;}
 #sidePanel a{
   display:block;
@@ -82,7 +72,6 @@ header button{
   text-decoration:none;
   font-weight:500;
 }
-
 .logoutBtn{
   width:100%;
   margin-top:30px;
@@ -103,7 +92,6 @@ header button{
   <button onclick="togglePanel()">Menu</button>
 </header>
 
-<!-- MAIN PAGE CONTENT -->
 <div class="container">
   <div class="card">
     <h3>User Information</h3>
@@ -136,7 +124,6 @@ header button{
   </div>
 </div>
 
-<!-- SIDE PANEL -->
 <div id="sidePanel">
   <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
   <h2>Menu</h2>
@@ -151,38 +138,38 @@ header button{
   <button class="logoutBtn" onclick="logout()">Logout</button>
 </div>
 
-<!-- Supabase -->
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-window.togglePanel = () => {
-  document.getElementById('sidePanel').classList.toggle('active');
-};
+// منوی کناری
+window.togglePanel = () => document.getElementById('sidePanel').classList.toggle('active');
 
+// Logout
 window.logout = async () => {
   const { error } = await supabase.auth.signOut();
   if(error){ alert(error.message); return; }
   window.location.href = "index.html";
 };
 
+// Require login
 window.requireLogin = async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  console.log("Session:", session);
   if(!session) window.location.href = "index.html";
 };
 
+// Load profile
 window.loadProfile = async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if(!session) return;
 
   const userId = session.user.id;
-  console.log("User ID:", userId);
 
+  // گرفتن اطلاعات کاربر از جدول users
   const { data, error } = await supabase
     .from('users')
     .select('first_name,last_name,email,country,dob')
@@ -190,16 +177,15 @@ window.loadProfile = async () => {
     .single();
 
   if(error) {
-    console.error("Error fetching user:", error);
+    console.error("Error fetching user:", error.message);
     return;
   }
-  console.log("User Data:", data);
 
-  document.getElementById('p_firstname').innerText = data?.first_name || '—';
-  document.getElementById('p_lastname').innerText = data?.last_name || '—';
-  document.getElementById('p_email').innerText = data?.email || '—';
-  document.getElementById('p_country').innerText = data?.country || '—';
-  document.getElementById('p_dob').innerText = data?.dob || '—';
+  document.getElementById('p_firstname').innerText = data.first_name;
+  document.getElementById('p_lastname').innerText = data.last_name;
+  document.getElementById('p_email').innerText = data.email;
+  document.getElementById('p_country').innerText = data.country;
+  document.getElementById('p_dob').innerText = data.dob;
 };
 </script>
 
