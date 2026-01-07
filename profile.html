@@ -140,7 +140,7 @@ header button{
 <div id="sidePanel">
   <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
   <h2>Menu</h2>
-  <a href="dashboard.html">dashboard</a>
+  <a href="dashboard.html">Dashboard</a>
   <a href="profile.html">Profile</a>
   <a href="kyc.html">KYC</a>
   <a href="changepassword.html">Change Password</a>
@@ -160,19 +160,23 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// سوئیچ منو
-function togglePanel(){
+// ⚡ وصل توابع به window برای استفاده در onclick
+window.togglePanel = () => {
   document.getElementById('sidePanel').classList.toggle('active');
-}
+};
 
-// Require login
-async function requireLogin(){
+window.logout = async () => {
+  const { error } = await supabase.auth.signOut();
+  if(error){ alert(error.message); return; }
+  window.location.href = "index.html";
+};
+
+window.requireLogin = async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if(!session) window.location.href = "index.html";
-}
+};
 
-// Load profile from Supabase
-async function loadProfile(){
+window.loadProfile = async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if(!session) return;
 
@@ -185,19 +189,12 @@ async function loadProfile(){
 
   if(error) { console.error(error); return; }
 
-  document.getElementById('p_firstname').innerText = data.first_name;
-  document.getElementById('p_lastname').innerText = data.last_name;
-  document.getElementById('p_email').innerText = data.email;
-  document.getElementById('p_country').innerText = data.country;
-  document.getElementById('p_dob').innerText = data.dob;
-}
-
-// Logout
-async function logout(){
-  const { error } = await supabase.auth.signOut();
-  if(error){ alert(error.message); return; }
-  window.location.href = "index.html";
-}
+  document.getElementById('p_firstname').innerText = data.first_name || '—';
+  document.getElementById('p_lastname').innerText = data.last_name || '—';
+  document.getElementById('p_email').innerText = data.email || '—';
+  document.getElementById('p_country').innerText = data.country || '—';
+  document.getElementById('p_dob').innerText = data.dob || '—';
+};
 </script>
 
 </body>
