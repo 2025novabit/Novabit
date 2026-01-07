@@ -4,7 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login / Sign Up</title>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+  // ===== Supabase Project New =====
+  const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
+
+  window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -57,32 +65,26 @@ button:hover { background: #45a049; }
 <p id="msg"></p>
 </div>
 
-<script>
-// ===== Supabase Initialization =====
-const supabaseUrl = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
+<script type="module">
+// ===== Helpers =====
 const msg = document.getElementById('msg');
+const supabase = window.supabase;
 
-// ===== Sign Up Function =====
+// ===== Sign Up =====
 async function signUp() {
   msg.style.color = 'red';
   msg.innerText = '';
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
-  
   if (!email || !password) { msg.innerText = 'Enter email & password'; return; }
 
   try {
-    // Create user in Supabase Auth
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
+    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+    if (authError) throw authError;
 
-    // Add user to "users" table in new project
     await supabase.from('users').insert({
-      id: data.user.id,
-      email: email,
+      id: authData.user.id,
+      email,
       usdt_balance: 1000,
       btc_balance: 0
     });
@@ -94,13 +96,12 @@ async function signUp() {
   }
 }
 
-// ===== Login Function =====
+// ===== Login =====
 async function login() {
   msg.style.color = 'red';
   msg.innerText = '';
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
-
   if (!email || !password) { msg.innerText = 'Enter email & password'; return; }
 
   try {
@@ -109,8 +110,8 @@ async function login() {
 
     msg.style.color = 'green';
     msg.innerText = 'Login Successful ✅';
-    // Redirect to dashboard
-    // window.location.href = 'dashboard.html';
+    // Redirect to dashboard page
+    window.location.href = 'dashboard.html';
   } catch (err) {
     msg.innerText = err.message;
   }
