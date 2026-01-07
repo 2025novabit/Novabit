@@ -25,7 +25,8 @@ h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
 .toggle-btns button{flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;background:#f0f0f0;color:#333;cursor:pointer;transition:0.3s;}
 .toggle-btns button.active{background:#4b49ac;color:#fff;}
 form{display:none;flex-direction:column;}
-input,select{width:100%;padding:12px 15px;margin:10px 0;border-radius:8px;border:1px solid #ccc;font-size:16px;outline:none;transition:0.3s;}
+label{margin-top:10px;font-weight:500;color:#1a1a2e;}
+input,select{width:100%;padding:12px 15px;margin:5px 0;border-radius:8px;border:1px solid #ccc;font-size:16px;outline:none;transition:0.3s;}
 input:focus,select:focus{border-color:#4b49ac;box-shadow:0 0 5px rgba(75,73,172,0.5);}
 button.submit-btn{width:100%;padding:12px;margin:15px 0;border-radius:8px;border:none;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;transition:0.3s;}
 button.submit-btn:hover{background:#3a3690;}
@@ -43,19 +44,27 @@ button.submit-btn:hover{background:#3a3690;}
 
 <!-- Login Form -->
 <form id="loginForm" style="display:flex;">
-<input type="email" id="loginEmail" placeholder="Email">
-<input type="password" id="loginPassword" placeholder="Password">
+<label for="loginEmail">Email</label>
+<input type="email" id="loginEmail" placeholder="Enter your email">
+<label for="loginPassword">Password</label>
+<input type="password" id="loginPassword" placeholder="Enter your password">
 <button type="button" class="submit-btn" id="loginSubmit">Login</button>
 </form>
 
 <!-- Sign Up Form -->
 <form id="signupForm">
-<input type="text" id="signupFirstName" placeholder="First Name">
-<input type="text" id="signupLastName" placeholder="Last Name">
-<input type="date" id="signupDOB" placeholder="Date of Birth">
+<label for="signupFirstName">First Name</label>
+<input type="text" id="signupFirstName" placeholder="Enter your first name">
+<label for="signupLastName">Last Name</label>
+<input type="text" id="signupLastName" placeholder="Enter your last name">
+<label for="signupDOB">Date of Birth</label>
+<input type="date" id="signupDOB" placeholder="Select your date of birth">
+<label for="signupCountry">Country</label>
 <select id="signupCountry"><option value="">Select Country</option></select>
-<input type="email" id="signupEmail" placeholder="Email">
-<input type="password" id="signupPassword" placeholder="Password">
+<label for="signupEmail">Email</label>
+<input type="email" id="signupEmail" placeholder="Enter your email">
+<label for="signupPassword">Password</label>
+<input type="password" id="signupPassword" placeholder="Enter your password">
 <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
 </form>
 
@@ -84,7 +93,7 @@ const countries = [
 "Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
 ];
 
-// پر کردن select
+// پر کردن select کشورها
 const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
   const opt = document.createElement('option');
