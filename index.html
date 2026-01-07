@@ -52,6 +52,17 @@ tr:nth-child(even){background:#f1f1f1;}
   <a href="market.html">Markets</a>
 </div>
 
+<!-- اتصال Supabase -->
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+// 🟦 تنظیمات Supabase
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
+window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
 <script>
 // Fetch Top 100 Coins
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
@@ -69,6 +80,14 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
       </tr>`;
   });
 });
+
+// نمونه استفاده Supabase (خواندن کاربران)
+async function getUsers() {
+  const { data, error } = await supabase.from('users').select('*');
+  if(error) console.log('Supabase Error:', error);
+  else console.log('Users:', data);
+}
+getUsers();
 </script>
 
 </body>
