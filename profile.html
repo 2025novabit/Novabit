@@ -2,99 +2,205 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Login / Sign Up</title>
+<title>Profile | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script type="module" src="countries.js"></script>
+
 <style>
-body{font-family:Roboto,sans-serif;background:#f8f9fa;margin:0;height:100vh;display:flex;justify-content:center;align-items:center;}
-.container{background:#fff;padding:30px;border-radius:10px;width:400px;box-shadow:0 0 15px rgba(0,0,0,0.1);}
-h2{text-align:center;margin-bottom:20px;}
-input, select{width:100%;padding:10px;margin:8px 0;border-radius:5px;border:1px solid #ccc;}
-button{width:100%;padding:10px;margin:10px 0;border:none;border-radius:5px;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;}
-button:hover{background:#3a3690;}
-#msg{min-height:20px;font-weight:bold;text-align:center;}
+body{
+  margin:0;
+  font-family:Roboto,sans-serif;
+  background:#f4f6fa;
+}
+
+/* HEADER */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* MAIN CONTENT */
+.container{
+  padding:20px;
+}
+
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,.1);
+  max-width:600px;
+}
+
+/* PROFILE INFO */
+.profile-item{
+  margin:15px 0;
+}
+.profile-item label{
+  font-size:12px;
+  color:#777;
+}
+.profile-item span{
+  display:block;
+  font-size:15px;
+  font-weight:500;
+  margin-top:5px;
+}
+
+/* SIDE PANEL */
+#sidePanel{
+  position:fixed;
+  top:0;
+  right:-400px;
+  width:33%;
+  max-width:360px;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  transition:right 0.3s;
+  z-index:100;
+}
+#sidePanel.active{right:0;}
+
+#sidePanel h2{margin-top:0;}
+#sidePanel a{
+  display:block;
+  margin:12px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
+}
+
+.logoutBtn{
+  width:100%;
+  margin-top:30px;
+  padding:10px;
+  background:#e74c3c;
+  border:none;
+  color:#fff;
+  border-radius:5px;
+  cursor:pointer;
+}
 </style>
 </head>
-<body>
 
+<body onload="requireLogin(); loadProfile();">
+
+<header>
+  <h2>Profile</h2>
+  <button onclick="togglePanel()">Menu</button>
+</header>
+
+<!-- MAIN PAGE CONTENT -->
 <div class="container">
-<h2>Login / Sign Up</h2>
+  <div class="card">
+    <h3>User Information</h3>
 
-<!-- Email / Password -->
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="password" placeholder="Password">
+    <div class="profile-item">
+      <label>First Name</label>
+      <span id="p_firstname">—</span>
+    </div>
 
-<!-- Sign Up Additional -->
-<input type="text" id="first_name" placeholder="First Name">
-<input type="text" id="last_name" placeholder="Last Name">
-<select id="country"><option value="">Select Country</option></select>
-<input type="date" id="dob">
+    <div class="profile-item">
+      <label>Last Name</label>
+      <span id="p_lastname">—</span>
+    </div>
 
-<button id="signupBtn">Sign Up</button>
-<button id="loginBtn">Login</button>
-<p id="msg"></p>
+    <div class="profile-item">
+      <label>Email</label>
+      <span id="p_email">—</span>
+    </div>
+
+    <div class="profile-item">
+      <label>Country</label>
+      <span id="p_country">—</span>
+    </div>
+
+    <div class="profile-item">
+      <label>Date of Birth</label>
+      <span id="p_dob">—</span>
+    </div>
+
+  </div>
 </div>
 
+<!-- SIDE PANEL -->
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
+  <h2>Menu</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="profile.html">Profile</a>
+  <a href="kyc.html">KYC</a>
+  <a href="changepassword.html">Change Password</a>
+  <a href="2fa.html">2FA Settings</a>
+  <a href="fee.html">Fees</a>
+  <a href="referral.html">Referral</a>
+
+  <button class="logoutBtn" onclick="logout()">Logout</button>
+</div>
+
+<!-- Supabase -->
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import { countries } from './countries.js';
 
-// Supabase
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const msg = document.getElementById('msg');
-const countrySelect = document.getElementById('country');
+window.togglePanel = () => {
+  document.getElementById('sidePanel').classList.toggle('active');
+};
 
-// populate countries
-countries.forEach(c => {
-  const opt = document.createElement('option');
-  opt.value = c.name;
-  opt.text = c.name;
-  countrySelect.appendChild(opt);
-});
+window.logout = async () => {
+  const { error } = await supabase.auth.signOut();
+  if(error){ alert(error.message); return; }
+  window.location.href = "index.html";
+};
 
-// Sign Up
-document.getElementById('signupBtn').addEventListener('click', async()=>{
-  msg.style.color='red';
-  msg.innerText='';
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
-  const first_name = document.getElementById('first_name').value.trim();
-  const last_name = document.getElementById('last_name').value.trim();
-  const country = document.getElementById('country').value;
-  const dob = document.getElementById('dob').value;
+window.requireLogin = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  console.log("Session:", session);
+  if(!session) window.location.href = "index.html";
+};
 
-  if(!email||!password||!first_name||!last_name||!country||!dob){ msg.innerText="All fields required"; return; }
+window.loadProfile = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if(!session) return;
 
-  try{
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if(error) throw error;
+  const userId = session.user.id;
+  console.log("User ID:", userId);
 
-    // insert into users table
-    await supabase.from('users').insert({ id: data.user.id, first_name, last_name, email, country, dob });
+  const { data, error } = await supabase
+    .from('users')
+    .select('first_name,last_name,email,country,dob')
+    .eq('id', userId)
+    .single();
 
-    msg.style.color='green';
-    msg.innerText='Sign Up Successful ✅';
-  }catch(e){ msg.innerText=e.message; }
-});
+  if(error) {
+    console.error("Error fetching user:", error);
+    return;
+  }
+  console.log("User Data:", data);
 
-// Login
-document.getElementById('loginBtn').addEventListener('click', async()=>{
-  msg.style.color='red';
-  msg.innerText='';
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
-  if(!email||!password){ msg.innerText="Enter email & password"; return; }
-  try{
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if(error) throw error;
-    msg.style.color='green';
-    msg.innerText='Login Successful ✅';
-    window.location.href='profile.html';
-  }catch(e){ msg.innerText=e.message; }
-});
+  document.getElementById('p_firstname').innerText = data?.first_name || '—';
+  document.getElementById('p_lastname').innerText = data?.last_name || '—';
+  document.getElementById('p_email').innerText = data?.email || '—';
+  document.getElementById('p_country').innerText = data?.country || '—';
+  document.getElementById('p_dob').innerText = data?.dob || '—';
+};
 </script>
 
 </body>
