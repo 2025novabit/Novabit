@@ -7,115 +7,160 @@
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-  // ===== Supabase Project New =====
+  // ===== اتصال Supabase پروژه جدید =====
   const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
-
   window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
+
 <style>
 body {
-  font-family: Arial, sans-serif;
-  background: #f0f2f5;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  margin: 0;
 }
 .container {
   background: #fff;
-  padding: 30px;
-  border-radius: 10px;
-  width: 350px;
+  border-radius: 15px;
+  width: 400px;
+  max-width: 90%;
+  padding: 40px 30px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
   text-align: center;
-  box-shadow: 0 0 15px rgba(0,0,0,0.1);
 }
-h2 { margin-bottom: 20px; }
+.container h2 {
+  margin-bottom: 25px;
+  color: #333;
+}
 input {
   width: 100%;
-  padding: 10px;
+  padding: 12px 15px;
   margin: 10px 0;
-  border-radius: 5px;
+  border-radius: 8px;
   border: 1px solid #ccc;
+  font-size: 16px;
+  outline: none;
+  transition: 0.3s;
+}
+input:focus {
+  border-color: #2575fc;
+  box-shadow: 0 0 5px rgba(37,117,252,0.5);
 }
 button {
   width: 100%;
-  padding: 10px;
-  margin: 10px 0;
+  padding: 12px;
+  margin: 12px 0;
+  border-radius: 8px;
   border: none;
-  border-radius: 5px;
-  background: #4caf50;
-  color: white;
+  background: #2575fc;
+  color: #fff;
   font-size: 16px;
   cursor: pointer;
+  transition: 0.3s;
 }
-button:hover { background: #45a049; }
-#msg { margin-top: 10px; min-height: 20px; font-weight: bold; }
+button:hover { background: #6a11cb; }
+#msg {
+  margin-top: 10px;
+  min-height: 22px;
+  font-weight: 600;
+  color: red;
+}
+.toggle-btns {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+.toggle-btns button {
+  flex: 1;
+  margin: 0 5px;
+  background: #f0f0f0;
+  color: #333;
+}
+.toggle-btns button.active {
+  background: #2575fc;
+  color: #fff;
+}
 </style>
 </head>
 <body>
 
 <div class="container">
-<h2>Login / Sign Up</h2>
+<h2>Welcome</h2>
+<div class="toggle-btns">
+  <button id="btnSignIn" class="active">Login</button>
+  <button id="btnSignUp">Sign Up</button>
+</div>
+
 <input type="email" id="email" placeholder="Email">
 <input type="password" id="password" placeholder="Password">
-<button onclick="signUp()">Sign Up</button>
-<button onclick="login()">Login</button>
+<button id="actionBtn">Login</button>
 <p id="msg"></p>
 </div>
 
 <script type="module">
-// ===== Helpers =====
-const msg = document.getElementById('msg');
 const supabase = window.supabase;
+const msg = document.getElementById('msg');
 
-// ===== Sign Up =====
-async function signUp() {
+let mode = 'login'; // login or signup
+
+const btnSignIn = document.getElementById('btnSignIn');
+const btnSignUp = document.getElementById('btnSignUp');
+const actionBtn = document.getElementById('actionBtn');
+
+btnSignIn.addEventListener('click', () => {
+  mode = 'login';
+  btnSignIn.classList.add('active');
+  btnSignUp.classList.remove('active');
+  actionBtn.textContent = 'Login';
+  msg.textContent = '';
+});
+
+btnSignUp.addEventListener('click', () => {
+  mode = 'signup';
+  btnSignUp.classList.add('active');
+  btnSignIn.classList.remove('active');
+  actionBtn.textContent = 'Sign Up';
+  msg.textContent = '';
+});
+
+actionBtn.addEventListener('click', async () => {
   msg.style.color = 'red';
   msg.innerText = '';
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
-  if (!email || !password) { msg.innerText = 'Enter email & password'; return; }
+  if(!email || !password){ msg.innerText = 'Enter email & password'; return; }
 
   try {
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
-    if (authError) throw authError;
+    if(mode === 'signup') {
+      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+      if(authError) throw authError;
 
-    await supabase.from('users').insert({
-      id: authData.user.id,
-      email,
-      usdt_balance: 1000,
-      btc_balance: 0
-    });
+      await supabase.from('users').insert({
+        id: authData.user.id,
+        email,
+        usdt_balance: 1000,
+        btc_balance: 0
+      });
 
-    msg.style.color = 'green';
-    msg.innerText = 'Sign Up Successful ✅';
-  } catch (err) {
+      msg.style.color = 'green';
+      msg.innerText = 'Sign Up Successful ✅';
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if(error) throw error;
+
+      msg.style.color = 'green';
+      msg.innerText = 'Login Successful ✅';
+      // بعد از لاگین کاربر را به داشبورد هدایت می‌کنیم
+      window.location.href = 'dashboard.html';
+    }
+  } catch(err) {
     msg.innerText = err.message;
   }
-}
-
-// ===== Login =====
-async function login() {
-  msg.style.color = 'red';
-  msg.innerText = '';
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
-  if (!email || !password) { msg.innerText = 'Enter email & password'; return; }
-
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-
-    msg.style.color = 'green';
-    msg.innerText = 'Login Successful ✅';
-    // Redirect to dashboard page
-    window.location.href = 'dashboard.html';
-  } catch (err) {
-    msg.innerText = err.message;
-  }
-}
+});
 </script>
 
 </body>
