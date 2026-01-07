@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login / Sign Up</title>
 
-<!-- Supabase JS بدون ماژول -->
+<!-- Supabase JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 
 <style>
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f8f9fa;display:flex;justify-content:center;align-items:center;height:100vh;}
-.container{background:#fff;padding:40px 30px;border-radius:15px;width:450px;max-width:95%;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+.container{background:#fff;padding:40px 30px;border-radius:15px;width:500px;max-width:95%;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
 h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
 .toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
 .toggle-btns button{flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;background:#f0f0f0;color:#333;cursor:pointer;transition:0.3s;}
@@ -54,13 +54,25 @@ button.submit-btn:hover{background:#3a3690;}
 </div>
 
 <script>
-// === لیست کشورها مستقیم ===
+// === لیست کامل کشورها ===
 const countries = [
-  "Afghanistan","Albania","Algeria","Andorra","Angola",
-  "Argentina","Armenia","Australia","Austria","Azerbaijan",
-  "Bahamas","Bahrain","Bangladesh","Belgium","Brazil",
-  "Canada","China","France","Germany","India",
-  "Iran","Italy","Japan","United Kingdom","United States","Vietnam"
+"Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria",
+"Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina",
+"Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic",
+"Chad","Chile","China","Colombia","Comoros","Congo, Democratic Republic of the","Congo, Republic of the","Costa Rica","Croatia","Cuba",
+"Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea",
+"Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala",
+"Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy",
+"Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Korea, North","Korea, South","Kosovo","Kuwait","Kyrgyzstan","Laos","Latvia",
+"Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta",
+"Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar",
+"Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Macedonia","Norway","Oman","Pakistan","Palau",
+"Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda",
+"Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia",
+"Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","Spain",
+"Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga",
+"Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States",
+"Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
 ];
 
 // پر کردن select
@@ -72,7 +84,7 @@ countries.forEach(c=>{
   countrySelect.appendChild(opt);
 });
 
-// فرم‌ها و سوئیچ بین آنها
+// فرم‌ها و سوئیچ
 const msg=document.getElementById('msg');
 const btnLogin=document.getElementById('btnLogin');
 const btnSignUp=document.getElementById('btnSignUp');
@@ -91,7 +103,7 @@ btnSignUp.addEventListener('click',()=>{
 // === Supabase ===
 const supabaseUrl = 'https://iecnioogmafgxwarmkxz.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
-const supabase = supabaseJs.createClient(supabaseUrl, supabaseKey);
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 // Login
 document.getElementById('loginSubmit').addEventListener('click', async ()=>{
