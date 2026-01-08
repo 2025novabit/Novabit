@@ -41,6 +41,7 @@ header button{
   border-radius:10px;
   box-shadow:0 4px 8px rgba(0,0,0,.1);
   max-width:600px;
+  margin:auto;
 }
 
 /* PROFILE INFO */
@@ -170,21 +171,25 @@ window.logout = async () => {
 // Require login
 window.requireLogin = async () => {
   const { data, error } = await supabase.auth.getSession();
+  console.log("Session Data:", data);
+  console.log("Session Error:", error);
+
   if (!data.session) {
-    console.log("No active session, redirect to login");
+    alert("No active session! Redirecting to login.");
     window.location.href = "index.html";
     return false;
   }
   return true;
 };
 
-// Load profile data
+// Load profile data with debug for mobile
 window.loadProfile = async () => {
   const loginOk = await requireLogin();
   if (!loginOk) return;
 
   const { data: { session } } = await supabase.auth.getSession();
   const userId = session.user.id;
+  console.log("User ID:", userId);
 
   const { data, error } = await supabase
     .from('users')
@@ -192,10 +197,12 @@ window.loadProfile = async () => {
     .eq('id', userId)
     .single();
 
-  if (error) {
-    console.error("Error loading user profile:", error);
-    return;
-  }
+  console.log("Profile Data:", data);
+  console.log("Profile Error:", error);
+
+  alert("Profile Data: " + JSON.stringify(data) + "\nError: " + JSON.stringify(error));
+
+  if (!data) return;
 
   document.getElementById('p_firstname').textContent = data.first_name || '—';
   document.getElementById('p_lastname').textContent  = data.last_name  || '—';
@@ -205,7 +212,6 @@ window.loadProfile = async () => {
 };
 
 // Run on page load
-requireLogin();
 loadProfile();
 </script>
 
