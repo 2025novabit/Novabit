@@ -2,198 +2,118 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard</title>
+<title>Profile</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body {
-  font-family: 'Roboto', sans-serif;
+  font-family: Roboto, sans-serif;
   margin: 0;
-  background-color: #f8f9fa;
-  padding-bottom: 60px;
+  background: #f4f6f8;
 }
 header {
-  background-color: #1a1a2e;
+  background: #1a1a2e;
   color: #fff;
   padding: 15px 20px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
-header h1 { margin: 0; font-size: 20px; }
-#menuBtn {
-  background-color: #4b49ac;
-  color: #fff;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: 500;
+header h1 {
+  margin: 0;
+  font-size: 20px;
 }
-#sideMenu {
-  position: fixed;
-  top: 0;
-  right: -400px;
-  width: 33%;
-  max-width: 300px;
-  height: 100%;
-  background-color: #fff;
-  box-shadow: -2px 0 6px rgba(0,0,0,0.2);
-  transition: right 0.3s;
-  z-index: 100;
+.container {
   padding: 20px;
 }
-#sideMenu.active { right: 0; }
-#sideMenu h2 { margin-top: 0; }
-#sideMenu a {
-  display: block;
-  margin: 15px 0;
-  color: #1a1a2e;
-  text-decoration: none;
-  font-weight: 500;
-}
-#closeMenu {
-  background-color: #e74c3c;
-  color: #fff;
-  border: none;
-  padding: 8px 12px;
-  cursor: pointer;
-  border-radius: 5px;
-  margin-bottom: 15px;
-}
-.container { padding: 20px; }
-.balance-card {
-  background-color: #fff;
+.card {
+  background: #fff;
   padding: 25px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  margin-bottom: 30px;
+  max-width: 500px;
+  margin: auto;
 }
-.balance-card h2 { margin-top: 0; }
-.balance-card p {
-  margin: 10px 0 20px;
+label {
+  display: block;
+  margin-top: 15px;
+  font-weight: 500;
+}
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  background: #4b49ac;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
   font-size: 16px;
-  line-height: 1.5;
-}
-.balance-card button {
-  padding: 10px 20px;
-  margin-right: 10px;
-  background-color: #4b49ac;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
   cursor: pointer;
-  font-weight: 500;
 }
-.balance-card button:hover { background-color: #3a3690; }
-.tabs {
-  display: flex;
-  margin-bottom: 15px;
-  border-bottom: 2px solid #ccc;
+button:hover {
+  background: #3a3690;
 }
-.tabs button {
-  flex: 1;
-  padding: 10px;
-  background-color: #fff;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
+.success {
+  color: green;
+  margin-top: 15px;
 }
-.tabs button.active {
-  border-bottom: 3px solid #4b49ac;
+.error {
+  color: red;
+  margin-top: 15px;
+}
+.back {
+  text-align: center;
+  margin-top: 15px;
+}
+.back a {
   color: #4b49ac;
-}
-.table-container {
-  max-height: 400px;
-  overflow-y: auto;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  margin-bottom: 30px;
-}
-th, td {
-  padding: 10px;
-  text-align: left;
-}
-th {
-  background-color: #1a1a2e;
-  color: #fff;
-  font-weight: 500;
-  position: sticky;
-  top: 0;
-}
-tr:nth-child(even) { background-color: #f1f1f1; }
-.price-up { color: green; font-weight: bold; }
-.price-down { color: red; font-weight: bold; }
-.star { cursor: pointer; color: gray; font-size: 18px; }
-.star.active { color: gold; }
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  background-color: #1a1a2e;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 0;
-  z-index: 10;
-}
-.bottom-nav a {
-  color: #fff;
   text-decoration: none;
-  font-size: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  font-weight: 500;
 }
-.bottom-nav a.active { color: #4b49ac; }
-@media (min-width: 768px) { .bottom-nav { display: none; } }
 </style>
 </head>
 
 <body>
 
 <header>
-  <h1>Dashboard</h1>
-  <button id="menuBtn" onclick="toggleMenu()">Menu</button>
+  <h1>Profile</h1>
 </header>
 
-<div id="sideMenu">
-  <button id="closeMenu" onclick="toggleMenu()">Close</button>
-  <h2>Menu</h2>
-  <a href="profile.html">Profile</a>
-  <a href="kyc.html">KYC</a>
-  <a href="changepassword.html">Change Password</a>
-  <a href="2fa.html">2FA Settings</a>
-  <a href="fee.html">Fees</a>
-  <a href="referral.html">Referral</a>
-</div>
-
 <div class="container">
-  <div class="balance-card">
-    <h2>Welcome, <span id="user-name">...</span></h2>
-    <p>Deposit. Trade. Grow. 🚀<br>
-    Start now and take control of your financial future!</p>
-    <div style="display:flex;gap:10px;margin-bottom:20px;">
-      <button onclick="window.location.href='wallet.html'">Deposit</button>
-      <button onclick="window.location.href='referral.html'">Referral</button>
+  <div class="card">
+    <label>First Name</label>
+    <input type="text" id="first_name" placeholder="Enter first name">
+
+    <label>Last Name</label>
+    <input type="text" id="last_name" placeholder="Enter last name">
+
+    <button onclick="saveProfile()">Save Profile</button>
+
+    <div id="message"></div>
+
+    <div class="back">
+      <a href="dashboard.html">← Back to Dashboard</a>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(
+  "https://YOUR_PROJECT_ID.supabase.co",
+  "YOUR_PUBLIC_ANON_KEY"
+);
 
-async function loadUserName() {
+let currentUserId = null;
+
+// Load profile
+async function loadProfile() {
   const { data: { user } } = await supabaseClient.auth.getUser();
 
   if (!user) {
@@ -201,22 +121,43 @@ async function loadUserName() {
     return;
   }
 
+  currentUserId = user.id;
+
   const { data, error } = await supabaseClient
     .from("users")
     .select("first_name, last_name")
     .eq("id", user.id)
     .single();
 
-  if (error || !data) {
-    console.error(error);
-    return;
+  if (data) {
+    document.getElementById("first_name").value = data.first_name || "";
+    document.getElementById("last_name").value = data.last_name || "";
   }
-
-  document.getElementById("user-name").innerText =
-    data.first_name + " " + data.last_name;
 }
 
-loadUserName();
+async function saveProfile() {
+  const firstName = document.getElementById("first_name").value.trim();
+  const lastName = document.getElementById("last_name").value.trim();
+
+  const { error } = await supabaseClient
+    .from("users")
+    .update({
+      first_name: firstName,
+      last_name: lastName
+    })
+    .eq("id", currentUserId);
+
+  const msg = document.getElementById("message");
+  if (error) {
+    msg.className = "error";
+    msg.innerText = "Error saving profile";
+  } else {
+    msg.className = "success";
+    msg.innerText = "Profile updated successfully ✔";
+  }
+}
+
+loadProfile();
 </script>
 
 </body>
