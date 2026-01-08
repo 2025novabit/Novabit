@@ -131,7 +131,7 @@ document.getElementById('loginSubmit').addEventListener('click', async ()=>{
   }catch(err){ msg.style.color='red'; msg.innerText=err.message; }
 });
 
-// ===== Sign Up =====
+// ===== Sign Up (اصلاح شده برای Trigger) =====
 document.getElementById('signupSubmit').addEventListener('click', async ()=>{
   const firstName=document.getElementById('signupFirstName').value.trim();
   const lastName=document.getElementById('signupLastName').value.trim();
@@ -141,27 +141,33 @@ document.getElementById('signupSubmit').addEventListener('click', async ()=>{
   const password=document.getElementById('signupPassword').value.trim();
 
   if(!firstName||!lastName||!dob||!country||!email||!password){ 
-    msg.style.color='red'; msg.innerText='Please fill all fields'; 
+    msg.style.color='red'; 
+    msg.innerText='Please fill all fields'; 
     return; 
   }
 
   try{
-    // ثبت نام در Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+    // 1️⃣ ثبت‌نام در Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password
+    });
     if(authError) throw authError;
 
-    // ثبت اطلاعات در جدول users
-    const { data, error } = await supabase.from('users').insert([{
-      id: authData.user.id,
-      email,
-      first_name:firstName,
-      last_name:lastName,
-      dob,
-      country,
-      usdt_balance:1000,
-      btc_balance:0
-    }]);
-    if(error) throw error;
+    // 2️⃣ UPDATE اطلاعات روی Row ساخته‌شده توسط Trigger
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
+        first_name: firstName,
+        last_name: lastName,
+        dob: dob,
+        country: country,
+        usdt_balance: 1000,
+        btc_balance: 0
+      })
+      .eq('id', authData.user.id);
+
+    if(updateError) throw updateError;
 
     msg.style.color='green';
     msg.innerText='Sign Up Successful ✅. You can now login.';
