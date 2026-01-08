@@ -168,31 +168,25 @@ window.logout = async () => {
   window.location.href = "index.html";
 };
 
-// Load profile with auto-create row
+// Load profile with auto-create row (final version)
 window.loadProfile = async () => {
-  // 1️⃣ بررسی session
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  console.log("Session:", session, sessionError);
-
+  // بررسی session
+  const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    alert("No active session! Redirecting to login.");
     window.location.href = "index.html";
     return;
   }
 
   const userId = session.user.id;
-  console.log("User ID:", userId);
 
-  // 2️⃣ خواندن پروفایل
+  // خواندن پروفایل
   let { data, error } = await supabase
     .from('users')
     .select('first_name,last_name,email,country,dob')
     .eq('id', userId)
     .single();
 
-  console.log("Initial Profile Data:", data, error);
-
-  // 3️⃣ اگر row وجود ندارد، خودکار ایجاد کن
+  // اگر row وجود ندارد، خودکار ایجاد کن
   if (error && error.code === 'PGRST116') {
     await supabase.from('users').insert({
       id: userId,
@@ -203,8 +197,6 @@ window.loadProfile = async () => {
       dob: ''
     });
 
-    console.log("New row created for user");
-
     // دوباره داده را بخوان
     const { data: newData } = await supabase
       .from('users')
@@ -213,9 +205,6 @@ window.loadProfile = async () => {
       .single();
     data = newData;
   }
-
-  console.log("Final Profile Data:", data);
-  alert("Profile Data Loaded: " + JSON.stringify(data));
 
   // نمایش در صفحه
   document.getElementById('p_firstname').textContent = data.first_name || '—';
