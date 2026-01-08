@@ -2,79 +2,95 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Profile</title>
+<title>Profile | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body {
-  font-family: Roboto, sans-serif;
-  margin: 0;
-  background: #f4f6f8;
+body{
+  margin:0;
+  font-family:Roboto,sans-serif;
+  background:#f4f6fa;
 }
-header {
-  background: #1a1a2e;
-  color: #fff;
-  padding: 15px 20px;
-  display: flex;
-  align-items: center;
+
+/* HEADER */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
-header h1 {
-  margin: 0;
-  font-size: 20px;
+header button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:5px;
+  cursor:pointer;
 }
-.container {
-  padding: 20px;
+
+/* MAIN CONTENT */
+.container{
+  padding:20px;
 }
-.card {
-  background: #fff;
-  padding: 25px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  max-width: 500px;
-  margin: auto;
+
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,.1);
+  max-width:600px;
 }
-label {
-  display: block;
-  margin-top: 15px;
-  font-weight: 500;
+
+/* PROFILE INFO */
+.profile-item{
+  margin:15px 0;
 }
-input {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 15px;
+.profile-item label{
+  font-size:12px;
+  color:#777;
 }
-button {
-  margin-top: 20px;
-  width: 100%;
-  padding: 12px;
-  background: #4b49ac;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
+.profile-item span{
+  display:block;
+  font-size:15px;
+  font-weight:500;
+  margin-top:5px;
 }
-button:hover {
-  background: #3a3690;
+
+/* SIDE PANEL */
+#sidePanel{
+  position:fixed;
+  top:0;
+  right:-400px;
+  width:33%;
+  max-width:360px;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  transition:right 0.3s;
+  z-index:100;
 }
-.success {
-  color: green;
-  margin-top: 15px;
+#sidePanel.active{right:0;}
+
+#sidePanel a{
+  display:block;
+  margin:12px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
 }
-.error {
-  color: red;
-  margin-top: 15px;
-}
-.back {
-  text-align: center;
-  margin-top: 15px;
-}
-.back a {
-  color: #4b49ac;
-  text-decoration: none;
-  font-weight: 500;
+
+.logoutBtn{
+  width:100%;
+  margin-top:30px;
+  padding:10px;
+  background:#e74c3c;
+  border:none;
+  color:#fff;
+  border-radius:5px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -82,81 +98,112 @@ button:hover {
 <body>
 
 <header>
-  <h1>Profile</h1>
+  <h2>Profile</h2>
+  <button onclick="togglePanel()">Menu</button>
 </header>
 
 <div class="container">
   <div class="card">
-    <label>First Name</label>
-    <input type="text" id="first_name" placeholder="Enter first name">
+    <h3>User Information</h3>
 
-    <label>Last Name</label>
-    <input type="text" id="last_name" placeholder="Enter last name">
-
-    <button onclick="saveProfile()">Save Profile</button>
-
-    <div id="message"></div>
-
-    <div class="back">
-      <a href="dashboard.html">← Back to Dashboard</a>
+    <div class="profile-item">
+      <label>First Name</label>
+      <span id="p_firstname">—</span>
     </div>
+
+    <div class="profile-item">
+      <label>Last Name</label>
+      <span id="p_lastname">—</span>
+    </div>
+
+    <div class="profile-item">
+      <label>Email</label>
+      <span id="p_email">—</span>
+    </div>
+
+    <div class="profile-item">
+      <label>Country</label>
+      <span id="p_country">—</span>
+    </div>
+
+    <div class="profile-item">
+      <label>Date of Birth</label>
+      <span id="p_dob">—</span>
+    </div>
+
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const supabaseClient = supabase.createClient(
-  "https://YOUR_PROJECT_ID.supabase.co",
-  "YOUR_PUBLIC_ANON_KEY"
-);
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="profile.html">Profile</a>
+  <a href="kyc.html">KYC</a>
+  <a href="changepassword.html">Change Password</a>
+  <a href="2fa.html">2FA Settings</a>
+  <a href="fee.html">Fees</a>
+  <a href="referral.html">Referral</a>
 
-let currentUserId = null;
+  <button class="logoutBtn" onclick="logout()">Logout</button>
+</div>
 
-// Load profile
-async function loadProfile() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  if (!user) {
-    window.location.href = "login.html";
+// ===== Supabase Configuration =====
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Toggle side panel
+window.togglePanel = () => {
+  document.getElementById('sidePanel').classList.toggle('active');
+};
+
+// Logout
+window.logout = async () => {
+  await supabase.auth.signOut();
+  window.location.href = "index.html";
+};
+
+// Require login
+window.requireLogin = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    // اگر کاربر لاگین نباشد
+    window.location.href = "index.html";
+    return;
+  }
+};
+
+// Load profile data
+window.loadProfile = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+
+  const userId = session.user.id;
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('first_name,last_name,email,country,dob')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error("Error loading user profile:", error);
     return;
   }
 
-  currentUserId = user.id;
+  document.getElementById('p_firstname').textContent = data.first_name || '—';
+  document.getElementById('p_lastname').textContent  = data.last_name  || '—';
+  document.getElementById('p_email').textContent     = data.email      || '—';
+  document.getElementById('p_country').textContent   = data.country    || '—';
+  document.getElementById('p_dob').textContent       = data.dob        || '—';
+};
 
-  const { data, error } = await supabaseClient
-    .from("users")
-    .select("first_name, last_name")
-    .eq("id", user.id)
-    .single();
-
-  if (data) {
-    document.getElementById("first_name").value = data.first_name || "";
-    document.getElementById("last_name").value = data.last_name || "";
-  }
-}
-
-async function saveProfile() {
-  const firstName = document.getElementById("first_name").value.trim();
-  const lastName = document.getElementById("last_name").value.trim();
-
-  const { error } = await supabaseClient
-    .from("users")
-    .update({
-      first_name: firstName,
-      last_name: lastName
-    })
-    .eq("id", currentUserId);
-
-  const msg = document.getElementById("message");
-  if (error) {
-    msg.className = "error";
-    msg.innerText = "Error saving profile";
-  } else {
-    msg.className = "success";
-    msg.innerText = "Profile updated successfully ✔";
-  }
-}
-
+// Run on page load
+requireLogin();
 loadProfile();
 </script>
 
