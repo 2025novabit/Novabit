@@ -190,55 +190,57 @@ tr:nth-child(even) { background-color: #f1f1f1; }
   <a href="fee.html">Fees</a>
   <a href="referral.html">Referral</a>
 </div>
+
 <div class="container">
   <!-- Balance Card -->
   <div class="balance-card">
-    <h2>Welcome!</h2>
+    <h2>Welcome, <span id="userName">—</span>!</h2>
     <p>Deposit. Trade. Grow. 🚀<br>
     Start now and take control of your financial future!</p>
     <div style="display:flex;gap:10px;margin-bottom:20px;">
-    <button onclick="window.location.href='wallet.html'"
-      style="flex:1;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:6px;font-weight:500;cursor:pointer;">
-      Deposit
-    </button>
+      <button onclick="window.location.href='wallet.html'"
+        style="flex:1;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:6px;font-weight:500;cursor:pointer;">
+        Deposit
+      </button>
 
-    <button onclick="window.location.href='referral.html'"
-  style="flex:1;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:6px;font-weight:500;cursor:pointer;">
-  Referral
-</button>
-  </div>
+      <button onclick="window.location.href='referral.html'"
+        style="flex:1;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:6px;font-weight:500;cursor:pointer;">
+        Referral
+      </button>
+    </div>
 
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="active" onclick="openTab(event,'top')">Top Coins</button>
-    <button onclick="openTab(event,'movers')">Biggest Movers</button>
-    <button onclick="openTab(event,'starred')">Starred Coins</button>
-  </div>
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="active" onclick="openTab(event,'top')">Top Coins</button>
+      <button onclick="openTab(event,'movers')">Biggest Movers</button>
+      <button onclick="openTab(event,'starred')">Starred Coins</button>
+    </div>
 
-  <!-- Top Coins -->
-  <div id="top" class="table-container">
-    <table id="topTable">
-      <thead>
-        <tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th><th>⭐</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+    <!-- Top Coins -->
+    <div id="top" class="table-container">
+      <table id="topTable">
+        <thead>
+          <tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th><th>⭐</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-  <!-- Movers -->
-  <div id="movers" class="table-container" style="display:none">
-    <table id="moversTable">
-      <thead><tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
+    <!-- Movers -->
+    <div id="movers" class="table-container" style="display:none">
+      <table id="moversTable">
+        <thead><tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-  <!-- Starred -->
-  <div id="starred" class="table-container" style="display:none">
-    <table id="starredTable">
-      <thead><tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <!-- Starred -->
+    <div id="starred" class="table-container" style="display:none">
+      <table id="starredTable">
+        <thead><tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -250,13 +252,14 @@ tr:nth-child(even) { background-color: #f1f1f1; }
   <a href="trade.html">Trade</a>
 </div>
 
-<script>
-function openWallet(){
-  document.getElementById('dashboardSection').style.display = 'none';
-  document.getElementById('walletSection').style.display = 'block';
-}
-</script>
-<script>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // ------- Menu -------
 const sideMenu = document.getElementById('sideMenu');
 function toggleMenu() {
@@ -294,7 +297,7 @@ function renderStarredTable() {
   });
 }
 
-// ------- Fetch API -------
+// ------- Fetch API for Coins -------
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(res => res.json())
 .then(data => {
@@ -347,6 +350,42 @@ function toggleStar(symbol, price, change, el) {
   saveStarred();
   renderStarredTable();
 }
+
+// ------- Load User Name -------
+async function loadUserName() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+  const userId = session.user.id;
+
+  let { data, error } = await supabase
+    .from('users')
+    .select('first_name,last_name')
+    .eq('id', userId)
+    .single();
+
+  if (error && error.code === 'PGRST116') {
+    await supabase.from('users').insert({
+      id: userId,
+      first_name: '',
+      last_name: '',
+      email: session.user.email,
+      country: '',
+      dob: ''
+    });
+    const { data: newData } = await supabase
+      .from('users')
+      .select('first_name,last_name')
+      .eq('id', userId)
+      .single();
+    data = newData;
+  }
+
+  const fullName = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'User';
+  document.getElementById('userName').textContent = fullName;
+}
+
+// Load username on dashboard
+loadUserName();
 </script>
 </body>
 </html>
