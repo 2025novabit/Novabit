@@ -189,60 +189,50 @@ tr:nth-child(even) { background-color: #f1f1f1; }
   <a href="2fa.html">2FA Settings</a>
   <a href="fee.html">Fees</a>
   <a href="referral.html">Referral</a>
+  <button style="width:100%;margin-top:20px;padding:10px;background:#e74c3c;color:#fff;border:none;border-radius:5px;cursor:pointer;" onclick="logout()">Logout</button>
 </div>
+
 <div class="container">
-  <!-- Balance Card -->
   <div class="balance-card">
-    <h2>Welcome!</h2>
+    <h2>Welcome, <span id="userName">—</span>!</h2>
     <p>Deposit. Trade. Grow. 🚀<br>
     Start now and take control of your financial future!</p>
     <div style="display:flex;gap:10px;margin-bottom:20px;">
-    <button onclick="window.location.href='wallet.html'"
-      style="flex:1;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:6px;font-weight:500;cursor:pointer;">
-      Deposit
-    </button>
+      <button onclick="window.location.href='wallet.html'" style="flex:1;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:6px;font-weight:500;cursor:pointer;">Deposit</button>
+      <button onclick="window.location.href='referral.html'" style="flex:1;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:6px;font-weight:500;cursor:pointer;">Referral</button>
+    </div>
 
-    <button onclick="window.location.href='referral.html'"
-  style="flex:1;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:6px;font-weight:500;cursor:pointer;">
-  Referral
-</button>
-  </div>
+    <div class="tabs">
+      <button class="active" onclick="openTab(event,'top')">Top Coins</button>
+      <button onclick="openTab(event,'movers')">Biggest Movers</button>
+      <button onclick="openTab(event,'starred')">Starred Coins</button>
+    </div>
 
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="active" onclick="openTab(event,'top')">Top Coins</button>
-    <button onclick="openTab(event,'movers')">Biggest Movers</button>
-    <button onclick="openTab(event,'starred')">Starred Coins</button>
-  </div>
+    <div id="top" class="table-container">
+      <table id="topTable">
+        <thead>
+          <tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th><th>⭐</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-  <!-- Top Coins -->
-  <div id="top" class="table-container">
-    <table id="topTable">
-      <thead>
-        <tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th><th>⭐</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+    <div id="movers" class="table-container" style="display:none">
+      <table id="moversTable">
+        <thead><tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-  <!-- Movers -->
-  <div id="movers" class="table-container" style="display:none">
-    <table id="moversTable">
-      <thead><tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- Starred -->
-  <div id="starred" class="table-container" style="display:none">
-    <table id="starredTable">
-      <thead><tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <div id="starred" class="table-container" style="display:none">
+      <table id="starredTable">
+        <thead><tr><th>Symbol</th><th>Price (USD)</th><th>24h Change</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<!-- Bottom Nav -->
 <div class="bottom-nav">
   <a href="dashboard.html" class="active">dashboard</a>
   <a href="wallet.html">Wallet</a>
@@ -250,103 +240,100 @@ tr:nth-child(even) { background-color: #f1f1f1; }
   <a href="trade.html">Trade</a>
 </div>
 
-<script>
-function openWallet(){
-  document.getElementById('dashboardSection').style.display = 'none';
-  document.getElementById('walletSection').style.display = 'block';
-}
-</script>
-<script>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // ------- Menu -------
 const sideMenu = document.getElementById('sideMenu');
-function toggleMenu() {
+window.toggleMenu = () => {
   sideMenu.classList.toggle('active');
-}
+};
+
+// ------- Logout -------
+window.logout = async () => {
+  await supabase.auth.signOut();
+  window.location.href = "index.html";
+};
 
 // ------- Tabs -------
-function openTab(evt, tabName) {
+window.openTab = (evt, tabName) => {
   ['top','movers','starred'].forEach(id => {
     document.getElementById(id).style.display = 'none';
   });
-  document.querySelectorAll('.tabs button').forEach(btn => {
-    btn.classList.remove('active');
-  });
+  document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
   document.getElementById(tabName).style.display = 'block';
   evt.currentTarget.classList.add('active');
-}
+};
 
-// ------- Starred Storage -------
+// ------- Starred Coins -------
 let starredCoins = JSON.parse(localStorage.getItem('starredCoins') || '[]');
-function saveStarred() {
-  localStorage.setItem('starredCoins', JSON.stringify(starredCoins));
-}
+function saveStarred() { localStorage.setItem('starredCoins', JSON.stringify(starredCoins)); }
 function renderStarredTable() {
   const starredTable = document.querySelector('#starredTable tbody');
   starredTable.innerHTML = '';
   starredCoins.forEach(c => {
     let tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${c.symbol}</td>
-      <td>$${c.price.toLocaleString()}</td>
-      <td class="${c.change>=0?'price-up':'price-down'}">${c.change.toFixed(2)}%</td>
-    `;
+    tr.innerHTML = `<td>${c.symbol}</td><td>$${c.price.toLocaleString()}</td><td class="${c.change>=0?'price-up':'price-down'}">${c.change.toFixed(2)}%</td>`;
     starredTable.appendChild(tr);
   });
 }
 
-// ------- Fetch API -------
+// ------- Fetch Coins -------
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(res => res.json())
 .then(data => {
-  const topTable = document.querySelector('#topTable tbody');
-  topTable.innerHTML = '';
+  const topTable = document.querySelector('#topTable tbody'); topTable.innerHTML='';
   data.forEach(coin => {
     const symbol = coin.symbol.toUpperCase();
-    const isStarred = starredCoins.some(c => c.symbol === symbol);
+    const isStarred = starredCoins.some(c=>c.symbol===symbol);
     let tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${symbol}</td>
-      <td>$${coin.current_price.toLocaleString()}</td>
-      <td class="${coin.price_change_percentage_24h>=0?'price-up':'price-down'}">
-        ${coin.price_change_percentage_24h.toFixed(2)}%
-      </td>
-      <td>
-        <span class="star ${isStarred?'active':''}" onclick="toggleStar('${symbol}',${coin.current_price},${coin.price_change_percentage_24h},this)">⭐</span>
-      </td>
-    `;
+    tr.innerHTML = `<td>${symbol}</td><td>$${coin.current_price.toLocaleString()}</td>
+      <td class="${coin.price_change_percentage_24h>=0?'price-up':'price-down'}">${coin.price_change_percentage_24h.toFixed(2)}%</td>
+      <td><span class="star ${isStarred?'active':''}" onclick="toggleStar('${symbol}',${coin.current_price},${coin.price_change_percentage_24h},this)">⭐</span></td>`;
     topTable.appendChild(tr);
   });
-
-  // Biggest Movers
-  let movers = [...data].sort((a,b) => Math.abs(b.price_change_percentage_24h) - Math.abs(a.price_change_percentage_24h)).slice(0,10);
-  const moversTable = document.querySelector('#moversTable tbody');
-  moversTable.innerHTML = '';
+  let movers = [...data].sort((a,b)=>Math.abs(b.price_change_percentage_24h)-Math.abs(a.price_change_percentage_24h)).slice(0,10);
+  const moversTable = document.querySelector('#moversTable tbody'); moversTable.innerHTML='';
   movers.forEach(coin => {
     let tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${coin.symbol.toUpperCase()}</td>
-      <td>$${coin.current_price.toLocaleString()}</td>
-      <td class="${coin.price_change_percentage_24h>=0?'price-up':'price-down'}">${coin.price_change_percentage_24h.toFixed(2)}%</td>
-    `;
+    tr.innerHTML = `<td>${coin.symbol.toUpperCase()}</td><td>$${coin.current_price.toLocaleString()}</td><td class="${coin.price_change_percentage_24h>=0?'price-up':'price-down'}">${coin.price_change_percentage_24h.toFixed(2)}%</td>`;
     moversTable.appendChild(tr);
   });
-
   renderStarredTable();
 });
 
-// ------- Star Toggle -------
-function toggleStar(symbol, price, change, el) {
-  const exists = starredCoins.find(c => c.symbol === symbol);
-  if (exists) {
-    starredCoins = starredCoins.filter(c => c.symbol !== symbol);
-    el.classList.remove('active');
-  } else {
-    starredCoins.push({symbol, price, change});
-    el.classList.add('active');
+// ------- Toggle Star -------
+window.toggleStar = (symbol, price, change, el) => {
+  const exists = starredCoins.find(c=>c.symbol===symbol);
+  if(exists){ starredCoins = starredCoins.filter(c=>c.symbol!==symbol); el.classList.remove('active'); }
+  else{ starredCoins.push({symbol,price,change}); el.classList.add('active'); }
+  saveStarred(); renderStarredTable();
+};
+
+// ------- Load User Name -------
+async function loadUserName() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if(!session) return;
+  const userId = session.user.id;
+
+  let { data, error } = await supabase
+    .from('users').select('first_name,last_name').eq('id', userId).single();
+
+  if(error && error.code==='PGRST116'){
+    await supabase.from('users').insert({id:userId,first_name:'',last_name:'',email:session.user.email,country:'',dob:''});
+    const { data: newData } = await supabase.from('users').select('first_name,last_name').eq('id', userId).single();
+    data = newData;
   }
-  saveStarred();
-  renderStarredTable();
+
+  const fullName = `${data.first_name||''} ${data.last_name||''}`.trim() || 'User';
+  document.getElementById('userName').textContent = fullName;
 }
+loadUserName();
 </script>
 </body>
 </html>
