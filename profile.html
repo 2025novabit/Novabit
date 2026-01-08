@@ -169,19 +169,21 @@ window.logout = async () => {
 
 // Require login
 window.requireLogin = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    // اگر کاربر لاگین نباشد
+  const { data, error } = await supabase.auth.getSession();
+  if (!data.session) {
+    console.log("No active session, redirect to login");
     window.location.href = "index.html";
-    return;
+    return false;
   }
+  return true;
 };
 
 // Load profile data
 window.loadProfile = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
+  const loginOk = await requireLogin();
+  if (!loginOk) return;
 
+  const { data: { session } } = await supabase.auth.getSession();
   const userId = session.user.id;
 
   const { data, error } = await supabase
