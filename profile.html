@@ -2,209 +2,221 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Profile | Novabit</title>
+<title>Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body{
-  margin:0;
-  font-family:Roboto,sans-serif;
-  background:#f4f6fa;
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  background-color: #f8f9fa;
+  padding-bottom: 60px;
 }
-
-/* HEADER */
-header{
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+header {
+  background-color: #1a1a2e;
+  color: #fff;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
-header button{
-  background:#4b49ac;
-  border:none;
-  color:#fff;
-  padding:8px 14px;
-  border-radius:5px;
-  cursor:pointer;
+header h1 { margin: 0; font-size: 20px; }
+#menuBtn {
+  background-color: #4b49ac;
+  color: #fff;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
 }
-
-/* MAIN CONTENT */
-.container{
-  padding:20px;
+#sideMenu {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 33%;
+  max-width: 300px;
+  height: 100%;
+  background-color: #fff;
+  box-shadow: -2px 0 6px rgba(0,0,0,0.2);
+  transition: right 0.3s;
+  z-index: 100;
+  padding: 20px;
 }
-
-.card{
-  background:#fff;
-  padding:20px;
-  border-radius:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,.1);
-  max-width:600px;
+#sideMenu.active { right: 0; }
+#sideMenu h2 { margin-top: 0; }
+#sideMenu a {
+  display: block;
+  margin: 15px 0;
+  color: #1a1a2e;
+  text-decoration: none;
+  font-weight: 500;
 }
-
-/* PROFILE INFO */
-.profile-item{
-  margin:15px 0;
+#closeMenu {
+  background-color: #e74c3c;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-bottom: 15px;
 }
-.profile-item label{
-  font-size:12px;
-  color:#777;
+.container { padding: 20px; }
+.balance-card {
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
 }
-.profile-item span{
-  display:block;
-  font-size:15px;
-  font-weight:500;
-  margin-top:5px;
+.balance-card h2 { margin-top: 0; }
+.balance-card p {
+  margin: 10px 0 20px;
+  font-size: 16px;
+  line-height: 1.5;
 }
-
-/* SIDE PANEL */
-#sidePanel{
-  position:fixed;
-  top:0;
-  right:-400px;
-  width:33%;
-  max-width:360px;
-  height:100%;
-  background:#fff;
-  box-shadow:-3px 0 10px rgba(0,0,0,.2);
-  padding:20px;
-  transition:right 0.3s;
-  z-index:100;
+.balance-card button {
+  padding: 10px 20px;
+  margin-right: 10px;
+  background-color: #4b49ac;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
 }
-#sidePanel.active{right:0;}
-
-#sidePanel a{
-  display:block;
-  margin:12px 0;
-  color:#1a1a2e;
-  text-decoration:none;
-  font-weight:500;
+.balance-card button:hover { background-color: #3a3690; }
+.tabs {
+  display: flex;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #ccc;
 }
-
-.logoutBtn{
-  width:100%;
-  margin-top:30px;
-  padding:10px;
-  background:#e74c3c;
-  border:none;
-  color:#fff;
-  border-radius:5px;
-  cursor:pointer;
+.tabs button {
+  flex: 1;
+  padding: 10px;
+  background-color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
 }
+.tabs button.active {
+  border-bottom: 3px solid #4b49ac;
+  color: #4b49ac;
+}
+.table-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+th, td {
+  padding: 10px;
+  text-align: left;
+}
+th {
+  background-color: #1a1a2e;
+  color: #fff;
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+}
+tr:nth-child(even) { background-color: #f1f1f1; }
+.price-up { color: green; font-weight: bold; }
+.price-down { color: red; font-weight: bold; }
+.star { cursor: pointer; color: gray; font-size: 18px; }
+.star.active { color: gold; }
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #1a1a2e;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  z-index: 10;
+}
+.bottom-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.bottom-nav a.active { color: #4b49ac; }
+@media (min-width: 768px) { .bottom-nav { display: none; } }
 </style>
 </head>
 
 <body>
 
 <header>
-  <h2>Profile</h2>
-  <button onclick="togglePanel()">Menu</button>
+  <h1>Dashboard</h1>
+  <button id="menuBtn" onclick="toggleMenu()">Menu</button>
 </header>
 
-<div class="container">
-  <div class="card">
-    <h3>User Information</h3>
-
-    <div class="profile-item">
-      <label>First Name</label>
-      <span id="p_firstname">—</span>
-    </div>
-
-    <div class="profile-item">
-      <label>Last Name</label>
-      <span id="p_lastname">—</span>
-    </div>
-
-    <div class="profile-item">
-      <label>Email</label>
-      <span id="p_email">—</span>
-    </div>
-
-    <div class="profile-item">
-      <label>Country</label>
-      <span id="p_country">—</span>
-    </div>
-
-    <div class="profile-item">
-      <label>Date of Birth</label>
-      <span id="p_dob">—</span>
-    </div>
-
-  </div>
-</div>
-
-<div id="sidePanel">
-  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
-  <a href="dashboard.html">Dashboard</a>
+<div id="sideMenu">
+  <button id="closeMenu" onclick="toggleMenu()">Close</button>
+  <h2>Menu</h2>
   <a href="profile.html">Profile</a>
   <a href="kyc.html">KYC</a>
   <a href="changepassword.html">Change Password</a>
   <a href="2fa.html">2FA Settings</a>
   <a href="fee.html">Fees</a>
   <a href="referral.html">Referral</a>
-
-  <button class="logoutBtn" onclick="logout()">Logout</button>
 </div>
 
-<script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+<div class="container">
+  <div class="balance-card">
+    <h2>Welcome, <span id="user-name">...</span></h2>
+    <p>Deposit. Trade. Grow. 🚀<br>
+    Start now and take control of your financial future!</p>
+    <div style="display:flex;gap:10px;margin-bottom:20px;">
+      <button onclick="window.location.href='wallet.html'">Deposit</button>
+      <button onclick="window.location.href='referral.html'">Referral</button>
+    </div>
+  </div>
+</div>
 
-// ===== Supabase Configuration =====
-const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+async function loadUserName() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
 
-// Toggle side panel
-window.togglePanel = () => {
-  document.getElementById('sidePanel').classList.toggle('active');
-};
-
-// Logout
-window.logout = async () => {
-  await supabase.auth.signOut();
-  window.location.href = "index.html";
-};
-
-// Require login
-window.requireLogin = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    // اگر کاربر لاگین نباشد
-    window.location.href = "index.html";
+  if (!user) {
+    window.location.href = "login.html";
     return;
   }
-};
 
-// Load profile data
-window.loadProfile = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
-
-  const userId = session.user.id;
-
-  const { data, error } = await supabase
-    .from('users')
-    .select('first_name,last_name,email,country,dob')
-    .eq('id', userId)
+  const { data, error } = await supabaseClient
+    .from("users")
+    .select("first_name, last_name")
+    .eq("id", user.id)
     .single();
 
-  if (error) {
-    console.error("Error loading user profile:", error);
+  if (error || !data) {
+    console.error(error);
     return;
   }
 
-  document.getElementById('p_firstname').textContent = data.first_name || '—';
-  document.getElementById('p_lastname').textContent  = data.last_name  || '—';
-  document.getElementById('p_email').textContent     = data.email      || '—';
-  document.getElementById('p_country').textContent   = data.country    || '—';
-  document.getElementById('p_dob').textContent       = data.dob        || '—';
-};
+  document.getElementById("user-name").innerText =
+    data.first_name + " " + data.last_name;
+}
 
-// Run on page load
-requireLogin();
-loadProfile();
+loadUserName();
 </script>
 
 </body>
