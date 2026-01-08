@@ -168,42 +168,56 @@ window.logout = async () => {
   window.location.href = "index.html";
 };
 
-// Require login
-window.requireLogin = async () => {
-  const { data, error } = await supabase.auth.getSession();
-  console.log("Session Data:", data);
-  console.log("Session Error:", error);
+// Load profile with auto-create row
+window.loadProfile = async () => {
+  // 1️⃣ بررسی session
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  console.log("Session:", session, sessionError);
 
-  if (!data.session) {
+  if (!session) {
     alert("No active session! Redirecting to login.");
     window.location.href = "index.html";
-    return false;
+    return;
   }
-  return true;
-};
 
-// Load profile data with debug for mobile
-window.loadProfile = async () => {
-  const loginOk = await requireLogin();
-  if (!loginOk) return;
-
-  const { data: { session } } = await supabase.auth.getSession();
   const userId = session.user.id;
   console.log("User ID:", userId);
 
-  const { data, error } = await supabase
+  // 2️⃣ خواندن پروفایل
+  let { data, error } = await supabase
     .from('users')
     .select('first_name,last_name,email,country,dob')
     .eq('id', userId)
     .single();
 
-  console.log("Profile Data:", data);
-  console.log("Profile Error:", error);
+  console.log("Initial Profile Data:", data, error);
 
-  alert("Profile Data: " + JSON.stringify(data) + "\nError: " + JSON.stringify(error));
+  // 3️⃣ اگر row وجود ندارد، خودکار ایجاد کن
+  if (error && error.code === 'PGRST116') {
+    await supabase.from('users').insert({
+      id: userId,
+      first_name: '',
+      last_name: '',
+      email: session.user.email,
+      country: '',
+      dob: ''
+    });
 
-  if (!data) return;
+    console.log("New row created for user");
 
+    // دوباره داده را بخوان
+    const { data: newData } = await supabase
+      .from('users')
+      .select('first_name,last_name,email,country,dob')
+      .eq('id', userId)
+      .single();
+    data = newData;
+  }
+
+  console.log("Final Profile Data:", data);
+  alert("Profile Data Loaded: " + JSON.stringify(data));
+
+  // نمایش در صفحه
   document.getElementById('p_firstname').textContent = data.first_name || '—';
   document.getElementById('p_lastname').textContent  = data.last_name  || '—';
   document.getElementById('p_email').textContent     = data.email      || '—';
@@ -211,7 +225,7 @@ window.loadProfile = async () => {
   document.getElementById('p_dob').textContent       = data.dob        || '—';
 };
 
-// Run on page load
+// اجرا در load
 loadProfile();
 </script>
 
