@@ -9,7 +9,7 @@
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
   const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6MTc2Nzc5NjA0OCwiZXhwIjoyMDgzMzcyMDQ4fQ.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
   window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
@@ -33,6 +33,19 @@ body{
   box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
 h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
+.home-btn{
+  display:block;
+  width:100%;
+  margin-bottom:20px;
+  padding:12px 0;
+  font-size:16px;
+  font-weight:bold;
+  border:none;
+  border-radius:8px;
+  background:#4b49ac;
+  color:#fff;
+  cursor:pointer;
+}
 .toggle-btns{
   display:flex;
   justify-content:center;
@@ -66,11 +79,12 @@ button.submit-btn{
 <body>
 
 <div class="container">
+  <!-- Home Button -->
+  <button class="home-btn" id="btnHome">Home</button>
+
   <h2>Welcome</h2>
 
-  <!-- Toggle Buttons: Home | Login | Sign Up -->
   <div class="toggle-btns">
-    <button id="btnHome">Home</button>
     <button id="btnLogin" class="active">Login</button>
     <button id="btnSignUp">Sign Up</button>
   </div>
@@ -113,7 +127,7 @@ button.submit-btn{
 </div>
 
 <script type="module">
-// ===== Countries (Complete List) =====
+// ===== Countries =====
 const countries = [
 "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia",
 "Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium",
