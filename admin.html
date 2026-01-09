@@ -8,95 +8,92 @@
 body {
   margin:0;
   font-family:'Segoe UI',sans-serif;
+  background:#f8f9fa;
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
-  background:#f8f9fa;
 }
 .container {
   background:#fff;
   padding:40px 30px;
   border-radius:15px;
   width:400px;
-  max-width:90%;
+  max-width:95%;
   box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
-h2 {
-  text-align:center;
-  color:#1a1a2e;
-  margin-bottom:25px;
+h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
+label{margin-top:10px;font-weight:500;color:#1a1a2e;display:block;}
+input{
+  width:100%;padding:12px 15px;margin:5px 0;
+  border-radius:8px;border:1px solid #ccc;font-size:16px;
 }
-input {
-  width:100%;
-  padding:12px;
-  margin:10px 0;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:16px;
+button{
+  width:100%;padding:12px;margin:15px 0;border-radius:8px;
+  border:none;background:#e74c3c;color:#fff;font-size:16px;cursor:pointer;
 }
-button {
-  width:100%;
-  padding:12px;
-  margin-top:15px;
-  border-radius:8px;
-  border:none;
-  background:#e74c3c;
-  color:#fff;
-  font-size:16px;
-  cursor:pointer;
-}
-#msg {
-  text-align:center;
-  color:red;
-  font-weight:600;
-  margin-top:10px;
-}
+#msg{text-align:center;font-weight:600;color:red;}
 </style>
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-  const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"; // ← این را با کلید درست جایگزین کنید
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  async function adminLogin() {
-    const email = document.getElementById('adminEmail').value.trim();
-    const password = document.getElementById('adminPassword').value.trim();
-    const msg = document.getElementById('msg');
-
-    if(!email || !password){
-      msg.innerText = "Please fill both fields.";
-      return;
-    }
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if(error){
-      msg.innerText = "Invalid credentials!";
-      return;
-    }
-
-    // ✅ چک نقش ادمین (اگر فیلد role اضافه کردید)
-    if(data.user.user_metadata?.role !== "admin"){
-      msg.innerText = "Not an admin account!";
-      await supabase.auth.signOut();
-      return;
-    }
-
-    // ورود موفق
-    window.location.href = "dashboard_admin.html";
-  }
-</script>
 </head>
 <body>
+
 <div class="container">
   <h2>Admin Login</h2>
-  <input type="email" id="adminEmail" placeholder="Email">
-  <input type="password" id="adminPassword" placeholder="Password">
-  <button onclick="adminLogin()">Login</button>
+  <label>Email</label>
+  <input type="email" id="adminEmail" placeholder="Enter admin email">
+  <label>Password</label>
+  <input type="password" id="adminPassword" placeholder="Enter password">
+  <button id="adminLoginBtn">Login</button>
   <p id="msg"></p>
 </div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+// اتصال به Supabase
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const emailInput = document.getElementById('adminEmail');
+const passInput = document.getElementById('adminPassword');
+const btn = document.getElementById('adminLoginBtn');
+const msg = document.getElementById('msg');
+
+btn.onclick = async () => {
+  const email = emailInput.value.trim();
+  const password = passInput.value.trim();
+
+  if(!email || !password){
+    msg.innerText = "Please enter email and password.";
+    return;
+  }
+
+  // بررسی ایمیل و رمز در جدول admins
+  const { data, error } = await supabase
+    .from('admins')
+    .select('*')
+    .eq('email', email)
+    .eq('password', password)
+    .limit(1)
+    .single();
+
+  if(error){
+    console.log(error);
+    msg.innerText = "Error connecting to database.";
+    return;
+  }
+
+  if(!data){
+    msg.innerText = "Invalid email or password.";
+    return;
+  }
+
+  // ورود موفق → هدایت به داشبورد ادمین
+  window.location.href = "admin_dashboard.html";
+};
+</script>
+
 </body>
 </html>
