@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+<style>
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f8f9fa;}
+header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
+header h1{margin:0;font-size:20px;}
+nav{display:flex;background:#fff;padding:10px 20px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+nav a{margin-right:15px;text-decoration:none;color:#1a1a2e;font-weight:500;}
+nav a.active{color:#e74c3c;}
+.container{padding:20px;}
+button.logoutBtn{background:#e74c3c;color:#fff;border:none;padding:8px 12px;border-radius:5px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Admin Dashboard</h1>
+  <button class="logoutBtn" onclick="logout()">Logout</button>
+</header>
+
+<nav>
+  <a href="DashboardAdmin.html" class="active">Home</a>
+  <a href="Admin_KYC.html">KYC Requests</a>
+  <a href="#">Users</a>
+</nav>
+
+<div class="container" id="content">
+  <h2>Welcome, Admin!</h2>
+  <p>Here you can manage KYC requests and user accounts.</p>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function checkAdmin() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if(!user || user.user_metadata?.role !== "admin"){
+    alert("Access denied!");
+    window.location.href = "Admin.html";
+  }
+}
+checkAdmin();
+
+async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = "Admin.html";
+}
+</script>
+
+</body>
+</html>
