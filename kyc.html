@@ -94,27 +94,9 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// کشورها
-const countries = [
-  "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
-  "Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina",
-  "Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Chad","Chile","China",
-  "Colombia","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic",
-  "Ecuador","Egypt","El Salvador","Estonia","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana",
-  "Greece","Grenada","Guatemala","Guinea","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq",
-  "Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon",
-  "Lesotho","Liberia","Libya","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands",
-  "Mauritania","Mauritius","Mexico","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia",
-  "Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","Norway","Oman","Pakistan","Palau","Panama","Papua New Guinea",
-  "Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia",
-  "Saint Vincent and the Grenadines","Samoa","San Marino","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore",
-  "Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland",
-  "Syria","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan",
-  "Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu",
-  "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
-];
+const countries = [ /* آرایه کشورها مثل قبل */ "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Chad","Chile","China","Colombia","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Estonia","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","Norway","Oman","Pakistan","Palau","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
 
-// --- Init ---
+let session;
 async function initKYC(){
   populateCountries();
   toggleUploads();
@@ -122,63 +104,22 @@ async function initKYC(){
   updateProgress();
 }
 
-// --- Menu ---
 function togglePanel(){document.getElementById('sidePanel').classList.toggle('active');}
+function populateCountries(){const sel=document.getElementById('countrySelect'); sel.innerHTML='<option value="">Select Country</option>'; countries.forEach(c=>{const opt=document.createElement('option'); opt.value=c; opt.innerText=c; sel.appendChild(opt);});}
+function toggleUploads(){const type=document.querySelector('input[name="docType"]:checked').value; document.getElementById('docUpload2').style.display=type==="Passport"?"none":"block";}
+function updateProgress(){let filled=0; if(document.getElementById('firstName').value)filled++; if(document.getElementById('lastName').value)filled++; if(document.getElementById('dob').value)filled++; if(document.getElementById('countrySelect').value)filled++; if(document.querySelector('input[name="docType"]:checked'))filled++; if(document.getElementById('docNumber').value)filled++; if(document.getElementById('docUpload1').files.length)filled++; const docType=document.querySelector('input[name="docType"]:checked').value; if(docType==="ID Card" && document.getElementById('docUpload2').files.length)filled++; const percent=Math.floor(filled/8*100); document.getElementById('progressBar').style.width=percent+"%";}
+async function checkSession(){ const { data } = await supabase.auth.getSession(); session = data.session; if(!session){ alert("Please login first."); window.location.href="index.html"; } }
 
-// --- Populate countries ---
-function populateCountries(){
-  const sel = document.getElementById('countrySelect');
-  sel.innerHTML = '<option value="">Select Country</option>';
-  countries.forEach(c=>{
-    const opt = document.createElement('option'); opt.value=c; opt.innerText=c;
-    sel.appendChild(opt);
-  });
-}
-
-// --- Show/hide upload2 ---
-function toggleUploads(){
-  const type = document.querySelector('input[name="docType"]:checked').value;
-  document.getElementById('docUpload2').style.display = type==="Passport"?"none":"block";
-}
-
-// --- Progress bar ---
-function updateProgress(){
-  let filled = 0;
-  if(document.getElementById('firstName').value) filled++;
-  if(document.getElementById('lastName').value) filled++;
-  if(document.getElementById('dob').value) filled++;
-  if(document.getElementById('countrySelect').value) filled++;
-  if(document.querySelector('input[name="docType"]:checked')) filled++;
-  if(document.getElementById('docNumber').value) filled++;
-  if(document.getElementById('docUpload1').files.length) filled++;
-  const docType = document.querySelector('input[name="docType"]:checked').value;
-  if(docType==="ID Card" && document.getElementById('docUpload2').files.length) filled++;
-  const percent = Math.floor(filled/8*100);
-  document.getElementById('progressBar').style.width = percent+"%";
-}
-
-// --- Check user session ---
-let session;
-async function checkSession(){
-  const { data } = await supabase.auth.getSession();
-  session = data.session;
-  if(!session){
-    alert("Please login first.");
-    window.location.href="index.html";
-  }
-}
-
-// --- Submit KYC ---
 async function submitKYC(){
   updateProgress();
-  const firstName = document.getElementById('firstName').value.trim();
-  const lastName = document.getElementById('lastName').value.trim();
-  const dob = document.getElementById('dob').value;
-  const country = document.getElementById('countrySelect').value;
-  const docType = document.querySelector('input[name="docType"]:checked').value;
-  const docNumber = document.getElementById('docNumber').value.trim();
-  const docUpload1 = document.getElementById('docUpload1').files[0];
-  const docUpload2 = document.getElementById('docUpload2').files[0];
+  const firstName=document.getElementById('firstName').value.trim();
+  const lastName=document.getElementById('lastName').value.trim();
+  const dob=document.getElementById('dob').value;
+  const country=document.getElementById('countrySelect').value;
+  const docType=document.querySelector('input[name="docType"]:checked').value;
+  const docNumber=document.getElementById('docNumber').value.trim();
+  const docUpload1=document.getElementById('docUpload1').files[0];
+  const docUpload2=document.getElementById('docUpload2').files[0];
 
   if(!firstName || !lastName || !dob || !country || !docNumber || !docUpload1 || (docType==="ID Card" && !docUpload2)){
     alert("Please fill all fields and upload required documents.");
@@ -186,6 +127,23 @@ async function submitKYC(){
   }
 
   try{
+    // Upload files to Supabase Storage
+    const fileExt1 = docUpload1.name.split('.').pop();
+    const path1 = `kyc/${session.user.id}/doc1.${fileExt1}`;
+    const { data: upload1, error: err1 } = await supabase.storage.from('kyc-docs').upload(path1, docUpload1, { upsert:true });
+    if(err1) throw err1;
+    const url1 = supabase.storage.from('kyc-docs').getPublicUrl(path1).data.publicUrl;
+
+    let url2 = null;
+    if(docType==="ID Card" && docUpload2){
+      const fileExt2 = docUpload2.name.split('.').pop();
+      const path2 = `kyc/${session.user.id}/doc2.${fileExt2}`;
+      const { data: upload2, error: err2 } = await supabase.storage.from('kyc-docs').upload(path2, docUpload2, { upsert:true });
+      if(err2) throw err2;
+      url2 = supabase.storage.from('kyc-docs').getPublicUrl(path2).data.publicUrl;
+    }
+
+    // Insert into kyc_requests
     const { error } = await supabase
       .from('kyc_requests')
       .upsert({
@@ -196,19 +154,21 @@ async function submitKYC(){
         country: country,
         doc_type: docType,
         doc_number: docNumber,
+        doc_url_1: url1,
+        doc_url_2: url2,
         status: "Pending"
-      }, { onConflict: 'user_id' });
+      }, { onConflict:'user_id' });
 
     if(error) throw error;
     alert("KYC submitted! Status: Pending");
     document.getElementById('kycStatus').innerText = "Status: Pending";
     updateProgress();
+
   }catch(err){
     console.error("Error saving KYC:", err.message);
-    alert("Error saving KYC: " + err.message);
+    alert("Error saving KYC: "+err.message);
   }
 }
 </script>
-
 </body>
 </html>
