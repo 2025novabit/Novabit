@@ -10,6 +10,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
 window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
@@ -82,7 +83,10 @@ const countries = [
 "Saudi Arabia","Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
 ];
 const countrySelect = document.getElementById('signupCountry');
-countries.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; countrySelect.appendChild(o); });
+countries.forEach(c=>{
+  const o=document.createElement('option'); o.value=c; o.textContent=c;
+  countrySelect.appendChild(o);
+});
 
 // Toggle forms
 const btnLogin=document.getElementById('btnLogin');
@@ -122,17 +126,19 @@ document.getElementById('signupSubmit').onclick = async () => {
   }
 
   try {
-    // 1️⃣ ثبت نام در Auth
+    // ثبت نام در Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email, password,
       options: { data: { first_name, last_name, dob, country } }
     });
     if(authError) throw authError;
 
-    const userId = authData.user.id; // UUID
-    const userCode = Math.floor(10000000 + Math.random()*90000000).toString(); // 8 رقمی یکتا
+    const userId = authData.user.id; // UUID از Auth
 
-    // 2️⃣ ثبت اطلاعات در جدول public.users
+    // تولید User ID یکتا ۸ رقمی
+    const userCode = Math.floor(10000000 + Math.random()*90000000).toString();
+
+    // ذخیره در جدول public.users
     const { error: insertError } = await supabase.from('users').insert([{
       id: userId,
       first_name,
@@ -144,12 +150,13 @@ document.getElementById('signupSubmit').onclick = async () => {
     }]);
     if(insertError) throw insertError;
 
-    msg.style.color="green"; msg.innerText="Registered successfully. Please login.";
+    msg.style.color = "green"; msg.innerText = "Registered successfully. Please login.";
 
   } catch(err) {
-    msg.style.color="red"; msg.innerText=err.message;
+    msg.style.color = "red"; msg.innerText = err.message;
   }
 };
 </script>
+
 </body>
 </html>
