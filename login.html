@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login | Novabit</title>
+<title>Login / Sign Up</title>
 
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -24,71 +24,86 @@ body{
   align-items:center;
   height:100vh;
 }
-
 .container{
   background:#fff;
   padding:40px 30px;
   border-radius:15px;
-  width:420px;
+  width:480px;
   max-width:95%;
   box-shadow:0 10px 30px rgba(0,0,0,.15);
 }
-
-h2{
-  text-align:center;
-  color:#1a1a2e;
-  margin-bottom:25px;
+h2{text-align:center;margin-bottom:25px;color:#1a1a2e;}
+.toggle{display:flex;margin-bottom:20px;}
+.toggle button{
+  flex:1;padding:10px;border:none;border-radius:8px;
+  background:#eee;cursor:pointer;font-weight:600;
 }
-
-label{
-  display:block;
-  margin-top:15px;
-  font-weight:500;
-  color:#1a1a2e;
+.toggle button.active{background:#4b49ac;color:#fff;}
+form{display:none;flex-direction:column;}
+label{margin-top:12px;font-weight:500;}
+input,select{
+  padding:12px;margin-top:5px;
+  border-radius:8px;border:1px solid #ccc;
 }
-
-input{
-  width:100%;
-  padding:12px 14px;
-  margin-top:6px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:15px;
+.submit{
+  margin-top:20px;padding:12px;
+  background:#4b49ac;color:#fff;
+  border:none;border-radius:8px;
+  cursor:pointer;font-size:16px;
 }
-
-button{
-  width:100%;
-  margin-top:25px;
-  padding:12px;
-  border:none;
-  border-radius:8px;
-  background:#4b49ac;
-  color:#fff;
-  font-size:16px;
-  cursor:pointer;
-}
-
-#msg{
-  text-align:center;
-  margin-top:15px;
-  font-weight:600;
-  color:red;
-}
+#msg{text-align:center;margin-top:15px;font-weight:600;color:red;}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-  <h2>Login</h2>
+  <h2>Welcome</h2>
 
-  <label>Email</label>
-  <input type="email" id="email">
+  <div class="toggle">
+    <button id="btnLogin" class="active">Login</button>
+    <button id="btnSignup">Sign Up</button>
+  </div>
 
-  <label>Password</label>
-  <input type="password" id="password">
+  <!-- LOGIN -->
+  <form id="loginForm" style="display:flex;">
+    <label>Email</label>
+    <input type="email" id="loginEmail">
+    <label>Password</label>
+    <input type="password" id="loginPassword">
+    <button type="button" class="submit" id="loginBtn">Login</button>
+  </form>
 
-  <button id="loginBtn">Login</button>
+  <!-- SIGN UP -->
+  <form id="signupForm">
+    <label>First Name</label>
+    <input type="text" id="first_name">
+
+    <label>Last Name</label>
+    <input type="text" id="last_name">
+
+    <label>Date of Birth</label>
+    <input type="date" id="dob">
+
+    <label>Country</label>
+    <select id="country">
+      <option value="">Select Country</option>
+      <option>Afghanistan</option>
+      <option>Iran</option>
+      <option>Pakistan</option>
+      <option>Turkey</option>
+      <option>Germany</option>
+      <option>United States</option>
+    </select>
+
+    <label>Email</label>
+    <input type="email" id="signupEmail">
+
+    <label>Password</label>
+    <input type="password" id="signupPassword">
+
+    <button type="button" class="submit" id="signupBtn">Sign Up</button>
+  </form>
 
   <p id="msg"></p>
 </div>
@@ -96,27 +111,82 @@ button{
 <script type="module">
 const msg = document.getElementById('msg');
 
-document.getElementById('loginBtn').onclick = async () => {
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
+const btnLogin = document.getElementById('btnLogin');
+const btnSignup = document.getElementById('btnSignup');
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
 
-  if (!email || !password) {
-    msg.textContent = "Please enter email and password.";
+btnLogin.onclick = () => {
+  btnLogin.classList.add('active');
+  btnSignup.classList.remove('active');
+  loginForm.style.display='flex';
+  signupForm.style.display='none';
+  msg.textContent='';
+};
+
+btnSignup.onclick = () => {
+  btnSignup.classList.add('active');
+  btnLogin.classList.remove('active');
+  signupForm.style.display='flex';
+  loginForm.style.display='none';
+  msg.textContent='';
+};
+
+// LOGIN
+document.getElementById('loginBtn').onclick = async () => {
+  const email = loginEmail.value.trim();
+  const password = loginPassword.value.trim();
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) { msg.textContent = error.message; return; }
+
+  location.href = "dashboard.html";
+};
+
+// SIGN UP
+document.getElementById('signupBtn').onclick = async () => {
+  const email = signupEmail.value.trim();
+  const password = signupPassword.value.trim();
+  const first_name = document.getElementById('first_name').value.trim();
+  const last_name = document.getElementById('last_name').value.trim();
+  const dob = document.getElementById('dob').value;
+  const country = document.getElementById('country').value;
+
+  if (!email || !password || !first_name || !last_name || !dob || !country) {
+    msg.textContent = "Fill all fields";
     return;
   }
 
-  const { error } = await supabase.auth.signInWithPassword({
+  // 1️⃣ create auth user
+  const { data, error } = await supabase.auth.signUp({
     email,
     password
   });
+  if (error) { msg.textContent = error.message; return; }
 
-  if (error) {
-    msg.textContent = error.message;
+  const userId = data.user.id;
+
+  // 2️⃣ generate 8-digit user code
+  const userCode = Math.floor(10000000 + Math.random()*90000000).toString();
+
+  // 3️⃣ insert into public.users
+  const { error: insertError } = await supabase.from('users').insert({
+    id: userId,
+    first_name,
+    last_name,
+    email,
+    country,
+    dob,
+    user_id: userCode
+  });
+
+  if (insertError) {
+    msg.textContent = insertError.message;
     return;
   }
 
-  // موفق → انتقال
-  window.location.href = "dashboard.html";
+  msg.style.color="green";
+  msg.textContent="Registered successfully. Please login.";
 };
 </script>
 
