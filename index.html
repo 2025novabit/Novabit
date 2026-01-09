@@ -5,12 +5,41 @@
 <title>Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{font-family:Arial,Roboto,sans-serif;margin:0;background:#f8f9fa;}
-header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;}
+body{
+  font-family:Arial,Roboto,sans-serif;
+  margin:0;
+  background:#f8f9fa;
+}
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
 header h1{margin:0;font-size:20px;}
-header .top-buttons{display:flex;gap:10px;}
-header .top-buttons button{padding:6px 12px;border:none;border-radius:5px;background:#4b49ac;color:#fff;cursor:pointer;}
+.top-buttons button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 12px;
+  border-radius:5px;
+  margin-left:10px;
+  cursor:pointer;
+}
 .container{padding:20px;}
+.event-banner{
+  background:#fffae6;
+  color:#8a6d3b;
+  padding:10px 15px;
+  border-radius:8px;
+  margin-bottom:20px;
+  font-weight:500;
+}
 .card{background:#fff;padding:20px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:20px;}
 .table-container{max-height:400px;overflow:auto;}
 table{width:100%;border-collapse:collapse;}
@@ -19,7 +48,6 @@ th{background:#1a1a2e;color:#fff;position:sticky;top:0;}
 tr:nth-child(even){background:#f1f1f1;}
 .price-up{color:green;font-weight:bold;}
 .price-down{color:red;font-weight:bold;}
-.event-banner{background:#fffae6;border-left:5px solid #ffc107;padding:10px;margin-bottom:15px;font-weight:bold;}
 </style>
 </head>
 <body>
@@ -27,16 +55,15 @@ tr:nth-child(even){background:#f1f1f1;}
 <header>
   <h1>Dashboard</h1>
   <div class="top-buttons">
-    <button onclick="location.href='index.html#login'">Login</button>
-    <button onclick="location.href='index.html#signup'">Sign Up</button>
+    <button onclick="location.href='login.html?form=login'">Login</button>
+    <button onclick="location.href='login.html?form=signup'">Sign Up</button>
   </div>
 </header>
 
 <div class="container">
-
-  <!-- بنر رویداد خاص -->
+  <!-- بخش رویداد خاص -->
   <div class="event-banner">
-    🎉 Special Event: Top 100 Coins Live Update!
+    🎉 Special Event: Earn bonus points on selected coins this week!
   </div>
 
   <div class="card">
@@ -60,8 +87,10 @@ tr:nth-child(even){background:#f1f1f1;}
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+// 🟦 تنظیمات Supabase
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
 window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
