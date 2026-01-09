@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login</title>
+<style>
+body {
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  background:#f8f9fa;
+}
+.container {
+  background:#fff;
+  padding:40px 30px;
+  border-radius:15px;
+  width:400px;
+  max-width:90%;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+h2 {
+  text-align:center;
+  color:#1a1a2e;
+  margin-bottom:25px;
+}
+input {
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:16px;
+}
+button {
+  width:100%;
+  padding:12px;
+  margin-top:15px;
+  border-radius:8px;
+  border:none;
+  background:#e74c3c;
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
+}
+#msg {
+  text-align:center;
+  color:red;
+  font-weight:600;
+  margin-top:10px;
+}
+</style>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE"; // ← این را با کلید درست جایگزین کنید
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function adminLogin() {
+    const email = document.getElementById('adminEmail').value.trim();
+    const password = document.getElementById('adminPassword').value.trim();
+    const msg = document.getElementById('msg');
+
+    if(!email || !password){
+      msg.innerText = "Please fill both fields.";
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if(error){
+      msg.innerText = "Invalid credentials!";
+      return;
+    }
+
+    // ✅ چک نقش ادمین (اگر فیلد role اضافه کردید)
+    if(data.user.user_metadata?.role !== "admin"){
+      msg.innerText = "Not an admin account!";
+      await supabase.auth.signOut();
+      return;
+    }
+
+    // ورود موفق
+    window.location.href = "DashboardAdmin.html";
+  }
+</script>
+</head>
+<body>
+<div class="container">
+  <h2>Admin Login</h2>
+  <input type="email" id="adminEmail" placeholder="Email">
+  <input type="password" id="adminPassword" placeholder="Password">
+  <button onclick="adminLogin()">Login</button>
+  <p id="msg"></p>
+</div>
+</body>
+</html>
