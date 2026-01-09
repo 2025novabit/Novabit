@@ -160,53 +160,44 @@ document.getElementById('loginSubmit').addEventListener('click', async ()=>{
   }catch(err){ msg.style.color='red'; msg.innerText=err.message; }
 });
 
-// ===== Sign Up (ثبت کامل اطلاعات) =====
+// ===== Sign Up (FINAL - CORRECT) =====
 document.getElementById('signupSubmit').addEventListener('click', async ()=>{
-  const firstName=document.getElementById('signupFirstName').value.trim();
-  const lastName=document.getElementById('signupLastName').value.trim();
-  const dob=document.getElementById('signupDOB').value;
-  const country=document.getElementById('signupCountry').value;
-  const email=document.getElementById('signupEmail').value.trim();
-  const password=document.getElementById('signupPassword').value.trim();
+  const firstName = document.getElementById('signupFirstName').value.trim();
+  const lastName  = document.getElementById('signupLastName').value.trim();
+  const dob       = document.getElementById('signupDOB').value;
+  const country   = document.getElementById('signupCountry').value;
+  const email     = document.getElementById('signupEmail').value.trim();
+  const password  = document.getElementById('signupPassword').value.trim();
 
-  if(!firstName||!lastName||!dob||!country||!email||!password){ 
-    msg.style.color='red'; 
-    msg.innerText='Please fill all fields'; 
-    return; 
+  if(!firstName || !lastName || !dob || !country || !email || !password){
+    msg.style.color='red';
+    msg.innerText='Please fill all fields';
+    return;
   }
 
   try{
-    // 1️⃣ ثبت‌نام در Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
-      password
+      password,
+      options:{
+        data:{
+          first_name: firstName,
+          last_name: lastName,
+          dob: dob,
+          country: country
+        }
+      }
     });
-    if(authError) throw authError;
 
-    // 2️⃣ ثبت کامل اطلاعات در جدول users با upsert
-    const { error: upsertError } = await supabase
-      .from('users')
-      .upsert([{
-        id: authData.user.id,
-        email: email,
-        first_name: firstName,
-        last_name: lastName,
-        dob: dob,
-        country: country,
-        usdt_balance: 1000,
-        btc_balance: 0
-      }]);
-
-    if(upsertError) throw upsertError;
+    if(error) throw error;
 
     msg.style.color='green';
-    msg.innerText='Sign Up Successful ✅. You can now login.';
-  }catch(err){ 
-    msg.style.color='red'; 
-    msg.innerText=err.message; 
+    msg.innerText='Sign Up Successful ✅ Please login.';
+  }catch(err){
+    msg.style.color='red';
+    msg.innerText = err.message;
   }
 });
-</script>
 
 </body>
 </html>
