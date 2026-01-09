@@ -122,23 +122,52 @@ document.getElementById('loginSubmit').onclick=async()=>{
 };
 
 // Sign Up
-document.getElementById('signupSubmit').onclick=async()=>{
-  const { error } = await supabase.auth.signUp({
-    email: signupEmail.value,
-    password: signupPassword.value,
-    options:{
-      data:{
-        first_name: signupFirstName.value,
-        last_name: signupLastName.value,
-        dob: signupDOB.value,
-        country: signupCountry.value
-      }
-    }
-  });
+document.getElementById('signupSubmit').onclick = async () => {
+  const email = signupEmail.value.trim();
+  const password = signupPassword.value.trim();
+  const firstName = signupFirstName.value.trim();
+  const lastName = signupLastName.value.trim();
+  const dob = signupDOB.value;
+  const country = signupCountry.value;
 
-  if(error){ msg.innerText=error.message; return; }
-  msg.style.color="green";
-  msg.innerText="Registered successfully. Please login.";
+  if (!email || !password || !firstName || !lastName || !dob || !country) {
+    msg.style.color = "red";
+    msg.innerText = "Please fill all fields.";
+    return;
+  }
+
+  try {
+    // 1️⃣ ثبت نام در auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { first_name: firstName, last_name: lastName, dob, country } }
+    });
+    if (authError) throw authError;
+
+    const userId = authData.user.id; // UUID تولید شده توسط Supabase
+
+    // 2️⃣ تولید User ID ۸ رقمی یکتا
+    const userCode = Math.random().toString().slice(2, 10); // مثال: '12345678'
+
+    // 3️⃣ اضافه کردن به جدول users
+    const { error: insertError } = await supabase.from('users').insert([{
+      id: userId,
+      first_name: firstName,
+      last_name: lastName,
+      dob,
+      country,
+      user_id: userCode
+    }]);
+    if (insertError) throw insertError;
+
+    msg.style.color = "green";
+    msg.innerText = "Registered successfully. Please login.";
+
+  } catch (err) {
+    msg.style.color = "red";
+    msg.innerText = err.message;
+  }
 };
 </script>
 
