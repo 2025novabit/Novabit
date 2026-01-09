@@ -32,18 +32,18 @@ body{
   max-width:95%;
   box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
-h2{text-align:center;color:#1a1a2e;margin-bottom:15px;}
 .home-btn{
   display:block;
-  margin:0 auto 20px auto;
-  padding:8px 15px;
+  margin:0 auto 15px auto;
+  padding:10px 20px;
+  border:none;
+  border-radius:8px;
   background:#4b49ac;
   color:#fff;
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
   font-weight:500;
+  cursor:pointer;
 }
+h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
 .toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
 .toggle-btns button{
   flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;
@@ -67,10 +67,8 @@ button.submit-btn{
 <body>
 
 <div class="container">
-  <h2>Welcome</h2>
-  
-  <!-- ✅ دکمه Home اضافه شده -->
   <button class="home-btn" onclick="window.location.href='index.html'">Home</button>
+  <h2>Welcome</h2>
 
   <div class="toggle-btns">
     <button id="btnLogin" class="active">Login</button>
@@ -115,7 +113,7 @@ button.submit-btn{
 </div>
 
 <script type="module">
-// ===== Countries =====
+// ===== Countries (Complete ISO 3166) =====
 const countries = [
 "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia",
 "Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium",
@@ -184,7 +182,7 @@ document.getElementById('loginSubmit').onclick = async ()=>{
   window.location.href = "dashboard.html";
 };
 
-// ===== Sign Up (IMPORTANT) =====
+// ===== Sign Up =====
 document.getElementById('signupSubmit').onclick = async ()=>{
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
@@ -202,12 +200,7 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     email,
     password,
     options:{
-      data:{
-        first_name,
-        last_name,
-        dob,
-        country
-      }
+      data:{ first_name, last_name, dob, country }
     }
   });
 
