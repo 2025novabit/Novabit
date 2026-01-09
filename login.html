@@ -7,10 +7,8 @@
 
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
   const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
-
   window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
@@ -75,13 +73,11 @@ button.submit-btn{width:100%;padding:12px;margin:15px 0;border-radius:8px;border
 </div>
 
 <script type="module">
-// کشورها (بدون تغییر)
-const countries = [
-"Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria",
+// لیست کشورها
+const countries = ["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria",
 "Azerbaijan","Bahrain","Bangladesh","Belgium","Brazil","Canada","China","Denmark","Egypt","France",
 "Germany","India","Iran","Iraq","Italy","Japan","Netherlands","Norway","Pakistan","Russia",
-"Saudi Arabia","Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
-];
+"Saudi Arabia","Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"];
 
 const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
@@ -114,8 +110,9 @@ btnSignUp.onclick=()=>{
 
 // Login
 document.getElementById('loginSubmit').onclick=async()=>{
-  const email=loginEmail.value;
-  const password=loginPassword.value;
+  const email=loginEmail.value.trim();
+  const password=loginPassword.value.trim();
+  if(!email || !password){ msg.innerText="Please enter email and password"; return; }
   const { error }=await supabase.auth.signInWithPassword({email,password});
   if(error){ msg.innerText=error.message; return; }
   location.href="dashboard.html";
@@ -137,7 +134,7 @@ document.getElementById('signupSubmit').onclick = async () => {
   }
 
   try {
-    // 1️⃣ ثبت نام در auth
+    // ثبت نام در auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -147,17 +144,18 @@ document.getElementById('signupSubmit').onclick = async () => {
 
     const userId = authData.user.id; // UUID تولید شده توسط Supabase
 
-    // 2️⃣ تولید User ID ۸ رقمی یکتا
-    const userCode = Math.random().toString().slice(2, 10); // مثال: '12345678'
+    // تولید User ID ۸ رقمی یکتا (تکراری بررسی نشده، اما احتمال خیلی کم)
+    const userCode = Math.floor(10000000 + Math.random()*90000000).toString();
 
-    // 3️⃣ اضافه کردن به جدول users
+    // اضافه کردن به جدول users
     const { error: insertError } = await supabase.from('users').insert([{
       id: userId,
       first_name: firstName,
       last_name: lastName,
       dob,
       country,
-      user_id: userCode
+      user_id: userCode,
+      email
     }]);
     if (insertError) throw insertError;
 
