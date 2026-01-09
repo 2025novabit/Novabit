@@ -108,6 +108,12 @@ header button{
     <h3>User Information</h3>
 
     <div class="profile-item">
+  <label>User ID</label>
+  <span id="p_userid">—</span>
+  <button onclick="copyUserID()">Copy</button>
+    </div>
+    
+    <div class="profile-item">
       <label>First Name</label>
       <span id="p_firstname">—</span>
     </div>
@@ -184,6 +190,13 @@ window.loadProfile = async () => {
     .eq('id', userId)
     .single();
 
+
+  function copyUserID() {
+  navigator.clipboard.writeText(document.getElementById('p_userid').textContent)
+    .then(()=> alert('User ID copied!'))
+    .catch(()=> alert('Copy failed'));
+}
+  
   // اگر row وجود ندارد، خودکار ایجاد شود
   if (error && error.code === 'PGRST116') {
     await supabase.from('users').insert({
@@ -203,6 +216,7 @@ window.loadProfile = async () => {
     data = newData;
   }
 
+  document.getElementById('p_userid').textContent = userId;
   document.getElementById('p_firstname').textContent = data.first_name || '—';
   document.getElementById('p_lastname').textContent  = data.last_name  || '—';
   document.getElementById('p_email').textContent     = data.email      || '—';
