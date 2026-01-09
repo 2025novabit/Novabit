@@ -32,22 +32,21 @@ body{
   max-width:95%;
   box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
-.home-btn{
-  display:block;
-  margin:0 auto 15px auto;
-  padding:10px 20px;
+h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
+.toggle-btns{
+  display:flex;
+  justify-content:center;
+  margin-bottom:20px;
+}
+.toggle-btns button{
+  flex:1;
+  margin:0 5px;
+  padding:10px;
   border:none;
   border-radius:8px;
-  background:#4b49ac;
-  color:#fff;
-  font-weight:500;
+  background:#f0f0f0;
+  color:#333;
   cursor:pointer;
-}
-h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
-.toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
-.toggle-btns button{
-  flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;
-  background:#f0f0f0;color:#333;cursor:pointer;
 }
 .toggle-btns button.active{background:#4b49ac;color:#fff;}
 form{display:none;flex-direction:column;}
@@ -67,10 +66,11 @@ button.submit-btn{
 <body>
 
 <div class="container">
-  <button class="home-btn" onclick="window.location.href='index.html'">Home</button>
   <h2>Welcome</h2>
 
+  <!-- Toggle Buttons: Home | Login | Sign Up -->
   <div class="toggle-btns">
+    <button id="btnHome">Home</button>
     <button id="btnLogin" class="active">Login</button>
     <button id="btnSignUp">Sign Up</button>
   </div>
@@ -113,7 +113,7 @@ button.submit-btn{
 </div>
 
 <script type="module">
-// ===== Countries (Complete ISO 3166) =====
+// ===== Countries (Complete List) =====
 const countries = [
 "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia",
 "Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium",
@@ -147,11 +147,16 @@ countries.forEach(c=>{
 });
 
 // ===== Toggle =====
+const btnHome = document.getElementById('btnHome');
 const btnLogin = document.getElementById('btnLogin');
 const btnSignUp = document.getElementById('btnSignUp');
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
 const msg = document.getElementById('msg');
+
+btnHome.onclick = ()=>{
+  window.location.href = "index.html";
+};
 
 btnLogin.onclick = ()=>{
   btnLogin.classList.add('active');
