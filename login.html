@@ -18,7 +18,7 @@
 body{
   margin:0;
   font-family:'Segoe UI',sans-serif;
-  background:#f4f6fa;
+  background:#f8f9fa;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -28,30 +28,28 @@ body{
   background:#fff;
   padding:40px 30px;
   border-radius:15px;
-  width:480px;
+  width:500px;
   max-width:95%;
-  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
-h2{text-align:center;margin-bottom:25px;color:#1a1a2e;}
-.toggle{display:flex;margin-bottom:20px;}
-.toggle button{
-  flex:1;padding:10px;border:none;border-radius:8px;
-  background:#eee;cursor:pointer;font-weight:600;
+h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
+.toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
+.toggle-btns button{
+  flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;
+  background:#f0f0f0;color:#333;cursor:pointer;
 }
-.toggle button.active{background:#4b49ac;color:#fff;}
+.toggle-btns button.active{background:#4b49ac;color:#fff;}
 form{display:none;flex-direction:column;}
-label{margin-top:12px;font-weight:500;}
+label{margin-top:10px;font-weight:500;color:#1a1a2e;}
 input,select{
-  padding:12px;margin-top:5px;
-  border-radius:8px;border:1px solid #ccc;
+  width:100%;padding:12px 15px;margin:5px 0;
+  border-radius:8px;border:1px solid #ccc;font-size:16px;
 }
-.submit{
-  margin-top:20px;padding:12px;
-  background:#4b49ac;color:#fff;
-  border:none;border-radius:8px;
-  cursor:pointer;font-size:16px;
+button.submit-btn{
+  width:100%;padding:12px;margin:15px 0;border-radius:8px;
+  border:none;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;
 }
-#msg{text-align:center;margin-top:15px;font-weight:600;color:red;}
+#msg{text-align:center;font-weight:600;color:red;}
 </style>
 </head>
 
@@ -60,9 +58,9 @@ input,select{
 <div class="container">
   <h2>Welcome</h2>
 
-  <div class="toggle">
+  <div class="toggle-btns">
     <button id="btnLogin" class="active">Login</button>
-    <button id="btnSignup">Sign Up</button>
+    <button id="btnSignUp">Sign Up</button>
   </div>
 
   <!-- LOGIN -->
@@ -71,29 +69,23 @@ input,select{
     <input type="email" id="loginEmail">
     <label>Password</label>
     <input type="password" id="loginPassword">
-    <button type="button" class="submit" id="loginBtn">Login</button>
+    <button type="button" class="submit-btn" id="loginSubmit">Login</button>
   </form>
 
   <!-- SIGN UP -->
   <form id="signupForm">
     <label>First Name</label>
-    <input type="text" id="first_name">
+    <input type="text" id="signupFirstName">
 
     <label>Last Name</label>
-    <input type="text" id="last_name">
+    <input type="text" id="signupLastName">
 
     <label>Date of Birth</label>
-    <input type="date" id="dob">
+    <input type="date" id="signupDOB">
 
     <label>Country</label>
-    <select id="country">
+    <select id="signupCountry">
       <option value="">Select Country</option>
-      <option>Afghanistan</option>
-      <option>Iran</option>
-      <option>Pakistan</option>
-      <option>Turkey</option>
-      <option>Germany</option>
-      <option>United States</option>
     </select>
 
     <label>Email</label>
@@ -102,91 +94,99 @@ input,select{
     <label>Password</label>
     <input type="password" id="signupPassword">
 
-    <button type="button" class="submit" id="signupBtn">Sign Up</button>
+    <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
   </form>
 
   <p id="msg"></p>
 </div>
 
 <script type="module">
-const msg = document.getElementById('msg');
+// ===== Countries =====
+const countries = [
+  "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia",
+  "Australia","Austria","Azerbaijan","Bahrain","Bangladesh","Belgium","Brazil",
+  "Canada","China","Denmark","Egypt","France","Germany","India","Iran","Iraq",
+  "Italy","Japan","Netherlands","Norway","Pakistan","Russia","Saudi Arabia",
+  "Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
+];
 
+const countrySelect = document.getElementById('signupCountry');
+countries.forEach(c=>{
+  const opt=document.createElement('option');
+  opt.value=c; opt.textContent=c;
+  countrySelect.appendChild(opt);
+});
+
+// ===== Toggle =====
 const btnLogin = document.getElementById('btnLogin');
-const btnSignup = document.getElementById('btnSignup');
+const btnSignUp = document.getElementById('btnSignUp');
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
+const msg = document.getElementById('msg');
 
-btnLogin.onclick = () => {
+btnLogin.onclick = ()=>{
   btnLogin.classList.add('active');
-  btnSignup.classList.remove('active');
+  btnSignUp.classList.remove('active');
   loginForm.style.display='flex';
   signupForm.style.display='none';
-  msg.textContent='';
+  msg.innerText='';
 };
 
-btnSignup.onclick = () => {
-  btnSignup.classList.add('active');
+btnSignUp.onclick = ()=>{
+  btnSignUp.classList.add('active');
   btnLogin.classList.remove('active');
   signupForm.style.display='flex';
   loginForm.style.display='none';
-  msg.textContent='';
+  msg.innerText='';
 };
 
-// LOGIN
-document.getElementById('loginBtn').onclick = async () => {
+// ===== Login =====
+document.getElementById('loginSubmit').onclick = async ()=>{
   const email = loginEmail.value.trim();
   const password = loginPassword.value.trim();
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) { msg.textContent = error.message; return; }
-
-  location.href = "dashboard.html";
+  if(error){
+    msg.innerText = error.message;
+    return;
+  }
+  window.location.href = "dashboard.html";
 };
 
-// SIGN UP
-document.getElementById('signupBtn').onclick = async () => {
+// ===== Sign Up (IMPORTANT) =====
+document.getElementById('signupSubmit').onclick = async ()=>{
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
-  const first_name = document.getElementById('first_name').value.trim();
-  const last_name = document.getElementById('last_name').value.trim();
-  const dob = document.getElementById('dob').value;
-  const country = document.getElementById('country').value;
+  const first_name = signupFirstName.value.trim();
+  const last_name = signupLastName.value.trim();
+  const dob = signupDOB.value;
+  const country = signupCountry.value;
 
-  if (!email || !password || !first_name || !last_name || !dob || !country) {
-    msg.textContent = "Fill all fields";
+  if(!email || !password || !first_name || !last_name || !dob || !country){
+    msg.innerText = "Please fill all fields.";
     return;
   }
 
-  // 1️⃣ create auth user
-  const { data, error } = await supabase.auth.signUp({
+  const { error } = await supabase.auth.signUp({
     email,
-    password
-  });
-  if (error) { msg.textContent = error.message; return; }
-
-  const userId = data.user.id;
-
-  // 2️⃣ generate 8-digit user code
-  const userCode = Math.floor(10000000 + Math.random()*90000000).toString();
-
-  // 3️⃣ insert into public.users
-  const { error: insertError } = await supabase.from('users').insert({
-    id: userId,
-    first_name,
-    last_name,
-    email,
-    country,
-    dob,
-    user_id: userCode
+    password,
+    options:{
+      data:{
+        first_name,
+        last_name,
+        dob,
+        country
+      }
+    }
   });
 
-  if (insertError) {
-    msg.textContent = insertError.message;
+  if(error){
+    msg.innerText = error.message;
     return;
   }
 
   msg.style.color="green";
-  msg.textContent="Registered successfully. Please login.";
+  msg.innerText="Registered successfully. Please login.";
 };
 </script>
 
