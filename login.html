@@ -6,44 +6,19 @@
 <title>Login / Sign Up</title>
 
 <script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
-
-  window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <style>
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f8f9fa;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.container{
-  background:#fff;
-  padding:40px 30px;
-  border-radius:15px;
-  width:500px;
-  max-width:95%;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
-}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f8f9fa;display:flex;justify-content:center;align-items:center;height:100vh;}
+.container{background:#fff;padding:40px 30px;border-radius:15px;width:500px;max-width:95%;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
 h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
 .toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
-.toggle-btns button{
-  flex:1;
-  margin:0 5px;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  background:#f0f0f0;
-  color:#333;
-  cursor:pointer;
-}
+.toggle-btns button{flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;background:#f0f0f0;color:#333;cursor:pointer;}
 .toggle-btns button.active{background:#4b49ac;color:#fff;}
 form{display:none;flex-direction:column;}
 label{margin-top:10px;font-weight:500;color:#1a1a2e;}
@@ -109,13 +84,11 @@ const countries = [
 
 const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
-  const o=document.createElement('option');
-  o.value=c;
-  o.textContent=c;
+  const o=document.createElement('option'); o.value=c; o.textContent=c;
   countrySelect.appendChild(o);
 });
 
-// toggle فرم ها
+// Toggle forms
 const btnLogin=document.getElementById('btnLogin');
 const btnSignUp=document.getElementById('btnSignUp');
 const loginForm=document.getElementById('loginForm');
@@ -123,29 +96,19 @@ const signupForm=document.getElementById('signupForm');
 const msg=document.getElementById('msg');
 
 btnLogin.onclick=()=>{
-  btnLogin.classList.add('active');
-  btnSignUp.classList.remove('active');
-  loginForm.style.display='flex';
-  signupForm.style.display='none';
-  msg.innerText='';
+  btnLogin.classList.add('active'); btnSignUp.classList.remove('active');
+  loginForm.style.display='flex'; signupForm.style.display='none'; msg.innerText='';
 };
 btnSignUp.onclick=()=>{
-  btnSignUp.classList.add('active');
-  btnLogin.classList.remove('active');
-  signupForm.style.display='flex';
-  loginForm.style.display='none';
-  msg.innerText='';
+  btnSignUp.classList.add('active'); btnLogin.classList.remove('active');
+  signupForm.style.display='flex'; loginForm.style.display='none'; msg.innerText='';
 };
 
 // Login
 document.getElementById('loginSubmit').onclick=async()=>{
-  const email=loginEmail.value.trim();
-  const password=loginPassword.value.trim();
-  if(!email || !password){ msg.innerText="Enter email and password"; return; }
-
+  const email=loginEmail.value; const password=loginPassword.value;
   const { error }=await supabase.auth.signInWithPassword({email,password});
   if(error){ msg.innerText=error.message; return; }
-
   location.href="dashboard.html";
 };
 
@@ -153,49 +116,42 @@ document.getElementById('loginSubmit').onclick=async()=>{
 document.getElementById('signupSubmit').onclick = async () => {
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
-  const firstName = signupFirstName.value.trim();
-  const lastName = signupLastName.value.trim();
+  const first_name = signupFirstName.value.trim();
+  const last_name = signupLastName.value.trim();
   const dob = signupDOB.value;
   const country = signupCountry.value;
 
-  if (!email || !password || !firstName || !lastName || !dob || !country) {
-    msg.style.color="red";
-    msg.innerText="Please fill all fields.";
-    return;
+  if (!email || !password || !first_name || !last_name || !dob || !country) {
+    msg.style.color = "red"; msg.innerText = "Please fill all fields."; return;
   }
 
   try {
     // ثبت نام در Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { first_name:firstName, last_name:lastName, dob, country } }
+      email, password,
+      options: { data: { first_name, last_name, dob, country } }
     });
     if(authError) throw authError;
 
-    const userId = authData.user.id;
+    const userId = authData.user.id; // UUID
+    const userCode = Math.floor(10000000 + Math.random()*90000000).toString(); // 8 رقمی یکتا
 
-    // تولید User ID ۸ رقمی یکتا
-    const userCode = Math.floor(10000000 + Math.random()*90000000).toString();
-
-    // ذخیره در جدول users
+    // ثبت اطلاعات در جدول public users
     const { error: insertError } = await supabase.from('users').insert([{
       id: userId,
-      first_name:firstName,
-      last_name:lastName,
+      first_name,
+      last_name,
       dob,
       country,
       email,
-      user_id:userCode
+      user_id: userCode
     }]);
     if(insertError) throw insertError;
 
-    msg.style.color="green";
-    msg.innerText="Registered successfully. Please login.";
+    msg.style.color="green"; msg.innerText="Registered successfully. Please login.";
 
-  } catch(err){
-    msg.style.color="red";
-    msg.innerText=err.message;
+  } catch(err) {
+    msg.style.color="red"; msg.innerText=err.message;
   }
 };
 </script>
