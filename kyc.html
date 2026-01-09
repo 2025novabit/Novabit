@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>KYC | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="countries.js"></script>
 <style>
 body {
   margin:0;
@@ -187,30 +186,52 @@ const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"; // جایگزین با کلید خودت
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ---------- COUNTRIES ARRAY ----------
+const countries = [
+"Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria",
+"Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina",
+"Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic",
+"Chad","Chile","China","Colombia","Comoros","Congo, Democratic Republic of the","Congo, Republic of the","Costa Rica","Croatia","Cuba",
+"Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea",
+"Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala",
+"Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy",
+"Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Korea, North","Korea, South","Kosovo","Kuwait","Kyrgyzstan","Laos","Latvia",
+"Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta",
+"Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar",
+"Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Macedonia","Norway","Oman","Pakistan","Palau",
+"Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda",
+"Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia",
+"Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","Spain",
+"Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga",
+"Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States",
+"Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
+];
+
+// ---------- FUNCTIONS ----------
+
 // Toggle Side Panel
 function togglePanel(){
   document.getElementById('sidePanel').classList.toggle('active');
 }
 
-// Populate country list
+// Populate countries
 function populateCountries(){
   const select = document.getElementById('countrySelect');
   countries.forEach(c=>{
     const opt = document.createElement('option');
-    opt.value = c.name;
-    opt.innerText = c.name;
+    opt.value = c;
+    opt.textContent = c;
     select.appendChild(opt);
   });
 }
 
-// Show/hide second upload based on document type
+// Show/hide second upload based on doc type
 function toggleUploads(){
   const type = document.querySelector('input[name="docType"]:checked').value;
-  const upload2 = document.getElementById('docUpload2');
-  upload2.style.display = type === "Passport" ? "none" : "block";
+  document.getElementById('docUpload2').style.display = type === "ID Card" ? "block" : "none";
 }
 
-// Load KYC from localStorage
+// Load KYC
 function loadKYC(){
   populateCountries();
   toggleUploads();
@@ -227,26 +248,7 @@ function loadKYC(){
   }
 }
 
-// Save KYC to Supabase
-async function saveToSupabase(kycData){
-  const { data: { session } } = await supabase.auth.getSession();
-  if(!session) { alert("You must be logged in."); return; }
-
-  const { error } = await supabase.from('kyc_requests').upsert({
-    user_id: session.user.id,
-    first_name: kycData.firstName,
-    last_name: kycData.lastName,
-    dob: kycData.dob,
-    country: kycData.country,
-    doc_type: kycData.docType,
-    doc_number: kycData.docNumber,
-    status: "Pending"
-  });
-
-  if(error) console.error("Supabase KYC error:", error);
-}
-
-// Save KYC function
+// Save KYC
 async function saveKYC(){
   const firstName = document.getElementById('firstName').value;
   const lastName = document.getElementById('lastName').value;
@@ -269,10 +271,24 @@ async function saveKYC(){
   const kycData = { firstName,lastName,dob,country,docType,docNumber,status:"Pending" };
   localStorage.setItem('kycData', JSON.stringify(kycData));
   document.getElementById('kycStatus').innerText = "Status: Pending";
-
   alert("KYC saved. Trade locked until approval.");
 
-  await saveToSupabase(kycData);
+  // Save to Supabase
+  const { data: { session } } = await supabase.auth.getSession();
+  if(!session){ alert("You must be logged in."); return; }
+
+  const { error } = await supabase.from('kyc_requests').upsert({
+    user_id: session.user.id,
+    first_name: firstName,
+    last_name: lastName,
+    dob: dob,
+    country: country,
+    doc_type: docType,
+    doc_number: docNumber,
+    status: "Pending"
+  });
+
+  if(error) console.error("Supabase KYC error:", error);
 }
 </script>
 </body>
