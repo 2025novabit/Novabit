@@ -50,7 +50,6 @@ button{
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-// اتصال به Supabase
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
@@ -70,26 +69,27 @@ btn.onclick = async () => {
     return;
   }
 
- document.getElementById('adminLoginBtn').onclick = async () => {
-  const email = document.getElementById('adminEmail').value.trim();
-  const password = document.getElementById('adminPassword').value.trim();
+  try {
+    const { data, error } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('email', email)
+      .eq('password', password)
+      .single();
 
-  // چک جدول admins
-  const { data, error } = await supabase
-    .from('admins')
-    .select('*')
-    .eq('email', email)
-    .eq('password', password)
-    .single();
+    if(error || !data){
+      msg.innerText = "Invalid email or password.";
+      console.log(error);
+      return;
+    }
 
-  if(error) {
-    alert("Invalid email or password, or database connection failed.");
-    console.log(error);
-    return;
+    // ورود موفق
+    window.location.href = "admin_dashboard.html";
+
+  } catch(err){
+    console.error(err);
+    msg.innerText = "Error connecting to database.";
   }
-
-  // ورود موفق
-  window.location.href = "admin_dashboard.html";
 };
 </script>
 
