@@ -7,17 +7,43 @@
 
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
   const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
   window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <style>
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f8f9fa;display:flex;justify-content:center;align-items:center;height:100vh;}
-.container{background:#fff;padding:40px 30px;border-radius:15px;width:500px;max-width:95%;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f8f9fa;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.container{
+  background:#fff;
+  padding:40px 30px;
+  border-radius:15px;
+  width:500px;
+  max-width:95%;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
 h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
 .toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
-.toggle-btns button{flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;background:#f0f0f0;color:#333;cursor:pointer;}
+.toggle-btns button{
+  flex:1;
+  margin:0 5px;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#f0f0f0;
+  color:#333;
+  cursor:pointer;
+}
 .toggle-btns button.active{background:#4b49ac;color:#fff;}
 form{display:none;flex-direction:column;}
 label{margin-top:10px;font-weight:500;color:#1a1a2e;}
@@ -74,19 +100,22 @@ button.submit-btn{width:100%;padding:12px;margin:15px 0;border-radius:8px;border
 
 <script type="module">
 // لیست کشورها
-const countries = ["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria",
+const countries = [
+"Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria",
 "Azerbaijan","Bahrain","Bangladesh","Belgium","Brazil","Canada","China","Denmark","Egypt","France",
 "Germany","India","Iran","Iraq","Italy","Japan","Netherlands","Norway","Pakistan","Russia",
-"Saudi Arabia","Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"];
+"Saudi Arabia","Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
+];
 
 const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
   const o=document.createElement('option');
-  o.value=c; o.textContent=c;
+  o.value=c;
+  o.textContent=c;
   countrySelect.appendChild(o);
 });
 
-// toggle
+// toggle فرم ها
 const btnLogin=document.getElementById('btnLogin');
 const btnSignUp=document.getElementById('btnSignUp');
 const loginForm=document.getElementById('loginForm');
@@ -112,9 +141,11 @@ btnSignUp.onclick=()=>{
 document.getElementById('loginSubmit').onclick=async()=>{
   const email=loginEmail.value.trim();
   const password=loginPassword.value.trim();
-  if(!email || !password){ msg.innerText="Please enter email and password"; return; }
+  if(!email || !password){ msg.innerText="Enter email and password"; return; }
+
   const { error }=await supabase.auth.signInWithPassword({email,password});
   if(error){ msg.innerText=error.message; return; }
+
   location.href="dashboard.html";
 };
 
@@ -128,43 +159,43 @@ document.getElementById('signupSubmit').onclick = async () => {
   const country = signupCountry.value;
 
   if (!email || !password || !firstName || !lastName || !dob || !country) {
-    msg.style.color = "red";
-    msg.innerText = "Please fill all fields.";
+    msg.style.color="red";
+    msg.innerText="Please fill all fields.";
     return;
   }
 
   try {
-    // ثبت نام در auth
+    // ثبت نام در Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { first_name: firstName, last_name: lastName, dob, country } }
+      options: { data: { first_name:firstName, last_name:lastName, dob, country } }
     });
-    if (authError) throw authError;
+    if(authError) throw authError;
 
-    const userId = authData.user.id; // UUID تولید شده توسط Supabase
+    const userId = authData.user.id;
 
-    // تولید User ID ۸ رقمی یکتا (تکراری بررسی نشده، اما احتمال خیلی کم)
+    // تولید User ID ۸ رقمی یکتا
     const userCode = Math.floor(10000000 + Math.random()*90000000).toString();
 
-    // اضافه کردن به جدول users
+    // ذخیره در جدول users
     const { error: insertError } = await supabase.from('users').insert([{
       id: userId,
-      first_name: firstName,
-      last_name: lastName,
+      first_name:firstName,
+      last_name:lastName,
       dob,
       country,
-      user_id: userCode,
-      email
+      email,
+      user_id:userCode
     }]);
-    if (insertError) throw insertError;
+    if(insertError) throw insertError;
 
-    msg.style.color = "green";
-    msg.innerText = "Registered successfully. Please login.";
+    msg.style.color="green";
+    msg.innerText="Registered successfully. Please login.";
 
-  } catch (err) {
-    msg.style.color = "red";
-    msg.innerText = err.message;
+  } catch(err){
+    msg.style.color="red";
+    msg.innerText=err.message;
   }
 };
 </script>
