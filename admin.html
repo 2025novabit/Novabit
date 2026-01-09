@@ -70,27 +70,25 @@ btn.onclick = async () => {
     return;
   }
 
-  // بررسی ایمیل و رمز در جدول admins
+ document.getElementById('adminLoginBtn').onclick = async () => {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value.trim();
+
+  // چک جدول admins
   const { data, error } = await supabase
     .from('admins')
     .select('*')
     .eq('email', email)
     .eq('password', password)
-    .limit(1)
     .single();
 
-  if(error){
+  if(error) {
+    alert("Invalid email or password, or database connection failed.");
     console.log(error);
-    msg.innerText = "Error connecting to database.";
     return;
   }
 
-  if(!data){
-    msg.innerText = "Invalid email or password.";
-    return;
-  }
-
-  // ورود موفق → هدایت به داشبورد ادمین
+  // ورود موفق
   window.location.href = "admin_dashboard.html";
 };
 </script>
