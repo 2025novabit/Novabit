@@ -75,7 +75,7 @@ button.submit-btn{width:100%;padding:12px;margin:15px 0;border-radius:8px;border
 </div>
 
 <script type="module">
-// لیست کشورها
+// 🌍 لیست کشورها
 const countries = [
 "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria",
 "Azerbaijan","Bahrain","Bangladesh","Belgium","Brazil","Canada","China","Denmark","Egypt","France",
@@ -84,11 +84,11 @@ const countries = [
 ];
 const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
-  const o=document.createElement('option'); o.value=c; o.textContent=c;
+  const o = document.createElement('option'); o.value=c; o.textContent=c;
   countrySelect.appendChild(o);
 });
 
-// Toggle forms
+// 🔄 Toggle forms
 const btnLogin=document.getElementById('btnLogin');
 const btnSignUp=document.getElementById('btnSignUp');
 const loginForm=document.getElementById('loginForm');
@@ -104,15 +104,16 @@ btnSignUp.onclick=()=>{
   signupForm.style.display='flex'; loginForm.style.display='none'; msg.innerText='';
 };
 
-// Login
+// 🔑 Login
 document.getElementById('loginSubmit').onclick=async()=>{
-  const email=loginEmail.value; const password=loginPassword.value;
-  const { error }=await supabase.auth.signInWithPassword({email,password});
-  if(error){ msg.innerText=error.message; return; }
+  const email = loginEmail.value;
+  const password = loginPassword.value;
+  const { error } = await supabase.auth.signInWithPassword({email, password});
+  if(error){ msg.innerText = error.message; return; }
   location.href="dashboard.html";
 };
 
-// Sign Up
+// ✍️ Sign Up
 document.getElementById('signupSubmit').onclick = async () => {
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
@@ -121,24 +122,22 @@ document.getElementById('signupSubmit').onclick = async () => {
   const dob = signupDOB.value;
   const country = signupCountry.value;
 
-  if (!email || !password || !first_name || !last_name || !dob || !country) {
+  if(!email || !password || !first_name || !last_name || !dob || !country){
     msg.style.color = "red"; msg.innerText = "Please fill all fields."; return;
   }
 
-  try {
-    // ثبت نام در Auth
+  try{
+    // 1️⃣ ثبت نام در Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email, password,
       options: { data: { first_name, last_name, dob, country } }
     });
     if(authError) throw authError;
 
-    const userId = authData.user.id; // UUID از Auth
+    const userId = authData.user.id; // UUID Auth
+    const userCode = Math.floor(10000000 + Math.random() * 90000000).toString(); // 8 رقمی یکتا
 
-    // تولید User ID یکتا ۸ رقمی
-    const userCode = Math.floor(10000000 + Math.random()*90000000).toString();
-
-    // ذخیره در جدول public.users
+    // 2️⃣ ثبت در جدول public.users
     const { error: insertError } = await supabase.from('users').insert([{
       id: userId,
       first_name,
@@ -150,10 +149,12 @@ document.getElementById('signupSubmit').onclick = async () => {
     }]);
     if(insertError) throw insertError;
 
-    msg.style.color = "green"; msg.innerText = "Registered successfully. Please login.";
+    msg.style.color = "green";
+    msg.innerText = "Registered successfully. Please login.";
 
-  } catch(err) {
-    msg.style.color = "red"; msg.innerText = err.message;
+  } catch(err){
+    msg.style.color = "red";
+    msg.innerText = err.message;
   }
 };
 </script>
