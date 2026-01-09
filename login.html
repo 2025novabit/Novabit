@@ -8,39 +8,10 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const supabase = createClient(
+window.supabase = createClient(
   "https://iecnioogmafgxwarmkxz.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
 );
-
-async function loadProfile() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  const userId = session.user.id;
-
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single();
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  document.getElementById('p_firstname').textContent = data.first_name || '—';
-  document.getElementById('p_lastname').textContent  = data.last_name  || '—';
-  document.getElementById('p_email').textContent     = data.email      || '—';
-  document.getElementById('p_country').textContent   = data.country    || '—';
-  document.getElementById('p_dob').textContent       = data.dob        || '—';
-}
-
-loadProfile();
 </script>
 
 <style>
@@ -48,156 +19,113 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f8f9fa;display:flex;
 .container{background:#fff;padding:40px 30px;border-radius:15px;width:500px;max-width:95%;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
 h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
 .toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
-.toggle-btns button{flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;background:#f0f0f0;color:#333;cursor:pointer;transition:0.3s;}
+.toggle-btns button{flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;background:#f0f0f0;color:#333;cursor:pointer;}
 .toggle-btns button.active{background:#4b49ac;color:#fff;}
 form{display:none;flex-direction:column;}
-label{margin-top:10px;font-weight:500;color:#1a1a2e;}
-input,select{width:100%;padding:12px 15px;margin:5px 0;border-radius:8px;border:1px solid #ccc;font-size:16px;outline:none;transition:0.3s;}
-input:focus,select:focus{border-color:#4b49ac;box-shadow:0 0 5px rgba(75,73,172,0.5);}
-button.submit-btn{width:100%;padding:12px;margin:15px 0;border-radius:8px;border:none;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;transition:0.3s;}
-button.submit-btn:hover{background:#3a3690;}
-#msg{margin-top:10px;min-height:22px;text-align:center;font-weight:600;color:red;}
+label{margin-top:10px;font-weight:500;}
+input,select{padding:12px;border-radius:8px;border:1px solid #ccc;}
+button.submit-btn{margin-top:15px;padding:12px;border:none;border-radius:8px;background:#4b49ac;color:#fff;}
+#msg{text-align:center;margin-top:10px;font-weight:600;}
 </style>
 </head>
+
 <body>
 
 <div class="container">
 <h2>Welcome</h2>
+
 <div class="toggle-btns">
   <button id="btnLogin" class="active">Login</button>
   <button id="btnSignUp">Sign Up</button>
 </div>
 
 <form id="loginForm" style="display:flex;">
-<label for="loginEmail">Email</label>
-<input type="email" id="loginEmail" placeholder="Enter your email">
-<label for="loginPassword">Password</label>
-<input type="password" id="loginPassword" placeholder="Enter your password">
-<button type="button" class="submit-btn" id="loginSubmit">Login</button>
+  <label>Email</label>
+  <input type="email" id="loginEmail">
+  <label>Password</label>
+  <input type="password" id="loginPassword">
+  <button type="button" class="submit-btn" id="loginSubmit">Login</button>
 </form>
 
 <form id="signupForm">
-<label for="signupFirstName">First Name</label>
-<input type="text" id="signupFirstName" placeholder="Enter your first name">
-<label for="signupLastName">Last Name</label>
-<input type="text" id="signupLastName" placeholder="Enter your last name">
-<label for="signupDOB">Date of Birth</label>
-<input type="date" id="signupDOB" placeholder="Select your date of birth">
-<label for="signupCountry">Country</label>
-<select id="signupCountry"><option value="">Select Country</option></select>
-<label for="signupEmail">Email</label>
-<input type="email" id="signupEmail" placeholder="Enter your email">
-<label for="signupPassword">Password</label>
-<input type="password" id="signupPassword" placeholder="Enter your password">
-<button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
+  <label>First Name</label>
+  <input type="text" id="signupFirstName">
+  <label>Last Name</label>
+  <input type="text" id="signupLastName">
+  <label>Date of Birth</label>
+  <input type="date" id="signupDOB">
+  <label>Country</label>
+  <select id="signupCountry"></select>
+  <label>Email</label>
+  <input type="email" id="signupEmail">
+  <label>Password</label>
+  <input type="password" id="signupPassword">
+  <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
 </form>
 
 <p id="msg"></p>
 </div>
 
 <script type="module">
-// لیست کشورها
-const countries = [
-"Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria",
-"Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina",
-"Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic",
-"Chad","Chile","China","Colombia","Comoros","Congo, Democratic Republic of the","Congo, Republic of the","Costa Rica","Croatia","Cuba",
-"Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea",
-"Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala",
-"Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy",
-"Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Korea, North","Korea, South","Kosovo","Kuwait","Kyrgyzstan","Laos","Latvia",
-"Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta",
-"Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar",
-"Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Macedonia","Norway","Oman","Pakistan","Palau",
-"Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda",
-"Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia",
-"Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","Spain",
-"Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga",
-"Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States",
-"Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
-];
+const supabase = window.supabase;
 
-// پر کردن select
-const countrySelect = document.getElementById('signupCountry');
+// countries
+const countries=["Afghanistan","Albania","Algeria","Germany","Iran","Turkey","United States"];
+const countrySelect=document.getElementById('signupCountry');
 countries.forEach(c=>{
-  const opt = document.createElement('option');
-  opt.value = c; opt.textContent = c;
-  countrySelect.appendChild(opt);
+  const o=document.createElement('option');
+  o.value=c;o.textContent=c;
+  countrySelect.appendChild(o);
 });
 
-// فرم‌ها و سوئیچ
-const msg=document.getElementById('msg');
+// toggle
 const btnLogin=document.getElementById('btnLogin');
 const btnSignUp=document.getElementById('btnSignUp');
 const loginForm=document.getElementById('loginForm');
 const signupForm=document.getElementById('signupForm');
+const msg=document.getElementById('msg');
 
-btnLogin.addEventListener('click',()=>{
-  btnLogin.classList.add('active'); 
-  btnSignUp.classList.remove('active'); 
-  loginForm.style.display='flex'; 
-  signupForm.style.display='none'; 
-  msg.innerText='';
-});
-btnSignUp.addEventListener('click',()=>{
-  btnSignUp.classList.add('active'); 
-  btnLogin.classList.remove('active'); 
-  signupForm.style.display='flex'; 
-  loginForm.style.display='none'; 
-  msg.innerText='';
-});
+btnLogin.onclick=()=>{
+  btnLogin.classList.add('active');
+  btnSignUp.classList.remove('active');
+  loginForm.style.display='flex';
+  signupForm.style.display='none';
+};
 
-// ===== Login =====
-document.getElementById('loginSubmit').addEventListener('click', async ()=>{
-  const email=document.getElementById('loginEmail').value.trim();
-  const password=document.getElementById('loginPassword').value.trim();
-  if(!email||!password){ msg.innerText='Enter email & password'; return; }
-  try{
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if(error) throw error;
-    msg.style.color='green'; msg.innerText='Login Successful ✅';
-    window.location.href='dashboard.html';
-  }catch(err){ msg.style.color='red'; msg.innerText=err.message; }
-});
+btnSignUp.onclick=()=>{
+  btnSignUp.classList.add('active');
+  btnLogin.classList.remove('active');
+  signupForm.style.display='flex';
+  loginForm.style.display='none';
+};
 
-// ===== Sign Up (FINAL - CORRECT) =====
-document.getElementById('signupSubmit').addEventListener('click', async ()=>{
-  const firstName = document.getElementById('signupFirstName').value.trim();
-  const lastName  = document.getElementById('signupLastName').value.trim();
-  const dob       = document.getElementById('signupDOB').value;
-  const country   = document.getElementById('signupCountry').value;
-  const email     = document.getElementById('signupEmail').value.trim();
-  const password  = document.getElementById('signupPassword').value.trim();
+// login
+document.getElementById('loginSubmit').onclick=async()=>{
+  const email=loginEmail.value;
+  const password=loginPassword.value;
+  const {error}=await supabase.auth.signInWithPassword({email,password});
+  if(error){msg.textContent=error.message;return;}
+  window.location.href='dashboard.html';
+};
 
-  if(!firstName || !lastName || !dob || !country || !email || !password){
-    msg.style.color='red';
-    msg.innerText='Please fill all fields';
-    return;
-  }
-
-  try{
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options:{
-        data:{
-          first_name: firstName,
-          last_name: lastName,
-          dob: dob,
-          country: country
-        }
+// signup
+document.getElementById('signupSubmit').onclick=async()=>{
+  const { error } = await supabase.auth.signUp({
+    email: signupEmail.value,
+    password: signupPassword.value,
+    options:{
+      data:{
+        first_name: signupFirstName.value,
+        last_name: signupLastName.value,
+        dob: signupDOB.value,
+        country: signupCountry.value
       }
-    });
-
-    if(error) throw error;
-
-    msg.style.color='green';
-    msg.innerText='Sign Up Successful ✅ Please login.';
-  }catch(err){
-    msg.style.color='red';
-    msg.innerText = err.message;
-  }
-});
+    }
+  });
+  if(error){msg.textContent=error.message;return;}
+  msg.textContent='Sign up successful ✅';
+};
+</script>
 
 </body>
 </html>
