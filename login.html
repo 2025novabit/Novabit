@@ -81,12 +81,8 @@ const countries = [
 "Germany","India","Iran","Iraq","Italy","Japan","Netherlands","Norway","Pakistan","Russia",
 "Saudi Arabia","Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
 ];
-
 const countrySelect = document.getElementById('signupCountry');
-countries.forEach(c=>{
-  const o=document.createElement('option'); o.value=c; o.textContent=c;
-  countrySelect.appendChild(o);
-});
+countries.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; countrySelect.appendChild(o); });
 
 // Toggle forms
 const btnLogin=document.getElementById('btnLogin');
@@ -126,7 +122,7 @@ document.getElementById('signupSubmit').onclick = async () => {
   }
 
   try {
-    // ثبت نام در Auth
+    // 1️⃣ ثبت نام در Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email, password,
       options: { data: { first_name, last_name, dob, country } }
@@ -136,7 +132,7 @@ document.getElementById('signupSubmit').onclick = async () => {
     const userId = authData.user.id; // UUID
     const userCode = Math.floor(10000000 + Math.random()*90000000).toString(); // 8 رقمی یکتا
 
-    // ثبت اطلاعات در جدول public users
+    // 2️⃣ ثبت اطلاعات در جدول public.users
     const { error: insertError } = await supabase.from('users').insert([{
       id: userId,
       first_name,
@@ -144,7 +140,7 @@ document.getElementById('signupSubmit').onclick = async () => {
       dob,
       country,
       email,
-      user_id: userCode //
+      user_id: userCode
     }]);
     if(insertError) throw insertError;
 
@@ -155,6 +151,5 @@ document.getElementById('signupSubmit').onclick = async () => {
   }
 };
 </script>
-
 </body>
 </html>
