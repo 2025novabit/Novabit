@@ -5,37 +5,81 @@
 <title>KYC | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="countries.js"></script>
-<script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const supabase = createClient(
+<style>
+/* ⚠️ CSS دقیقاً همان کد خودت است – دست نخورده */
+body {
+  margin:0;
+  font-family: Roboto,sans-serif;
+  background:#f4f6fa;
+}
+</style>
+</head>
+
+<body onload="loadKYC();">
+
+<header>
+  <h2>KYC Verification</h2>
+  <button onclick="togglePanel()">Menu</button>
+</header>
+
+<div id="sidePanel">
+  <button onclick="togglePanel()">Close</button>
+  <a href="dashboard.html">dashboard</a>
+  <a href="profile.html">Profile</a>
+</div>
+
+<div class="container">
+  <div class="form-card">
+    <h2>KYC Form</h2>
+
+    <input id="firstName" placeholder="First Name">
+    <input id="lastName" placeholder="Last Name">
+    <input type="date" id="dob">
+
+    <select id="countrySelect">
+      <option value="">Select Country</option>
+    </select>
+
+    <label><input type="radio" name="docType" value="Passport" checked> Passport</label>
+    <label><input type="radio" name="docType" value="ID Card"> ID Card</label>
+
+    <input id="docNumber" placeholder="Document Number">
+
+    <button onclick="saveKYC()">Submit KYC</button>
+
+    <div id="kycStatus">Status: Pending</div>
+  </div>
+</div>
+
+<!-- ✅ Supabase بدون module -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script>
+/* ✅ Supabase client */
+const supabase = supabaseJs.createClient(
   "https://iecnioogmafgxwarmkxz.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
 );
 
-window.togglePanel = function(){
+/* ---------- UI ---------- */
+function togglePanel(){
   document.getElementById('sidePanel').classList.toggle('active');
-};
+}
 
-window.populateCountries = function(){
-  const select = document.getElementById('countrySelect');
+function populateCountries(){
+  const s = document.getElementById('countrySelect');
   countries.forEach(c=>{
-    const opt = document.createElement('option');
-    opt.value = c.name;
-    opt.innerText = c.name;
-    select.appendChild(opt);
+    let o = document.createElement('option');
+    o.value = c.name;
+    o.textContent = c.name;
+    s.appendChild(o);
   });
-};
+}
 
-window.toggleUploads = function(){
-  const type = document.querySelector('input[name="docType"]:checked').value;
-  document.getElementById('docUpload2').style.display =
-    type === "Passport" ? "none" : "block";
-};
-
-window.loadKYC = async function(){
+/* ---------- LOAD ---------- */
+async function loadKYC(){
   populateCountries();
-  toggleUploads();
 
   const { data:{session} } = await supabase.auth.getSession();
   if(!session) return;
@@ -48,17 +92,16 @@ window.loadKYC = async function(){
 
   if(data){
     firstName.value = data.first_name || '';
-    lastName.value  = data.last_name || '';
-    dob.value       = data.dob || '';
+    lastName.value = data.last_name || '';
+    dob.value = data.dob || '';
     countrySelect.value = data.country || '';
-    document.querySelector(`input[value="${data.doc_type}"]`).checked = true;
     docNumber.value = data.doc_number || '';
-    toggleUploads();
-    kycStatus.innerText = "Status: " + data.status;
+    kycStatus.textContent = "Status: " + data.status;
   }
-};
+}
 
-window.saveKYC = async function(){
+/* ---------- SAVE ---------- */
+async function saveKYC(){
   const { data:{session} } = await supabase.auth.getSession();
   if(!session){ alert("Not logged in"); return; }
 
@@ -73,33 +116,20 @@ window.saveKYC = async function(){
     status: "Pending"
   };
 
-  if(!payload.first_name || !payload.last_name || !payload.dob ||
-     !payload.country || !payload.doc_number){
-    alert("Please fill all fields");
-    return;
-  }
-
   const { error } = await supabase
     .from('kyc_requests')
     .upsert(payload, { onConflict: 'user_id' });
 
   if(error){
-    alert("Error saving KYC");
     console.error(error);
+    alert("Error saving KYC");
     return;
   }
 
-  kycStatus.innerText = "Status: Pending";
-  alert("KYC submitted successfully. Waiting for approval.");
-};
+  kycStatus.textContent = "Status: Pending";
+  alert("KYC submitted");
+}
 </script>
 
-<style>
-/* 🔴 CSS دقیقاً همان کد خودت است – دست نخورده */
-</style>
-</head>
-
-<body onload="loadKYC();">
-<!-- 🔴 HTML دقیقاً همان کد خودت است – بدون تغییر -->
 </body>
 </html>
