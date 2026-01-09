@@ -127,7 +127,7 @@ document.getElementById('signupSubmit').onclick = async () => {
 
   try {
     // ثبت نام در Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { data: authData, error: authError } = await supabase.auth.signUp({ح
       email, password,
       options: { data: { first_name, last_name, dob, country } }
     });
@@ -144,7 +144,7 @@ document.getElementById('signupSubmit').onclick = async () => {
       dob,
       country,
       email,
-      user_id: userCode
+      user_id: userCode //
     }]);
     if(insertError) throw insertError;
 
