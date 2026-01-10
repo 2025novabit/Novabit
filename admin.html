@@ -5,22 +5,57 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Login</title>
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;display:flex;justify-content:center;align-items:center;height:100vh;}
-.container{background:#fff;padding:40px 30px;border-radius:12px;box-shadow:0 6px 12px rgba(0,0,0,.1);width:400px;}
-h2{text-align:center;margin-bottom:20px;color:#1a1a2e;}
-input{width:100%;padding:12px;margin:10px 0;border:1px solid #ccc;border-radius:6px;font-size:16px;}
-button{width:100%;padding:12px;border:none;border-radius:6px;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;}
-#msg{text-align:center;color:red;margin-top:10px;font-weight:500;}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f4f6fa;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.container{
+  background:#fff;
+  padding:40px 30px;
+  border-radius:15px;
+  width:400px;
+  max-width:95%;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
+label{display:block;margin-top:10px;font-weight:500;color:#1a1a2e;}
+input{
+  width:100%;
+  padding:12px 15px;
+  margin:5px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:16px;
+}
+button.submit-btn{
+  width:100%;
+  padding:12px;
+  margin-top:20px;
+  border:none;
+  border-radius:8px;
+  background:#4b49ac;
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
+}
+#msg{text-align:center;font-weight:600;color:red;margin-top:10px;}
 </style>
 </head>
 <body>
 
 <div class="container">
   <h2>Admin Login</h2>
-  <input type="email" id="adminEmail" placeholder="Email">
-  <input type="password" id="adminPassword" placeholder="Password">
-  <button id="adminLoginBtn">Login</button>
-  <div id="msg"></div>
+  <label>Email</label>
+  <input type="email" id="adminEmail" placeholder="Enter your email">
+  <label>Password</label>
+  <input type="password" id="adminPassword" placeholder="Enter your password">
+  <button class="submit-btn" id="loginSubmit">Login</button>
+  <p id="msg"></p>
 </div>
 
 <script type="module">
@@ -33,39 +68,41 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const msg = document.getElementById('msg');
 
-document.getElementById('adminLoginBtn').onclick = async () => {
+document.getElementById('loginSubmit').onclick = async () => {
+  msg.innerText = "";
+
   const email = document.getElementById('adminEmail').value.trim();
   const password = document.getElementById('adminPassword').value.trim();
 
   if(!email || !password){
-    msg.innerText = "Please fill in both fields!";
+    msg.innerText = "Please enter email and password.";
     return;
   }
 
-  // لاگین Supabase
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if(error){
-    msg.innerText = error.message;
+  // ورود با ایمیل و رمز
+  const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+  if(signInError || !sessionData.session){
+    msg.innerText = "Invalid login credentials";
     return;
   }
 
-  // چک اینکه کاربر ادمین است
-  const { data: adminData, error: adminError } = await supabase
+  const userId = sessionData.session.user.id;
+
+  // بررسی ادمین بودن
+  const { data: admin, error: adminError } = await supabase
     .from('admins')
     .select('user_id')
-    .eq('user_id', data.user.id)
+    .eq('user_id', userId)
     .single();
 
-  if(adminError || !adminData){
-    msg.innerText = "Access denied! You are not an admin.";
+  if(adminError || !admin){
+    msg.innerText = "Please login as admin!";
     await supabase.auth.signOut();
     return;
   }
 
-  // ذخیره localStorage برای چک داشبورد
+  // ادمین واقعی -> ورود موفق
   localStorage.setItem('admin_logged_in', 'true');
-
-  // هدایت به داشبورد ادمین
   window.location.href = "admin_dashboard.html";
 };
 </script>
