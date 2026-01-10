@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin | KYC Requests</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin KYC Requests</title>
 
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;}
@@ -24,28 +24,20 @@ header button{
   cursor:pointer;
 }
 .container{padding:30px;}
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  box-shadow:0 4px 8px rgba(0,0,0,.1);
-}
+table{width:100%;border-collapse:collapse;background:#fff;}
 th,td{
   padding:10px;
-  border:1px solid #ddd;
+  border:1px solid #ccc;
   text-align:center;
-  font-size:14px;
 }
 th{background:#1a1a2e;color:#fff;}
-.status-pending{color:#f39c12;font-weight:bold;}
-.status-approved{color:#27ae60;font-weight:bold;}
-.status-rejected{color:#e74c3c;font-weight:bold;}
-button.action{
-  padding:6px 10px;
+button.action-btn{
+  padding:6px 12px;
+  margin:2px;
   border:none;
   border-radius:5px;
-  color:#fff;
   cursor:pointer;
+  color:#fff;
 }
 .approve{background:#27ae60;}
 .reject{background:#e74c3c;}
@@ -60,21 +52,18 @@ button.action{
 </header>
 
 <div class="container">
-<table>
-  <thead>
-    <tr>
-      <th>User ID</th>
-      <th>Full Name</th>
-      <th>Date of Birth</th>
-      <th>Country</th>
-      <th>Document Type</th>
-      <th>Document No</th>
-      <th>Status</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody id="kycBody"></tbody>
-</table>
+  <table>
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Name</th>
+        <th>ID Number</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="kycBody"></tbody>
+  </table>
 </div>
 
 <script type="module">
@@ -85,77 +74,65 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 🔐 چک دسترسی
-if (!localStorage.getItem('admin_logged_in')) {
-  alert("Access denied!");
+/* 🔐 چک لاگین ادمین */
+const { data: { session } } = await supabase.auth.getSession();
+if (!session || !localStorage.getItem('admin_logged_in')) {
+  alert("Access denied");
   window.location.href = "admin.html";
 }
 
-// برگشت
+/* 🔙 بازگشت */
 window.goBack = () => {
   window.location.href = "admin_dashboard.html";
 };
 
-// لود KYC
+/* 📥 بارگذاری KYC ها */
 async function loadKYC(){
   const { data, error } = await supabase
     .from('kyc_requests')
-    .select('*')
-    .order('created_at', { ascending:false });
+    .select('id,user_id,first_name,last_name,doc_number,status')
+    .order('created_at',{ ascending:false });
 
   if(error){
-    console.log(error);
-    alert("Failed to load KYC");
+    alert(error.message);
     return;
   }
 
-  const body = document.getElementById('kycBody');
-  body.innerHTML = '';
+  const tbody = document.getElementById('kycBody');
+  tbody.innerHTML = '';
 
   data.forEach(row=>{
-    const statusClass =
-      row.status === 'approved' ? 'status-approved' :
-      row.status === 'rejected' ? 'status-rejected' :
-      'status-pending';
-
-    body.innerHTML += `
-      <tr>
-        <td>${row.user_id}</td>
-        <td>${row.first_name} ${row.last_name}</td>
-        <td>${row.dob || '-'}</td>
-        <td>${row.country || '-'}</td>
-        <td>${row.doc_type}</td>
-        <td>${row.doc_number}</td>
-        <td class="${statusClass}">${row.status}</td>
-        <td>
-          <button class="action approve" onclick="approve('${row.user_id}')">Approve</button>
-          <button class="action reject" onclick="reject('${row.user_id}')">Reject</button>
-        </td>
-      </tr>
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.user_id}</td>
+      <td>${row.first_name || ''} ${row.last_name || ''}</td>
+      <td>${row.doc_number || ''}</td>
+      <td>${row.status}</td>
+      <td>
+        <button class="action-btn approve" onclick="updateStatus('${row.id}','approved')">Approve</button>
+        <button class="action-btn reject" onclick="updateStatus('${row.id}','rejected')">Reject</button>
+      </td>
     `;
+    tbody.appendChild(tr);
   });
 }
 
-// ✅ تایید
-window.approve = async (user_id)=>{
-  await supabase
+/* ✅ تایید / ❌ رد */
+window.updateStatus = async (id,status)=>{
+  const { error } = await supabase
     .from('kyc_requests')
-    .update({ status:'approved' })
-    .eq('user_id', user_id);
+    .update({ status })
+    .eq('id', id);
+
+  if(error){
+    alert("Update failed: " + error.message);
+    return;
+  }
 
   loadKYC();
 };
 
-// ❌ رد
-window.reject = async (user_id)=>{
-  await supabase
-    .from('kyc_requests')
-    .update({ status:'rejected' })
-    .eq('user_id', user_id);
-
-  loadKYC();
-};
-
+/* 🚀 اجرا */
 loadKYC();
 </script>
 
