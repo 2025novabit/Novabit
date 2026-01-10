@@ -3,48 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Login</title>
+<title>Admin Dashboard</title>
 <style>
-body {
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f8f9fa;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.container {
-  background:#fff;
-  padding:40px 30px;
-  border-radius:15px;
-  width:400px;
-  max-width:95%;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
-}
-h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
-label{margin-top:10px;font-weight:500;color:#1a1a2e;display:block;}
-input{
-  width:100%;padding:12px 15px;margin:5px 0;
-  border-radius:8px;border:1px solid #ccc;font-size:16px;
-}
-button{
-  width:100%;padding:12px;margin:15px 0;border-radius:8px;
-  border:none;background:#e74c3c;color:#fff;font-size:16px;cursor:pointer;
-}
-#msg{text-align:center;font-weight:600;color:red;}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;}
+header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
+header button{background:#e74c3c;border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;}
+.container{padding:30px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;}
+.card{background:#fff;padding:25px;border-radius:12px;box-shadow:0 6px 12px rgba(0,0,0,.1);cursor:pointer;transition:.2s;}
+.card:hover{transform:translateY(-5px);}
+.card h3{margin:0;color:#1a1a2e;}
+.card p{color:#555;}
 </style>
 </head>
 <body>
 
+<header>
+  <h2>Admin Dashboard</h2>
+  <button onclick="logoutAdmin()">Logout</button>
+</header>
+
 <div class="container">
-  <h2>Admin Login</h2>
-  <label>Email</label>
-  <input type="email" id="adminEmail" placeholder="Enter admin email">
-  <label>Password</label>
-  <input type="password" id="adminPassword" placeholder="Enter password">
-  <button id="adminLoginBtn">Login</button>
-  <p id="msg"></p>
+
+  <div class="card" onclick="location.href='admin_kyc.html'">
+    <h3>KYC Requests</h3>
+    <p>Approve or reject user KYC submissions</p>
+  </div>
+
+  <div class="card" onclick="location.href='admin_deposits.html'">
+    <h3>Deposit Requests</h3>
+    <p>Review deposits and add balance to users</p>
+  </div>
+
+  <div class="card" onclick="location.href='admin_withdrawals.html'">
+    <h3>Withdrawal Requests</h3>
+    <p>Approve or reject withdrawal requests</p>
+  </div>
+
 </div>
 
 <script type="module">
@@ -55,42 +49,17 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const emailInput = document.getElementById('adminEmail');
-const passInput = document.getElementById('adminPassword');
-const btn = document.getElementById('adminLoginBtn');
-const msg = document.getElementById('msg');
+// 🔐 چک دسترسی ادمین
+const adminSession = localStorage.getItem('admin_logged_in');
+if (!adminSession) {
+  alert("Access denied!");
+  window.location.href = "admin.html";
+}
 
-btn.onclick = async () => {
-  const email = emailInput.value.trim();
-  const password = passInput.value.trim();
-  
-  if (!email || !password) {
-    msg.innerText = "Please enter email and password.";
-    return;
-  }
-
-  // لاگین با ایمیل و پسورد
-  const { data: user, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-  if (loginError) {
-    msg.innerText = loginError.message;
-    return;
-  }
-
-  // بررسی اینکه ایمیل در جدول admins باشد
-  const { data: adminData, error: adminError } = await supabase
-    .from('admins')
-    .select('*')
-    .eq('email', email)
-    .single();
-
-  if (adminError || !adminData) {
-    msg.innerText = "Access denied! You are not an admin.";
-    await supabase.auth.signOut();
-    return;
-  }
-
-  // ورود موفق
-  window.location.href = "admin_dashboard.html";
+// خروج
+window.logoutAdmin = () => {
+  localStorage.removeItem('admin_logged_in');
+  window.location.href = "admin.html";
 };
 </script>
 
