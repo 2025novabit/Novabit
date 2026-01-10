@@ -19,7 +19,7 @@ header button{background:#e74c3c;border:none;color:#fff;padding:8px 14px;border-
 
 <header>
   <h2>Admin Dashboard</h2>
-  <button onclick="logoutAdmin()">Logout</button>
+  <button id="logoutBtn">Logout</button>
 </header>
 
 <div class="container">
@@ -49,18 +49,42 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 🔐 چک دسترسی ادمین
-const adminSession = localStorage.getItem('admin_logged_in');
-if (!adminSession) {
-  alert("Access denied!");
+// تابع خروج
+function logoutAdmin(){
   window.location.href = "admin.html";
 }
 
-// خروج
-window.logoutAdmin = () => {
-  localStorage.removeItem('admin_logged_in');
-  window.location.href = "admin.html";
-};
+// چک واقعی ادمین
+async function checkAdminAccess(){
+  const { data: { session } } = await supabase.auth.getSession();
+  if(!session){
+    alert("Please login as admin!");
+    window.location.href = "admin.html";
+    return;
+  }
+
+  // بررسی جدول admins
+  const { data, error } = await supabase
+    .from('admins')
+    .select('user_id')
+    .eq('user_id', session.user.id)
+    .single();
+
+  if(error || !data){
+    alert("Access denied! You are not an admin.");
+    logoutAdmin();
+    return;
+  }
+}
+
+// اجرای چک
+checkAdminAccess();
+
+// دکمه خروج
+document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+  await supabase.auth.signOut();
+  logoutAdmin();
+});
 </script>
 
 </body>
