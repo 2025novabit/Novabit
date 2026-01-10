@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Login</title>
+
 <style>
-body {
+body{
   margin:0;
   font-family:'Segoe UI',sans-serif;
   background:#f8f9fa;
@@ -14,82 +15,89 @@ body {
   align-items:center;
   height:100vh;
 }
-.container {
+.container{
   background:#fff;
   padding:40px 30px;
   border-radius:15px;
   width:400px;
   max-width:95%;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
 }
-h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
-label{margin-top:10px;font-weight:500;color:#1a1a2e;display:block;}
+h2{text-align:center;color:#1a1a2e;}
+label{display:block;margin-top:10px;}
 input{
-  width:100%;padding:12px 15px;margin:5px 0;
-  border-radius:8px;border:1px solid #ccc;font-size:16px;
+  width:100%;
+  padding:12px;
+  margin-top:5px;
+  border-radius:8px;
+  border:1px solid #ccc;
 }
 button{
-  width:100%;padding:12px;margin:15px 0;border-radius:8px;
-  border:none;background:#e74c3c;color:#fff;font-size:16px;cursor:pointer;
+  width:100%;
+  padding:12px;
+  margin-top:15px;
+  border:none;
+  border-radius:8px;
+  background:#e74c3c;
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
 }
-#msg{text-align:center;font-weight:600;color:red;}
+#msg{text-align:center;margin-top:10px;color:red;font-weight:600;}
 </style>
 </head>
+
 <body>
 
 <div class="container">
   <h2>Admin Login</h2>
+
   <label>Email</label>
-  <input type="email" id="adminEmail" placeholder="Enter admin email">
+  <input type="email" id="email">
+
   <label>Password</label>
-  <input type="password" id="adminPassword" placeholder="Enter password">
-  <button id="adminLoginBtn">Login</button>
+  <input type="password" id="password">
+
+  <button id="loginBtn">Login</button>
   <p id="msg"></p>
 </div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+const supabase = createClient(
+  "https://iecnioogmafgxwarmkxz.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
+);
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-const emailInput = document.getElementById('adminEmail');
-const passInput = document.getElementById('adminPassword');
-const btn = document.getElementById('adminLoginBtn');
-const msg = document.getElementById('msg');
-
-btn.onclick = async () => {
-  const email = emailInput.value.trim();
-  const password = passInput.value.trim();
+document.getElementById('loginBtn').onclick = async ()=>{
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
 
   if(!email || !password){
-    msg.innerText = "Please enter email and password.";
+    msg.innerText = "Enter email and password";
     return;
   }
 
-  try {
-    const { data, error } = await supabase
-      .from('admins')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .single();
+  // 🔐 بررسی جدول admins
+  const { data, error } = await supabase
+    .from('admins')
+    .select('*')
+    .eq('email', email)
+    .eq('password', password)
+    .single();
 
-    if(error || !data){
-      msg.innerText = "Invalid email or password.";
-      console.log(error);
-      return;
-    }
-
-    // ورود موفق
-    window.location.href = "admin_dashboard.html";
-
-  } catch(err){
-    console.error(err);
-    msg.innerText = "Error connecting to database.";
+  if(error || !data){
+    msg.innerText = "Access denied!";
+    return;
   }
+
+  // ✅ ذخیره وضعیت ادمین
+  localStorage.setItem('adminEmail', email);
+  localStorage.setItem('adminLoggedIn', 'true');
+
+  // ورود به داشبورد
+  window.location.href = "admin_dashboard.html";
 };
 </script>
 
