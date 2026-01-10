@@ -52,11 +52,29 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 🔐 چک دسترسی ادمین
-const adminSession = localStorage.getItem('admin_logged_in');
-if (!adminSession) {
-  alert("Access denied!");
-  window.location.href = "admin.html";
+// 🔐 فقط ادمین واقعی می‌تواند وارد شود
+async function checkAdmin() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const session = sessionData.session;
+  if(!session) {
+    alert("Please login as admin!");
+    window.location.href = "admin_login.html";
+    return false;
+  }
+
+  // چک کردن ایمیل در جدول admins
+  const { data: adminData, error } = await supabase
+    .from('admins')
+    .select('user_id')
+    .eq('user_id', session.user.id)
+    .single();
+
+  if(error || !adminData) {
+    alert("Access denied! You are not an admin.");
+    window.location.href = "admin_login.html";
+    return false;
+  }
+  return true;
 }
 
 // برگشت به داشبورد
@@ -125,8 +143,11 @@ window.reject = async (id) => {
   loadKYC();
 }
 
-// لود اولیه
-window.onload = loadKYC;
+// لود اولیه فقط اگر ادمین واقعی است
+window.onload = async () => {
+  const isAdmin = await checkAdmin();
+  if(isAdmin) loadKYC();
+}
 </script>
 
 </body>
