@@ -5,89 +5,67 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Login</title>
 <style>
-body {
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f8f9fa;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.container {
-  background:#fff;
-  padding:40px 30px;
-  border-radius:15px;
-  width:400px;
-  max-width:95%;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
-}
-h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
-label{margin-top:10px;font-weight:500;color:#1a1a2e;display:block;}
-input{
-  width:100%;padding:12px 15px;margin:5px 0;
-  border-radius:8px;border:1px solid #ccc;font-size:16px;
-}
-button{
-  width:100%;padding:12px;margin:15px 0;border-radius:8px;
-  border:none;background:#e74c3c;color:#fff;font-size:16px;cursor:pointer;
-}
-#msg{text-align:center;font-weight:600;color:red;}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;display:flex;justify-content:center;align-items:center;height:100vh;}
+.container{background:#fff;padding:40px 30px;border-radius:12px;box-shadow:0 6px 12px rgba(0,0,0,.1);width:400px;}
+h2{text-align:center;margin-bottom:20px;color:#1a1a2e;}
+input{width:100%;padding:12px;margin:10px 0;border:1px solid #ccc;border-radius:6px;font-size:16px;}
+button{width:100%;padding:12px;border:none;border-radius:6px;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;}
+#msg{text-align:center;color:red;margin-top:10px;font-weight:500;}
 </style>
 </head>
 <body>
 
 <div class="container">
   <h2>Admin Login</h2>
-  <label>Email</label>
-  <input type="email" id="adminEmail" placeholder="Enter admin email">
-  <label>Password</label>
-  <input type="password" id="adminPassword" placeholder="Enter password">
-  <button id="adminLoginBtn" type="button">Login</button>
-  <p id="msg"></p>
+  <input type="email" id="adminEmail" placeholder="Email">
+  <input type="password" id="adminPassword" placeholder="Password">
+  <button id="adminLoginBtn">Login</button>
+  <div id="msg"></div>
 </div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-// اتصال Supabase
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const emailInput = document.getElementById('adminEmail');
-const passInput = document.getElementById('adminPassword');
-const btn = document.getElementById('adminLoginBtn');
 const msg = document.getElementById('msg');
 
-btn.onclick = async () => {
-  const email = emailInput.value.trim();
-  const password = passInput.value.trim();
+document.getElementById('adminLoginBtn').onclick = async () => {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value.trim();
 
-  if (!email || !password) {
-    msg.innerText = "Please enter email and password.";
+  if(!email || !password){
+    msg.innerText = "Please fill in both fields!";
     return;
   }
 
-  // بررسی ایمیل و رمز در جدول admins
-  const { data, error } = await supabase
+  // لاگین Supabase
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if(error){
+    msg.innerText = error.message;
+    return;
+  }
+
+  // چک اینکه کاربر ادمین است
+  const { data: adminData, error: adminError } = await supabase
     .from('admins')
-    .select('*')
-    .eq('email', email)
-    .eq('password', password) // در حالت واقعی، رمز باید هش شود!
+    .select('user_id')
+    .eq('user_id', data.user.id)
     .single();
 
-  if (error || !data) {
-    msg.innerText = "Invalid email or password!";
-    console.log(error);
+  if(adminError || !adminData){
+    msg.innerText = "Access denied! You are not an admin.";
+    await supabase.auth.signOut();
     return;
   }
 
-  // ورود موفق -> ذخیره session محلی برای چک در داشبورد
-  localStorage.setItem('admin_logged_in', JSON.stringify({ email }));
+  // ذخیره localStorage برای چک داشبورد
+  localStorage.setItem('admin_logged_in', 'true');
 
-  // هدایت به داشبورد
+  // هدایت به داشبورد ادمین
   window.location.href = "admin_dashboard.html";
 };
 </script>
