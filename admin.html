@@ -2,117 +2,95 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login</title>
+<style>
+body {
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f8f9fa;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.container {
+  background:#fff;
+  padding:40px 30px;
+  border-radius:15px;
+  width:400px;
+  max-width:95%;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
+label{margin-top:10px;font-weight:500;color:#1a1a2e;display:block;}
+input{
+  width:100%;padding:12px 15px;margin:5px 0;
+  border-radius:8px;border:1px solid #ccc;font-size:16px;
+}
+button{
+  width:100%;padding:12px;margin:15px 0;border-radius:8px;
+  border:none;background:#e74c3c;color:#fff;font-size:16px;cursor:pointer;
+}
+#msg{text-align:center;font-weight:600;color:red;}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Admin Login</h2>
+  <label>Email</label>
+  <input type="email" id="adminEmail" placeholder="Enter admin email">
+  <label>Password</label>
+  <input type="password" id="adminPassword" placeholder="Enter password">
+  <button id="adminLoginBtn" type="button">Login</button>
+  <p id="msg"></p>
+</div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+// اتصال Supabase
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 🔐 چک دسترسی ادمین
-async function checkAdmin() {
-  const { data: { session } } = await supabase.auth.getSession();
+const emailInput = document.getElementById('adminEmail');
+const passInput = document.getElementById('adminPassword');
+const btn = document.getElementById('adminLoginBtn');
+const msg = document.getElementById('msg');
 
-  if (!session) {
-    window.location.href = "admin.html";
+btn.onclick = async () => {
+  const email = emailInput.value.trim();
+  const password = passInput.value.trim();
+
+  if (!email || !password) {
+    msg.innerText = "Please enter email and password.";
     return;
   }
 
-  const userId = session.user.id;
-
+  // بررسی ایمیل و رمز در جدول admins
   const { data, error } = await supabase
     .from('admins')
-    .select('id')
-    .eq('id', userId)
+    .select('*')
+    .eq('email', email)
+    .eq('password', password) // در حالت واقعی، رمز باید هش شود!
     .single();
 
   if (error || !data) {
-    alert("Access denied!");
-    await supabase.auth.signOut();
-    window.location.href = "admin.html";
+    msg.innerText = "Invalid email or password!";
+    console.log(error);
+    return;
   }
-}
 
-checkAdmin();
+  // ورود موفق -> ذخیره session محلی برای چک در داشبورد
+  localStorage.setItem('admin_logged_in', JSON.stringify({ email }));
 
-// خروج
-window.logoutAdmin = async () => {
-  await supabase.auth.signOut();
-  window.location.href = "admin.html";
+  // هدایت به داشبورد
+  window.location.href = "admin_dashboard.html";
 };
 </script>
-
-<style>
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#f4f6fa;
-}
-header{
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-header button{
-  background:#e74c3c;
-  border:none;
-  color:#fff;
-  padding:8px 14px;
-  border-radius:6px;
-  cursor:pointer;
-}
-.container{
-  padding:30px;
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-  gap:20px;
-}
-.card{
-  background:#fff;
-  padding:25px;
-  border-radius:12px;
-  box-shadow:0 6px 12px rgba(0,0,0,.1);
-  cursor:pointer;
-  transition:.2s;
-}
-.card:hover{transform:translateY(-5px);}
-.card h3{margin:0;color:#1a1a2e;}
-.card p{color:#555;}
-</style>
-</head>
-
-<body>
-
-<header>
-  <h2>Admin Dashboard</h2>
-  <button onclick="logoutAdmin()">Logout</button>
-</header>
-
-<div class="container">
-
-  <div class="card" onclick="location.href='admin_kyc.html'">
-    <h3>KYC Requests</h3>
-    <p>Approve or reject user KYC submissions</p>
-  </div>
-
-  <div class="card" onclick="location.href='admin_deposits.html'">
-    <h3>Deposit Requests</h3>
-    <p>Review deposits and add balance to users</p>
-  </div>
-
-  <div class="card" onclick="location.href='admin_withdrawals.html'">
-    <h3>Withdrawal Requests</h3>
-    <p>Approve or reject withdrawal requests</p>
-  </div>
-
-</div>
 
 </body>
 </html>
