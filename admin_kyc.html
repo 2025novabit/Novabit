@@ -5,20 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin KYC Requests</title>
 <style>
-body {margin:0;font-family:Arial,sans-serif;background:#f4f6fa;}
-header {background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
-header button {background:#e74c3c;border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;}
-.container {padding:30px;}
-table {width:100%;border-collapse:collapse;}
-th, td {padding:10px;border:1px solid #ccc;text-align:center;}
-th {background:#1a1a2e;color:#fff;}
-button.action-btn {padding:5px 10px;margin:2px;border:none;border-radius:5px;cursor:pointer;}
-button.action-btn.approve {background:#4CAF50;color:#fff;}
-button.action-btn.reject {background:#e74c3c;color:#fff;}
-button.action-btn:hover {opacity:0.8;}
-.status-approved {color:green;font-weight:bold;}
-.status-rejected {color:red;font-weight:bold;}
-.status-pending {color:#555;font-weight:bold;}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;}
+header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
+header button{background:#e74c3c;border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;}
+.container{padding:30px;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;border:1px solid #ccc;text-align:center;}
+th{background:#1a1a2e;color:#fff;}
+button.action-btn{padding:5px 10px;margin:2px;border:none;border-radius:5px;cursor:pointer;}
+button.action-btn.approve{background:#27ae60;color:#fff;}
+button.action-btn.reject{background:#c0392b;color:#fff;}
+button.action-btn:hover{opacity:0.8;}
 </style>
 </head>
 <body>
@@ -36,7 +33,7 @@ button.action-btn:hover {opacity:0.8;}
         <th>Date of Birth</th>
         <th>Country</th>
         <th>Document Type</th>
-        <th>Document Number</th>
+        <th>ID Number</th>
         <th>Status</th>
         <th>Actions</th>
       </tr>
@@ -55,7 +52,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// چک دسترسی ادمین
+// 🔐 چک دسترسی ادمین
 const adminSession = localStorage.getItem('admin_logged_in');
 if (!adminSession) {
   alert("Access denied!");
@@ -69,10 +66,13 @@ function goBack() {
 
 // بارگذاری درخواست‌های KYC
 async function loadKYC() {
-  const { data, error } = await supabase.from('kyc_requests').select('*');
+  const { data, error } = await supabase
+    .from('kyc_requests')
+    .select('*')
+    .order('created_at', { ascending: false });
+
   if (error) {
-    console.log(error);
-    alert("Error loading KYC requests: " + error.message);
+    console.error(error);
     return;
   }
 
@@ -80,9 +80,6 @@ async function loadKYC() {
   tbody.innerHTML = '';
 
   data.forEach(row => {
-    const statusClass = row.status === 'approved' ? 'status-approved' :
-                        row.status === 'rejected' ? 'status-rejected' : 'status-pending';
-
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.first_name || ''} ${row.last_name || ''}</td>
@@ -90,7 +87,7 @@ async function loadKYC() {
       <td>${row.country || ''}</td>
       <td>${row.doc_type || ''}</td>
       <td>${row.doc_number || ''}</td>
-      <td class="${statusClass}">${row.status || 'Pending'}</td>
+      <td>${row.status || 'Pending'}</td>
       <td>
         <button class="action-btn approve" onclick="approve('${row.id}')">Approve</button>
         <button class="action-btn reject" onclick="reject('${row.id}')">Reject</button>
@@ -102,23 +99,31 @@ async function loadKYC() {
 
 // تایید KYC
 window.approve = async (id) => {
-  const { error } = await supabase.from('kyc_requests').update({ status: 'approved' }).eq('id', id);
+  const { error } = await supabase
+    .from('kyc_requests')
+    .update({ status: 'approved' })
+    .eq('id', id);
+
   if (error) {
-    alert("Error approving KYC: " + error.message);
+    alert("Error approving: " + error.message);
     return;
   }
   loadKYC();
-};
+}
 
 // رد KYC
 window.reject = async (id) => {
-  const { error } = await supabase.from('kyc_requests').update({ status: 'rejected' }).eq('id', id);
+  const { error } = await supabase
+    .from('kyc_requests')
+    .update({ status: 'rejected' })
+    .eq('id', id);
+
   if (error) {
-    alert("Error rejecting KYC: " + error.message);
+    alert("Error rejecting: " + error.message);
     return;
   }
   loadKYC();
-};
+}
 
 // لود اولیه
 window.onload = loadKYC;
