@@ -11,8 +11,6 @@ body {
   background:#f4f6fa;
   padding-bottom:0;
 }
-
-/* HEADER */
 header{
   background:#1a1a2e;
   color:#fff;
@@ -29,8 +27,6 @@ header button{
   border-radius:5px;
   cursor:pointer;
 }
-
-/* SIDE PANEL */
 #sidePanel{
   position:fixed;
   top:0;
@@ -54,8 +50,6 @@ header button{
   text-decoration:none;
   font-weight:500;
 }
-
-/* KYC FORM */
 .container{
   padding:20px;
 }
@@ -102,8 +96,6 @@ header button{
   margin-top:10px;
   font-weight:500;
 }
-
-/* Progress Bar */
 .progress-container{
   width:100%;
   background:#eee;
@@ -118,8 +110,6 @@ header button{
   background:#4b49ac;
   transition: width 0.3s;
 }
-
-/* SUBMIT BUTTON */
 button.submitBtn{
   padding:12px 20px;
   background:#4b49ac;
@@ -129,8 +119,6 @@ button.submitBtn{
   cursor:pointer;
   font-weight:500;
 }
-
-/* RESPONSIVE */
 @media(max-width:768px){
   #sidePanel{width:100%;}
 }
@@ -146,7 +134,7 @@ button.submitBtn{
 <div id="sidePanel">
   <button id="closePanel" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
   <h2>Menu</h2>
-  <a href="dashboard.html">dashboard</a>
+  <a href="dashboard.html">Dashboard</a>
   <a href="profile.html">Profile</a>
   <a href="kyc.html" class="active">KYC</a>
   <a href="changepassword.html">Change Password</a>
@@ -204,7 +192,7 @@ const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// List of countries
+// Populate countries
 const countries = [
   "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
   "Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Bolivia","Bosnia and Herzegovina",
@@ -219,7 +207,7 @@ const countries = [
 ];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Populate countries
+  // Populate country select
   const select = document.getElementById('countrySelect');
   countries.forEach(c=>{
     const opt = document.createElement('option');
@@ -240,15 +228,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Check login
+  // Check login session
   const { data: { session } } = await supabase.auth.getSession();
   if(!session){
     alert("Please login first!");
-    window.location.href="index.html";
+    window.location.href="login.html";
     return;
   }
 
-  // Load existing KYC if any
+  // Load existing KYC if exists
   const { data: existing } = await supabase
     .from('kyc_requests')
     .select('*')
@@ -285,13 +273,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // Show progress bar
+    // Progress bar
     const progress = document.getElementById('progressBar');
     progress.style.width = "0%";
     let pct = 0;
     const interval = setInterval(()=>{ pct+=10; progress.style.width = pct+"%"; if(pct>=100) clearInterval(interval); }, 50);
 
-    // Insert into Supabase
+    // Insert or update KYC
     const { error } = await supabase
       .from('kyc_requests')
       .upsert({
@@ -314,5 +302,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 });
 </script>
+
 </body>
 </html>
