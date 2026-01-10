@@ -49,41 +49,17 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// تابع خروج
-function logoutAdmin(){
-  window.location.href = "admin.html";
+// 🔐 چک دسترسی ادمین واقعی
+const adminLogged = localStorage.getItem('admin_logged_in');
+if(!adminLogged){
+  alert("Please login as admin!");
+  window.location.href = "admin_login.html";
 }
 
-// چک واقعی ادمین
-async function checkAdminAccess(){
-  const { data: { session } } = await supabase.auth.getSession();
-  if(!session){
-    alert("Please login as admin!");
-    window.location.href = "admin.html";
-    return;
-  }
-
-  // بررسی جدول admins
-  const { data, error } = await supabase
-    .from('admins')
-    .select('user_id')
-    .eq('user_id', session.user.id)
-    .single();
-
-  if(error || !data){
-    alert("Access denied! You are not an admin.");
-    logoutAdmin();
-    return;
-  }
-}
-
-// اجرای چک
-checkAdminAccess();
-
-// دکمه خروج
+// خروج
 document.getElementById('logoutBtn').addEventListener('click', async ()=>{
-  await supabase.auth.signOut();
-  logoutAdmin();
+  localStorage.removeItem('admin_logged_in');
+  window.location.href = "admin_login.html";
 });
 </script>
 
