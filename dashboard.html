@@ -35,6 +35,30 @@ header h1 { margin: 0; font-size: 20px; }
   font-weight: 500;
 }
 
+/* KYC Status Bar */
+#kycStatusContainer {
+  position: sticky;
+  top: 55px; /* پایین هدر */
+  z-index: 9;
+  width: 100%;
+  background: #f9e6e6;
+  padding: 12px 20px;
+  text-align: center;
+  font-weight: 500;
+  display: none; /* نمایش بسته به وضعیت */
+  border-bottom: 1px solid #e0dede;
+}
+#kycStatusContainer button {
+  margin-left: 10px;
+  padding: 6px 12px;
+  background: #4b49ac;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
 /* Side menu */
 #sideMenu {
   position: fixed;
@@ -92,9 +116,6 @@ header h1 { margin: 0; font-size: 20px; }
   font-weight: 500;
 }
 
-/* KYC Status */
-#kycStatusContainer { margin-bottom: 15px; }
-
 /* Bottom Navbar */
 .bottom-nav {
   position: fixed;
@@ -126,6 +147,9 @@ header h1 { margin: 0; font-size: 20px; }
   <button id="menuBtn" onclick="toggleMenu()">Menu</button>
 </header>
 
+<!-- KYC Status بالای داشبورد -->
+<div id="kycStatusContainer"></div>
+
 <div id="sideMenu">
   <button id="closeMenu" onclick="toggleMenu()">Close</button>
   <h2>Menu</h2>
@@ -145,9 +169,6 @@ header h1 { margin: 0; font-size: 20px; }
       Deposit. Trade. Grow. 🚀<br>
       Start now and take control of your financial future!
     </p>
-
-    <!-- KYC Status -->
-    <div id="kycStatusContainer"></div>
 
     <div style="display:flex;gap:10px;">
       <button onclick="window.location.href='wallet.html'" style="flex:1;">Deposit</button>
@@ -197,7 +218,7 @@ async function loadUserName(){
   document.getElementById('userName').textContent = fullName;
 }
 
-// Load KYC Status
+// Load KYC Status بالای داشبورد داینامیک
 async function loadKYCStatus(){
   const { data:{session} } = await supabase.auth.getSession();
   if(!session) return;
@@ -209,26 +230,30 @@ async function loadKYCStatus(){
     .single();
 
   const container = document.getElementById('kycStatusContainer');
+  container.style.display = 'none';
   container.innerHTML = '';
 
   if(error || !data){
+    container.style.display = 'block';
     container.innerHTML = `
-      <p style="color:#e74c3c;font-weight:500;">لطفا اهراز هویت انجام دهید</p>
-      <button onclick="window.location.href='kyc.html'" style="padding:10px 15px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;">Go to KYC</button>
+      لطفا اهراز هویت انجام دهید
+      <button onclick="window.location.href='kyc.html'">Go to KYC</button>
     `;
   } else if(data.status === 'Pending'){
-    container.innerHTML = `<p style="color:#f39c12;font-weight:500;">KYC Status: Pending</p>`;
+    container.style.display = 'block';
+    container.innerHTML = `KYC Status: Pending`;
   } else if(data.status === 'approved'){
-    container.innerHTML = '';
+    container.style.display = 'none';
   } else if(data.status === 'rejected'){
+    container.style.display = 'block';
     container.innerHTML = `
-      <p style="color:#c0392b;font-weight:500;">KYC was rejected. Please resubmit.</p>
-      <button onclick="window.location.href='kyc.html'" style="padding:10px 15px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;">Go to KYC</button>
+      KYC was rejected. Please resubmit.
+      <button onclick="window.location.href='kyc.html'">Go to KYC</button>
     `;
   }
 }
 
-// Load both
+// Load everything
 loadUserName();
 loadKYCStatus();
 </script>
