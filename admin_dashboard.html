@@ -53,13 +53,13 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const adminLogged = localStorage.getItem('admin_logged_in');
 if(!adminLogged){
   alert("Please login as admin!");
-  window.location.href = "admin_login.html";
+  window.location.href = "admin.html";
 }
 
 // خروج
 document.getElementById('logoutBtn').addEventListener('click', async ()=>{
   localStorage.removeItem('admin_logged_in');
-  window.location.href = "admin_login.html";
+  window.location.href = "admin.html";
 });
 </script>
 
