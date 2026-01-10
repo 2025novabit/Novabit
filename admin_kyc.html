@@ -39,7 +39,7 @@ button.action-btn:hover{opacity:0.8;}
       </tr>
     </thead>
     <tbody id="kycBody">
-      <!-- درخواست‌ها اینجا بارگذاری می‌شوند -->
+      <!-- KYC Requests will be loaded here -->
     </tbody>
   </table>
 </div>
@@ -47,42 +47,24 @@ button.action-btn:hover{opacity:0.8;}
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+// 🔑 Supabase credentials
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 🔐 فقط ادمین واقعی می‌تواند وارد شود
-async function checkAdmin() {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const session = sessionData.session;
-  if(!session) {
-    alert("Please login as admin!");
-    window.location.href = "admin_login.html";
-    return false;
-  }
-
-  // چک کردن ایمیل در جدول admins
-  const { data: adminData, error } = await supabase
-    .from('admins')
-    .select('user_id')
-    .eq('user_id', session.user.id)
-    .single();
-
-  if(error || !adminData) {
-    alert("Access denied! You are not an admin.");
-    window.location.href = "admin_login.html";
-    return false;
-  }
-  return true;
+// 🔐 Check admin login
+const adminSession = localStorage.getItem('admin_logged_in');
+if (!adminSession) {
+  alert("Please login as admin!");
+  window.location.href = "admin.html";
 }
 
-// برگشت به داشبورد
+// Go back to dashboard
 function goBack() {
   window.location.href = "admin_dashboard.html";
 }
 
-// بارگذاری درخواست‌های KYC
+// Load KYC requests
 async function loadKYC() {
   const { data, error } = await supabase
     .from('kyc_requests')
@@ -90,7 +72,7 @@ async function loadKYC() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error(error);
+    console.error("Error fetching KYC:", error.message);
     return;
   }
 
@@ -115,7 +97,7 @@ async function loadKYC() {
   });
 }
 
-// تایید KYC
+// Approve KYC
 window.approve = async (id) => {
   const { error } = await supabase
     .from('kyc_requests')
@@ -129,7 +111,7 @@ window.approve = async (id) => {
   loadKYC();
 }
 
-// رد KYC
+// Reject KYC
 window.reject = async (id) => {
   const { error } = await supabase
     .from('kyc_requests')
@@ -143,11 +125,9 @@ window.reject = async (id) => {
   loadKYC();
 }
 
-// لود اولیه فقط اگر ادمین واقعی است
-window.onload = async () => {
-  const isAdmin = await checkAdmin();
-  if(isAdmin) loadKYC();
-}
+// Initial load
+window.onload = loadKYC;
+
 </script>
 
 </body>
