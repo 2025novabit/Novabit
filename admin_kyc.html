@@ -13,6 +13,8 @@ table{width:100%;border-collapse:collapse;}
 th,td{padding:10px;border:1px solid #ccc;text-align:center;}
 th{background:#1a1a2e;color:#fff;}
 button.action-btn{padding:5px 10px;margin:2px;border:none;border-radius:5px;cursor:pointer;}
+button.action-btn.approve{background:#4CAF50;color:#fff;}
+button.action-btn.reject{background:#f44336;color:#fff;}
 button.action-btn:hover{opacity:0.8;}
 </style>
 </head>
@@ -72,15 +74,17 @@ async function loadKYC() {
   tbody.innerHTML = '';
 
   data.forEach(row => {
+    const name = `${row.first_name || ''} ${row.last_name || ''}`;
+    const idNumber = row.doc_number || '';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.user_id}</td>
-      <td>${row.name}</td>
-      <td>${row.id_number}</td>
-      <td>${row.status}</td>
+      <td>${name}</td>
+      <td>${idNumber}</td>
+      <td>${row.status || 'Pending'}</td>
       <td>
-        <button class="action-btn" onclick="approve('${row.id}')">Approve</button>
-        <button class="action-btn" onclick="reject('${row.id}')">Reject</button>
+        <button class="action-btn approve" onclick="approve('${row.user_id}')">Approve</button>
+        <button class="action-btn reject" onclick="reject('${row.user_id}')">Reject</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -88,14 +92,22 @@ async function loadKYC() {
 }
 
 // تایید KYC
-window.approve = async (id) => {
-  await supabase.from('kyc_requests').update({ status: 'approved' }).eq('id', id);
+window.approve = async (user_id) => {
+  const { error } = await supabase.from('kyc_requests').update({ status: 'approved' }).eq('user_id', user_id);
+  if(error){
+    alert("Error: " + error.message);
+    return;
+  }
   loadKYC();
 }
 
 // رد KYC
-window.reject = async (id) => {
-  await supabase.from('kyc_requests').update({ status: 'rejected' }).eq('id', id);
+window.reject = async (user_id) => {
+  const { error } = await supabase.from('kyc_requests').update({ status: 'rejected' }).eq('user_id', user_id);
+  if(error){
+    alert("Error: " + error.message);
+    return;
+  }
   loadKYC();
 }
 
