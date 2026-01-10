@@ -13,15 +13,15 @@ table{width:100%;border-collapse:collapse;}
 th,td{padding:10px;border:1px solid #ccc;text-align:center;}
 th{background:#1a1a2e;color:#fff;}
 button.action-btn{padding:5px 10px;margin:2px;border:none;border-radius:5px;cursor:pointer;}
-button.action-btn.approve{background:#4CAF50;color:#fff;}
+button.action-btn.approve{background:#2ecc71;color:#fff;}
 button.action-btn.reject{background:#e74c3c;color:#fff;}
-button.action-btn:hover{opacity:0.8;}
+button.action-btn:hover{opacity:0.85;}
 </style>
 </head>
 <body>
 
 <header>
-  <h2>KYC Requests</h2>
+  <h2>Admin KYC Requests</h2>
   <button onclick="goBack()">Back</button>
 </header>
 
@@ -33,8 +33,8 @@ button.action-btn:hover{opacity:0.8;}
         <th>Last Name</th>
         <th>DOB</th>
         <th>Country</th>
-        <th>Doc Type</th>
-        <th>Doc Number</th>
+        <th>Document Type</th>
+        <th>Document Number</th>
         <th>Status</th>
         <th>Created At</th>
         <th>Actions</th>
@@ -49,6 +49,7 @@ button.action-btn:hover{opacity:0.8;}
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+// ⚠️ برای ادمین حتما باید RLS اجازه آپدیت بدهد یا از service_role در سرور استفاده شود
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
@@ -68,13 +69,9 @@ function goBack() {
 
 // بارگذاری درخواست‌های KYC
 async function loadKYC() {
-  const { data, error } = await supabase
-    .from('kyc_requests')
-    .select('*')
-    .order('created_at', { ascending: false });
-
+  const { data, error } = await supabase.from('kyc_requests').select('*').order('created_at', { ascending: false });
   if (error) {
-    console.error("Error fetching KYC:", error);
+    console.log(error);
     return;
   }
 
@@ -83,58 +80,42 @@ async function loadKYC() {
 
   data.forEach(row => {
     const tr = document.createElement('tr');
-
-    // چک null و undefined برای جلوگیری از TypeError
-    const firstName = row.first_name ?? '';
-    const lastName = row.last_name ?? '';
-    const dob = row.dob ?? '';
-    const country = row.country ?? '';
-    const docType = row.doc_type ?? '';
-    const docNumber = row.doc_number ?? '';
-    const status = row.status ?? 'Pending';
-    const createdAt = row.created_at ? new Date(row.created_at).toLocaleString() : '';
-
     tr.innerHTML = `
-      <td>${firstName}</td>
-      <td>${lastName}</td>
-      <td>${dob}</td>
-      <td>${country}</td>
-      <td>${docType}</td>
-      <td>${docNumber}</td>
-      <td>${status}</td>
-      <td>${createdAt}</td>
+      <td>${row.first_name || ''}</td>
+      <td>${row.last_name || ''}</td>
+      <td>${row.dob || ''}</td>
+      <td>${row.country || ''}</td>
+      <td>${row.doc_type || ''}</td>
+      <td>${row.doc_number || ''}</td>
+      <td>${row.status || 'Pending'}</td>
+      <td>${row.created_at ? new Date(row.created_at).toLocaleString() : ''}</td>
       <td>
-        <button class="action-btn approve" data-id="${row.id}">Approve</button>
-        <button class="action-btn reject" data-id="${row.id}">Reject</button>
+        <button class="action-btn approve" onclick="approve('${row.id}')">Approve</button>
+        <button class="action-btn reject" onclick="reject('${row.id}')">Reject</button>
       </td>
     `;
     tbody.appendChild(tr);
   });
+}
 
-  // اضافه کردن event listener به دکمه‌ها
-  document.querySelectorAll('button.approve').forEach(btn => {
-    btn.onclick = async () => {
-      const id = btn.getAttribute('data-id');
-      const { error } = await supabase
-        .from('kyc_requests')
-        .update({ status: 'approved' })
-        .eq('id', id);
-      if (error) alert("Error updating KYC: " + error.message);
-      else loadKYC();
-    };
-  });
+// تایید KYC
+window.approve = async (id) => {
+  const { error } = await supabase.from('kyc_requests').update({ status: 'approved' }).eq('id', id);
+  if(error){
+    alert("Error approving KYC: "+error.message);
+    return;
+  }
+  loadKYC();
+}
 
-  document.querySelectorAll('button.reject').forEach(btn => {
-    btn.onclick = async () => {
-      const id = btn.getAttribute('data-id');
-      const { error } = await supabase
-        .from('kyc_requests')
-        .update({ status: 'rejected' })
-        .eq('id', id);
-      if (error) alert("Error updating KYC: " + error.message);
-      else loadKYC();
-    };
-  });
+// رد KYC
+window.reject = async (id) => {
+  const { error } = await supabase.from('kyc_requests').update({ status: 'rejected' }).eq('id', id);
+  if(error){
+    alert("Error rejecting KYC: "+error.message);
+    return;
+  }
+  loadKYC();
 }
 
 // لود اولیه
