@@ -9,13 +9,16 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;}
 header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
 header button{background:#e74c3c;border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;}
 .container{padding:30px;}
-table{width:100%;border-collapse:collapse;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
 th,td{padding:10px;border:1px solid #ccc;text-align:center;}
 th{background:#1a1a2e;color:#fff;}
 button.action-btn{padding:5px 10px;margin:2px;border:none;border-radius:5px;cursor:pointer;}
 button.action-btn.approve{background:#4CAF50;color:#fff;}
 button.action-btn.reject{background:#f44336;color:#fff;}
 button.action-btn:hover{opacity:0.8;}
+.filter-btns{margin-bottom:15px;}
+.filter-btns button{padding:8px 12px;margin-right:5px;border:none;border-radius:5px;cursor:pointer;}
+.filter-btns button.active{background:#4b49ac;color:#fff;}
 </style>
 </head>
 <body>
@@ -26,6 +29,15 @@ button.action-btn:hover{opacity:0.8;}
 </header>
 
 <div class="container">
+
+  <!-- Filter Buttons -->
+  <div class="filter-btns">
+    <button onclick="setFilter('all')" class="active">All</button>
+    <button onclick="setFilter('pending')">Pending</button>
+    <button onclick="setFilter('approved')">Approved</button>
+    <button onclick="setFilter('rejected')">Rejected</button>
+  </div>
+
   <table>
     <thead>
       <tr>
@@ -50,21 +62,39 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 🔐 چک دسترسی ادمین با localStorage
+// 🔐 چک دسترسی ادمین
 const adminSession = localStorage.getItem('admin_logged_in');
 if (!adminSession) {
   alert("Access denied!");
   window.location.href = "admin.html";
 }
 
-// برگشت به داشبورد
 function goBack() {
   window.location.href = "admin_dashboard.html";
 }
 
-// بارگذاری درخواست‌های KYC
+// فیلتر فعلی
+let currentFilter = 'all';
+
+// تغییر فیلتر
+window.setFilter = (status) => {
+  currentFilter = status;
+  const btns = document.querySelectorAll('.filter-btns button');
+  btns.forEach(b => b.classList.remove('active'));
+  if(status==='all') btns[0].classList.add('active');
+  else if(status==='pending') btns[1].classList.add('active');
+  else if(status==='approved') btns[2].classList.add('active');
+  else if(status==='rejected') btns[3].classList.add('active');
+  loadKYC();
+}
+
+// بارگذاری درخواست‌های KYC با فیلتر
 async function loadKYC() {
-  const { data, error } = await supabase.from('kyc_requests').select('*');
+  let query = supabase.from('kyc_requests').select('*');
+  if(currentFilter!=='all'){
+    query = query.eq('status', currentFilter);
+  }
+  const { data, error } = await query;
   if (error) {
     console.log(error);
     return;
@@ -94,20 +124,14 @@ async function loadKYC() {
 // تایید KYC
 window.approve = async (user_id) => {
   const { error } = await supabase.from('kyc_requests').update({ status: 'approved' }).eq('user_id', user_id);
-  if(error){
-    alert("Error: " + error.message);
-    return;
-  }
+  if(error){ alert("Error: "+error.message); return; }
   loadKYC();
 }
 
 // رد KYC
 window.reject = async (user_id) => {
   const { error } = await supabase.from('kyc_requests').update({ status: 'rejected' }).eq('user_id', user_id);
-  if(error){
-    alert("Error: " + error.message);
-    return;
-  }
+  if(error){ alert("Error: "+error.message); return; }
   loadKYC();
 }
 
