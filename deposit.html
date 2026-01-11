@@ -9,130 +9,32 @@
 <script src="wallets.js"></script>
 
 <style>
-body {
-  margin: 0;
-  font-family: Roboto, Arial, sans-serif;
-  background: #f5f6fa;
-}
-header {
-  background: #1a1a2e;
-  color: #fff;
-  padding: 15px;
-  font-size: 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-header button {
-  background: #4b49ac;
-  color: #fff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-footer {
-  background: #1a1a2e;
-  color: #fff;
-  padding: 15px;
-  text-align: center;
-  position: relative;
-  margin-top: 40px;
-}
-.container {
-  max-width: 1000px;
-  margin: 20px auto;
-  padding: 0 20px;
-}
+body { margin:0; font-family:'Roboto',sans-serif; background:#f5f6fa; }
+header { background:#1a1a2e; color:#fff; padding:15px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50; }
+header button { background:#4b49ac; color:#fff; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; }
+.container { max-width:1000px; margin:20px auto; padding:0 20px; }
 
-/* جستجو */
-.search-box {
-  margin-bottom: 20px;
-}
-.search-box input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-}
+/* Search */
+.search-box { margin-bottom:20px; }
+.search-box input { width:100%; padding:12px; border-radius:8px; border:1px solid #ccc; font-size:16px; }
 
-/* لیست ارزها */
-.coin-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill,minmax(120px,1fr));
-  gap: 15px;
-}
-.coin {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  text-align: center;
-  padding: 15px 10px;
-  cursor: pointer;
-  transition: 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.coin:hover { border-color: #4b49ac; box-shadow:0 4px 8px rgba(0,0,0,0.1);}
-.coin img { width: 48px; height: 48px; margin-bottom: 8px; }
+/* Coin list */
+.coin-list { display:flex; flex-wrap:wrap; gap:15px; }
+.coin { background:#fff; border:1px solid #ddd; border-radius:10px; text-align:center; padding:15px 10px; width:100px; cursor:pointer; transition:0.2s; display:flex; flex-direction:column; align-items:center; }
+.coin:hover { border-color:#4b49ac; box-shadow:0 4px 8px rgba(0,0,0,0.1);}
+.coin img { width:48px; height:48px; margin-bottom:5px; }
 
-/* پنجره واریز */
-.deposit-panel {
-  position: fixed;
-  top: 0;
-  right: -400px;
-  width: 380px;
-  max-width: 50%;
-  height: 100%;
-  background: #fff;
-  box-shadow: -2px 0 15px rgba(0,0,0,0.2);
-  padding: 25px;
-  transition: right 0.3s ease-in-out;
-  z-index: 100;
-  overflow-y: auto;
-  border-left: 1px solid #ddd;
-}
-.deposit-panel.active { right: 0; }
-.deposit-panel h3 { margin-top: 0; font-size: 20px; margin-bottom: 15px; }
-.close-btn {
-  background: #e74c3c;
-  color: #fff;
-  border: none;
-  padding: 8px 12px;
-  cursor: pointer;
-  border-radius: 5px;
-  margin-bottom: 10px;
-}
-.address-box {
-  background: #f1f1f1;
-  padding: 12px;
-  border-radius: 6px;
-  word-break: break-all;
-  margin: 10px 0;
-  font-family: monospace;
-}
-.copy-btn, .submit-btn {
-  background: #4b49ac;
-  color: #fff;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-right: 10px;
-}
-.copy-btn:hover, .submit-btn:hover{opacity:0.8;}
-.note-text{margin-top:10px;color:#333;font-size:14px;}
+/* Deposit Panel */
+.deposit-panel { position:fixed; top:0; right:-400px; width:380px; max-width:50%; height:100%; background:#fff; box-shadow:-2px 0 15px rgba(0,0,0,0.2); padding:25px; transition:right 0.3s ease-in-out; z-index:100; overflow-y:auto; border-left:1px solid #ddd; }
+.deposit-panel.active { right:0; }
+.deposit-panel h3 { margin-top:0; font-size:20px; margin-bottom:10px; }
+.close-btn { background:#e74c3c; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-bottom:10px; }
+.address-box { background:#f1f1f1; padding:12px; border-radius:6px; word-break:break-all; margin:10px 0; font-family:monospace; }
+.copy-btn, .submit-btn { background:#4b49ac; color:#fff; border:none; padding:10px 15px; border-radius:5px; cursor:pointer; margin-right:10px; }
+.note-text { margin-top:10px; color:#333; font-size:14px; }
 
-/* واکنش‌گرا */
-@media(max-width:768px){
-  .coin-list { grid-template-columns: repeat(auto-fill,minmax(100px,1fr)); }
-  .deposit-panel { width: 100%; }
-}
+/* Responsive */
+@media(max-width:768px){ .coin-list { justify-content:center; } .deposit-panel { width:100%; } }
 </style>
 </head>
 <body>
@@ -145,17 +47,17 @@ footer {
 
 <div class="container">
 
-  <!-- جستجو -->
+  <!-- Search -->
   <div class="search-box">
     <input type="text" id="searchInput" placeholder="Search coin...">
   </div>
 
-  <!-- لیست ارزها -->
+  <!-- Coin List -->
   <div class="coin-list" id="coinList"></div>
 
 </div>
 
-<!-- پنجره سمت راست -->
+<!-- Deposit Panel -->
 <div class="deposit-panel" id="depositPanel">
   <button class="close-btn" onclick="closeDepositPanel()">Close</button>
   <h3 id="panelCoinTitle"></h3>
@@ -165,17 +67,15 @@ footer {
 
   <div class="address-box" id="walletAddress"></div>
   <button class="copy-btn" onclick="copyAddress()">Copy Address</button>
-  <button class="submit-btn" onclick="goToDepositForm()">ثبت واریز</button>
-  <p class="note-text">بعد از واریز، درخواست خود را ثبت کنید.</p>
+  <button class="submit-btn" onclick="goToDepositForm()">Submit Deposit</button>
+  <p class="note-text">After depositing, please submit your request.</p>
 </div>
 
-<footer>© 2026 Novabit. All rights reserved.</footer>
-
 <script>
-// --- دکمه بک ---
+// Back button
 function goBack(){ window.history.back(); }
 
-// --- نمایش لیست ارزها ---
+// Coin rendering
 const coinList = document.getElementById('coinList');
 const searchInput = document.getElementById('searchInput');
 const depositPanel = document.getElementById('depositPanel');
@@ -183,52 +83,47 @@ const panelCoinTitle = document.getElementById('panelCoinTitle');
 const networkSelect = document.getElementById('networkSelect');
 const walletAddress = document.getElementById('walletAddress');
 
-function renderCoins(filter="") {
+function renderCoins(filter=""){
   coinList.innerHTML = "";
-  COINS.filter(c => c.symbol.toLowerCase().includes(filter.toLowerCase()) || c.name.toLowerCase().includes(filter.toLowerCase()))
-       .forEach(c => {
-    let div = document.createElement('div');
-    div.className = "coin";
-    div.innerHTML = `
-      <img src="${c.icon}" alt="${c.symbol}" onerror="this.src='https://via.placeholder.com/48'">
-      <div>${c.name} (${c.symbol})</div>
-    `;
-    div.onclick = () => openDepositPanel(c.symbol);
+  COINS.filter(c=>c.symbol.toLowerCase().includes(filter.toLowerCase()) || c.name.toLowerCase().includes(filter.toLowerCase()))
+       .forEach(c=>{
+    let div=document.createElement('div');
+    div.className="coin";
+    div.innerHTML=`<img src="${c.icon}" alt="${c.symbol}" onerror="this.src='https://via.placeholder.com/48'"><div>${c.name} (${c.symbol})</div>`;
+    div.onclick=()=>openDepositPanel(c.symbol);
     coinList.appendChild(div);
   });
 }
-
-searchInput.addEventListener('input', ()=>renderCoins(searchInput.value));
+searchInput.addEventListener('input',()=>renderCoins(searchInput.value));
 renderCoins();
 
-// --- پنجره واریز ---
-function openDepositPanel(symbol) {
-  const wallet = WALLET_ADDRESSES[symbol];
-  if(!wallet) { alert("Wallet not set for this coin"); return; }
+// Deposit panel
+function openDepositPanel(symbol){
+  const wallet=WALLET_ADDRESSES[symbol];
+  if(!wallet){ alert("Wallet not set"); return; }
 
   panelCoinTitle.innerText = wallet.name + " (" + symbol + ")";
   networkSelect.innerHTML = "";
-  wallet.networks.forEach(net => {
-    let option = document.createElement('option');
-    option.value = net.network;
-    option.innerText = net.network;
+  wallet.networks.forEach(net=>{
+    let option=document.createElement('option');
+    option.value=net.network;
+    option.innerText=net.network;
     networkSelect.appendChild(option);
   });
   walletAddress.innerText = wallet.networks[0].address;
   depositPanel.classList.add('active');
 }
 
-networkSelect.addEventListener('change', ()=>{
+networkSelect.addEventListener('change',()=>{
   const symbol = panelCoinTitle.innerText.match(/\((.*)\)/)[1];
   const wallet = WALLET_ADDRESSES[symbol];
   const net = wallet.networks.find(n=>n.network===networkSelect.value);
   walletAddress.innerText = net.address;
 });
 
-function closeDepositPanel() { depositPanel.classList.remove('active'); }
-function copyAddress() { navigator.clipboard.writeText(walletAddress.innerText).then(()=>alert("Address copied: " + walletAddress.innerText)); }
-function goToDepositForm() { window.location.href='deposit_form.html'; }
-
+function closeDepositPanel(){ depositPanel.classList.remove('active'); }
+function copyAddress(){ navigator.clipboard.writeText(walletAddress.innerText).then(()=>alert("Address copied: " + walletAddress.innerText)); }
+function goToDepositForm(){ window.location.href='deposit_form.html'; }
 </script>
 
 </body>
