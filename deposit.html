@@ -7,28 +7,33 @@
 <script src="coins.js"></script> <!-- فایل شما با COINS -->
 <style>
 body{margin:0;font-family:Roboto,Arial,sans-serif;background:#f5f6fa;}
-header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;position:sticky;top:0;z-index:50;font-size:18px;}
+header{background:#1a1a2e;color:#fff;padding:15px;display:flex;align-items:center;gap:15px;position:sticky;top:0;z-index:50;font-size:18px;}
+#backBtn{background:#4b49ac;color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;}
 .container{max-width:1000px;margin:20px auto;padding:0 20px;}
 .search-box{margin-bottom:20px;}
 .search-box input{width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;font-size:16px;}
-.coin-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;}
-.coin{background:#fff;border:1px solid #ddd;border-radius:10px;text-align:center;padding:15px 10px;cursor:pointer;transition:0.2s;display:flex;flex-direction:column;align-items:center;}
+.coin-list{display:flex;flex-direction:column;gap:10px;}
+.coin{background:#fff;border:1px solid #ddd;border-radius:10px;text-align:left;padding:10px 15px;cursor:pointer;transition:0.2s;display:flex;align-items:center;justify-content:space-between;}
 .coin:hover{border-color:#4b49ac;box-shadow:0 4px 8px rgba(0,0,0,0.1);}
-.coin img{width:48px;height:48px;margin-bottom:8px;}
+.coin-left{display:flex;align-items:center;gap:10px;}
+.coin img{width:32px;height:32px;}
 .deposit-panel{position:fixed;top:0;right:-400px;width:380px;max-width:50%;height:100%;background:#fff;box-shadow:-2px 0 15px rgba(0,0,0,0.2);padding:25px;transition:right 0.3s;z-index:100;overflow-y:auto;border-left:1px solid #ddd;}
 .deposit-panel.active{right:0;}
 .deposit-panel h3{margin-top:0;font-size:20px;margin-bottom:5px;}
 .deposit-panel p{margin:0 0 15px;color:#e74c3c;font-weight:500;}
 .close-btn{background:#e74c3c;color:#fff;border:none;padding:8px 12px;cursor:pointer;border-radius:5px;margin-bottom:15px;}
 .address-box{background:#f1f1f1;padding:12px;border-radius:6px;word-break:break-all;margin:10px 0;font-family:monospace;}
-.copy-btn,.deposit-btn,.submit-btn{padding:10px 20px;margin-top:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:500;display:block;width:100%;}
-.copy-btn:disabled,.deposit-btn:disabled,.submit-btn:disabled{background:#999;cursor:not-allowed;}
-@media(max-width:768px){.coin-list{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));}.deposit-panel{width:100%;}}
+.submit-btn{padding:10px 20px;margin-top:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:500;display:block;width:100%;}
+.submit-btn:disabled{background:#999;cursor:not-allowed;}
+@media(max-width:768px){.coin-list{flex-direction:column;}.deposit-panel{width:100%;}}
 </style>
 </head>
 <body>
 
-<header>Novabit | Deposit</header>
+<header>
+  <button id="backBtn">Back</button>
+  Deposit | Novabit
+</header>
 
 <div class="container">
   <div class="search-box">
@@ -44,8 +49,6 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;position:sti
   <label>Network:</label>
   <select id="networkSelect"></select>
   <div class="address-box" id="walletAddress"></div>
-  <button class="copy-btn" id="copyBtn">Copy Address</button>
-  <button class="deposit-btn" id="depositBtn">Deposit</button>
   <button class="submit-btn" id="submitBtn">Submit Deposit Request</button>
 </div>
 
@@ -63,14 +66,14 @@ const depositPanel = document.getElementById('depositPanel');
 const panelCoinTitle = document.getElementById('panelCoinTitle');
 const networkSelect = document.getElementById('networkSelect');
 const walletAddress = document.getElementById('walletAddress');
-const copyBtn = document.getElementById('copyBtn');
-const depositBtn = document.getElementById('depositBtn');
 const submitBtn = document.getElementById('submitBtn');
 const closeBtn = document.getElementById('closeBtn');
+const backBtn = document.getElementById('backBtn');
 
 let WALLET_ADDRESSES = {}; 
+let USER_BALANCES = {}; // موجودی فعلی کاربر
 
-// --- بارگذاری آدرس‌ها از Supabase ---
+// --- بارگذاری آدرس‌ها و موجودی کاربر ---
 async function loadWallets(){
   const { data: wallets, error } = await supabase.from('deposit_wallets').select('*');
   if(error){ console.error(error); return; }
@@ -81,17 +84,29 @@ async function loadWallets(){
     WALLET_ADDRESSES[w.asset].networks.push({ network: w.network, address: w.address });
   });
 
+  // نمونه موجودی کاربر از جدول balances (یا هر نامی که در DB هست)
+  const { data: balances } = await supabase.from('user_balances').select('*');
+  balances?.forEach(b => USER_BALANCES[b.asset] = b.amount || 0);
+
   renderCoins();
 }
 
-// --- رندر لیست ارزها ---
-function renderCoins(filter="") {
+// --- رندر لیست ارزها به شکل لیست ---
+function renderCoins(filter=""){
   coinList.innerHTML = "";
   COINS.filter(c => c.symbol.toLowerCase().includes(filter.toLowerCase()) || c.name.toLowerCase().includes(filter.toLowerCase()))
        .forEach(c => {
     const div = document.createElement('div');
     div.className = "coin";
-    div.innerHTML = `<img src="${c.icon}" alt="${c.symbol}" onerror="this.src='https://via.placeholder.com/48'"><div>${c.symbol}</div>`;
+    div.innerHTML = `
+      <div class="coin-left">
+        <img src="${c.icon}" alt="${c.symbol}" onerror="this.src='https://via.placeholder.com/32'">
+        <div>
+          <strong>${c.name}</strong> (${c.symbol})<br>
+          Balance: ${USER_BALANCES[c.symbol]||0}
+        </div>
+      </div>
+    `;
     div.onclick = () => openDepositPanel(c.symbol);
     coinList.appendChild(div);
   });
@@ -114,20 +129,15 @@ function openDepositPanel(symbol){
       networkSelect.appendChild(option);
     });
     walletAddress.innerText = wallet.networks[0].address;
-    copyBtn.disabled = false;
-    depositBtn.disabled = false;
     submitBtn.disabled = false;
   } else {
     walletAddress.innerText = "No deposit address set for this coin";
-    copyBtn.disabled = true;
-    depositBtn.disabled = true;
     submitBtn.disabled = true;
   }
 
   depositPanel.classList.add('active');
 }
 
-// شبکه تغییر کرد
 networkSelect.addEventListener('change', ()=>{
   const symbol = panelCoinTitle.innerText;
   const wallet = WALLET_ADDRESSES[symbol];
@@ -135,30 +145,21 @@ networkSelect.addEventListener('change', ()=>{
   walletAddress.innerText = net.address;
 });
 
-// بستن پنجره
 closeBtn.addEventListener('click', ()=>depositPanel.classList.remove('active'));
-
-// کپی آدرس
-copyBtn.addEventListener('click', ()=>{
-  navigator.clipboard.writeText(walletAddress.innerText).then(()=>alert("Address copied: "+walletAddress.innerText));
-});
-
-// واریز آزمایشی
-depositBtn.addEventListener('click', ()=>{
-  alert("Deposit request for " + panelCoinTitle.innerText + " sent! (demo)");
-});
 
 // **فرم ارسال درخواست واریز**
 submitBtn.addEventListener('click', ()=>{
   const coin = panelCoinTitle.innerText;
   const network = networkSelect.value;
   const address = walletAddress.innerText;
-  // نمونه فرم ساده
   const amount = prompt(`Enter deposit amount for ${coin} on ${network}:`);
   if(amount && !isNaN(amount)){
     alert(`Deposit request submitted!\nCoin: ${coin}\nNetwork: ${network}\nAddress: ${address}\nAmount: ${amount}`);
   }
 });
+
+// دکمه Back
+backBtn.addEventListener('click', ()=>history.back());
 
 loadWallets();
 </script>
