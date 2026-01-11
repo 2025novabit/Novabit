@@ -19,10 +19,20 @@ header {
   color: #fff;
   padding: 15px;
   font-size: 18px;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   position: sticky;
   top: 0;
   z-index: 50;
+}
+header button {
+  background: #4b49ac;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
 }
 footer {
   background: #1a1a2e;
@@ -96,7 +106,7 @@ footer {
   padding: 8px 12px;
   cursor: pointer;
   border-radius: 5px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 .address-box {
   background: #f1f1f1;
@@ -106,6 +116,17 @@ footer {
   margin: 10px 0;
   font-family: monospace;
 }
+.copy-btn, .submit-btn {
+  background: #4b49ac;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+.copy-btn:hover, .submit-btn:hover{opacity:0.8;}
+.note-text{margin-top:10px;color:#333;font-size:14px;}
 
 /* واکنش‌گرا */
 @media(max-width:768px){
@@ -116,7 +137,11 @@ footer {
 </head>
 <body>
 
-<header>Novabit | Deposit</header>
+<header>
+  <button onclick="goBack()">Back</button>
+  <span>Novabit | Deposit</span>
+  <div></div>
+</header>
 
 <div class="container">
 
@@ -140,15 +165,23 @@ footer {
 
   <div class="address-box" id="walletAddress"></div>
   <button class="copy-btn" onclick="copyAddress()">Copy Address</button>
-
+  <button class="submit-btn" onclick="goToDepositForm()">ثبت واریز</button>
+  <p class="note-text">بعد از واریز، درخواست خود را ثبت کنید.</p>
 </div>
 
 <footer>© 2026 Novabit. All rights reserved.</footer>
 
 <script>
+// --- دکمه بک ---
+function goBack(){ window.history.back(); }
+
 // --- نمایش لیست ارزها ---
 const coinList = document.getElementById('coinList');
 const searchInput = document.getElementById('searchInput');
+const depositPanel = document.getElementById('depositPanel');
+const panelCoinTitle = document.getElementById('panelCoinTitle');
+const networkSelect = document.getElementById('networkSelect');
+const walletAddress = document.getElementById('walletAddress');
 
 function renderCoins(filter="") {
   coinList.innerHTML = "";
@@ -156,22 +189,19 @@ function renderCoins(filter="") {
        .forEach(c => {
     let div = document.createElement('div');
     div.className = "coin";
-    div.innerHTML = `<img src="${c.icon}" alt="${c.symbol}" onerror="this.src='https://via.placeholder.com/48'"><div>${c.symbol}</div>`;
+    div.innerHTML = `
+      <img src="${c.icon}" alt="${c.symbol}" onerror="this.src='https://via.placeholder.com/48'">
+      <div>${c.name} (${c.symbol})</div>
+    `;
     div.onclick = () => openDepositPanel(c.symbol);
     coinList.appendChild(div);
   });
 }
 
-// جستجو
 searchInput.addEventListener('input', ()=>renderCoins(searchInput.value));
 renderCoins();
 
 // --- پنجره واریز ---
-const depositPanel = document.getElementById('depositPanel');
-const panelCoinTitle = document.getElementById('panelCoinTitle');
-const networkSelect = document.getElementById('networkSelect');
-const walletAddress = document.getElementById('walletAddress');
-
 function openDepositPanel(symbol) {
   const wallet = WALLET_ADDRESSES[symbol];
   if(!wallet) { alert("Wallet not set for this coin"); return; }
@@ -188,7 +218,6 @@ function openDepositPanel(symbol) {
   depositPanel.classList.add('active');
 }
 
-// تغییر آدرس وقتی شبکه انتخاب شد
 networkSelect.addEventListener('change', ()=>{
   const symbol = panelCoinTitle.innerText.match(/\((.*)\)/)[1];
   const wallet = WALLET_ADDRESSES[symbol];
@@ -196,17 +225,10 @@ networkSelect.addEventListener('change', ()=>{
   walletAddress.innerText = net.address;
 });
 
-// بستن پنجره
-function closeDepositPanel() {
-  depositPanel.classList.remove('active');
-}
+function closeDepositPanel() { depositPanel.classList.remove('active'); }
+function copyAddress() { navigator.clipboard.writeText(walletAddress.innerText).then(()=>alert("Address copied: " + walletAddress.innerText)); }
+function goToDepositForm() { window.location.href='deposit_form.html'; }
 
-// کپی آدرس
-function copyAddress() {
-  navigator.clipboard.writeText(walletAddress.innerText).then(()=>{
-    alert("Address copied: " + walletAddress.innerText);
-  });
-}
 </script>
 
 </body>
