@@ -16,7 +16,7 @@ header{background:#1a1a2e;color:#fff;padding:15px;display:flex;align-items:cente
 .coin{background:#fff;border:1px solid #ddd;border-radius:10px;text-align:left;padding:10px 15px;cursor:pointer;transition:0.2s;display:flex;align-items:center;justify-content:space-between;}
 .coin:hover{border-color:#4b49ac;box-shadow:0 4px 8px rgba(0,0,0,0.1);}
 .coin-left{display:flex;align-items:center;gap:10px;}
-.coin img{width:32px;height:32px;}
+.coin img{width:32px;height:32px;object-fit:contain;}
 .deposit-panel{position:fixed;top:0;right:-400px;width:380px;max-width:50%;height:100%;background:#fff;box-shadow:-2px 0 15px rgba(0,0,0,0.2);padding:25px;transition:right 0.3s;z-index:100;overflow-y:auto;border-left:1px solid #ddd;}
 .deposit-panel.active{right:0;}
 .deposit-panel h3{margin-top:0;font-size:20px;margin-bottom:5px;}
@@ -70,10 +70,9 @@ const submitBtn = document.getElementById('submitBtn');
 const closeBtn = document.getElementById('closeBtn');
 const backBtn = document.getElementById('backBtn');
 
-let WALLET_ADDRESSES = {}; 
+let WALLET_ADDRESSES = {};
 let USER_BALANCES = {}; // موجودی فعلی کاربر
 
-// --- بارگذاری آدرس‌ها و موجودی کاربر ---
 async function loadWallets(){
   const { data: wallets, error } = await supabase.from('deposit_wallets').select('*');
   if(error){ console.error(error); return; }
@@ -84,14 +83,12 @@ async function loadWallets(){
     WALLET_ADDRESSES[w.asset].networks.push({ network: w.network, address: w.address });
   });
 
-  // نمونه موجودی کاربر از جدول balances (یا هر نامی که در DB هست)
   const { data: balances } = await supabase.from('user_balances').select('*');
   balances?.forEach(b => USER_BALANCES[b.asset] = b.amount || 0);
 
   renderCoins();
 }
 
-// --- رندر لیست ارزها به شکل لیست ---
 function renderCoins(filter=""){
   coinList.innerHTML = "";
   COINS.filter(c => c.symbol.toLowerCase().includes(filter.toLowerCase()) || c.name.toLowerCase().includes(filter.toLowerCase()))
@@ -106,59 +103,20 @@ function renderCoins(filter=""){
           Balance: ${USER_BALANCES[c.symbol]||0}
         </div>
       </div>
+      <button class="submit-btn" style="width:120px;">Submit Deposit</button>
     `;
-    div.onclick = () => openDepositPanel(c.symbol);
+    div.querySelector('button').onclick = () => {
+      localStorage.setItem('depositCoin', c.symbol); 
+      window.location.href = "deposit_form.html"; // هدایت به صفحه فرم واریز
+    };
     coinList.appendChild(div);
   });
 }
 
 searchInput.addEventListener('input', ()=>renderCoins(searchInput.value));
 
-// --- پنجره واریز ---
-function openDepositPanel(symbol){
-  panelCoinTitle.innerText = symbol;
-
-  networkSelect.innerHTML = "";
-  const wallet = WALLET_ADDRESSES[symbol];
-
-  if(wallet && wallet.networks.length > 0){
-    wallet.networks.forEach(n => {
-      let option = document.createElement('option');
-      option.value = n.network;
-      option.innerText = n.network;
-      networkSelect.appendChild(option);
-    });
-    walletAddress.innerText = wallet.networks[0].address;
-    submitBtn.disabled = false;
-  } else {
-    walletAddress.innerText = "No deposit address set for this coin";
-    submitBtn.disabled = true;
-  }
-
-  depositPanel.classList.add('active');
-}
-
-networkSelect.addEventListener('change', ()=>{
-  const symbol = panelCoinTitle.innerText;
-  const wallet = WALLET_ADDRESSES[symbol];
-  const net = wallet.networks.find(n=>n.network===networkSelect.value);
-  walletAddress.innerText = net.address;
-});
-
+// پنجره سمت راست حذف شد چون دکمه مستقیم می‌رود به فرم
 closeBtn.addEventListener('click', ()=>depositPanel.classList.remove('active'));
-
-// **فرم ارسال درخواست واریز**
-submitBtn.addEventListener('click', ()=>{
-  const coin = panelCoinTitle.innerText;
-  const network = networkSelect.value;
-  const address = walletAddress.innerText;
-  const amount = prompt(`Enter deposit amount for ${coin} on ${network}:`);
-  if(amount && !isNaN(amount)){
-    alert(`Deposit request submitted!\nCoin: ${coin}\nNetwork: ${network}\nAddress: ${address}\nAmount: ${amount}`);
-  }
-});
-
-// دکمه Back
 backBtn.addEventListener('click', ()=>history.back());
 
 loadWallets();
