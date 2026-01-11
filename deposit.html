@@ -5,8 +5,7 @@
 <title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="coins.js"></script>
-<script src="wallets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body { margin:0; font-family:'Roboto',sans-serif; background:#f5f6fa; }
@@ -33,7 +32,9 @@ header button { background:#4b49ac; color:#fff; border:none; padding:6px 12px; b
 .copy-btn, .submit-btn { background:#4b49ac; color:#fff; border:none; padding:10px 15px; border-radius:5px; cursor:pointer; margin-right:10px; }
 .note-text { margin-top:10px; color:#333; font-size:14px; }
 
-/* Responsive */
+/* Wallet balance */
+.balance-text { margin-bottom:15px; font-weight:bold; }
+
 @media(max-width:768px){ .coin-list { justify-content:center; } .deposit-panel { width:100%; } }
 </style>
 </head>
@@ -46,6 +47,9 @@ header button { background:#4b49ac; color:#fff; border:none; padding:6px 12px; b
 </header>
 
 <div class="container">
+
+  <!-- Wallet balance -->
+  <div class="balance-text" id="walletBalance">Loading balance...</div>
 
   <!-- Search -->
   <div class="search-box">
@@ -72,59 +76,102 @@ header button { background:#4b49ac; color:#fff; border:none; padding:6px 12px; b
 </div>
 
 <script>
-// Back button
-function goBack(){ window.history.back(); }
+// ---------- Supabase setup ----------
+const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
+const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Coin rendering
+// فرض کنیم user_id کاربر حاضر
+const USER_ID = '123e4567-e89b-12d3-a456-426614174000';
+
 const coinList = document.getElementById('coinList');
 const searchInput = document.getElementById('searchInput');
 const depositPanel = document.getElementById('depositPanel');
 const panelCoinTitle = document.getElementById('panelCoinTitle');
 const networkSelect = document.getElementById('networkSelect');
 const walletAddress = document.getElementById('walletAddress');
+const walletBalanceText = document.getElementById('walletBalance');
 
-function renderCoins(filter=""){
-  coinList.innerHTML = "";
-  COINS.filter(c=>c.symbol.toLowerCase().includes(filter.toLowerCase()) || c.name.toLowerCase().includes(filter.toLowerCase()))
-       .forEach(c=>{
-    let div=document.createElement('div');
-    div.className="coin";
-    div.innerHTML=`<img src="${c.icon}" alt="${c.symbol}" onerror="this.src='https://via.placeholder.com/48'"><div>${c.name} (${c.symbol})</div>`;
-    div.onclick=()=>openDepositPanel(c.symbol);
+let coinsData = [];
+let walletBalances = {};
+let currentSymbol = '';
+
+// ---------- Fetch coins ----------
+async function fetchCoins(){
+  let { data, error } = await supabase.from('assets').select('*').order('market_cap', {ascending:false});
+  if(error){ console.error(error); return; }
+  coinsData = data;
+  renderCoins();
+}
+
+// ---------- Fetch user balances ----------
+async function fetchBalances(){
+  let { data, error } = await supabase.from('wallets').select('*').eq('user_id', USER_ID);
+  if(error){ console.error(error); return; }
+  walletBalances = {};
+  data.forEach(w=>{ walletBalances[w.asset]=w.balance; });
+  updateBalanceText();
+}
+
+function updateBalanceText(){
+  let total = 0;
+  for(let key in walletBalances) total += walletBalances[key];
+  walletBalanceText.innerText = `Current balance: $${total.toFixed(4)}`;
+}
+
+// ---------- Render coins ----------
+function renderCoins(filter=''){
+  coinList.innerHTML = '';
+  coinsData.filter(c=>c.symbol.toLowerCase().includes(filter.toLowerCase()) || c.name.toLowerCase().includes(filter.toLowerCase()))
+           .forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'coin';
+    div.innerHTML = `<img src="${c.icon}" alt="${c.symbol}" onerror="this.src='https://via.placeholder.com/48'"><div>${c.name} (${c.symbol})</div>`;
+    div.onclick = ()=>openDepositPanel(c.symbol);
     coinList.appendChild(div);
   });
 }
-searchInput.addEventListener('input',()=>renderCoins(searchInput.value));
-renderCoins();
+searchInput.addEventListener('input', ()=>renderCoins(searchInput.value));
 
-// Deposit panel
-function openDepositPanel(symbol){
-  const wallet=WALLET_ADDRESSES[symbol];
-  if(!wallet){ alert("Wallet not set"); return; }
+// ---------- Deposit panel ----------
+async function openDepositPanel(symbol){
+  currentSymbol = symbol;
+  const coin = coinsData.find(c=>c.symbol===symbol);
+  panelCoinTitle.innerText = coin.name + ' (' + symbol + ')';
 
-  panelCoinTitle.innerText = wallet.name + " (" + symbol + ")";
-  networkSelect.innerHTML = "";
-  wallet.networks.forEach(net=>{
-    let option=document.createElement('option');
-    option.value=net.network;
-    option.innerText=net.network;
+  // Fetch networks & addresses
+  let { data, error } = await supabase.from('deposit_wallets').select('*').eq('asset', symbol).eq('is_active', true);
+  if(error || !data.length){ alert('No active wallet found'); return; }
+
+  networkSelect.innerHTML = '';
+  data.forEach(w=>{
+    const option = document.createElement('option');
+    option.value = w.network;
+    option.innerText = w.network;
     networkSelect.appendChild(option);
   });
-  walletAddress.innerText = wallet.networks[0].address;
+  walletAddress.innerText = data[0].address;
   depositPanel.classList.add('active');
 }
 
-networkSelect.addEventListener('change',()=>{
-  const symbol = panelCoinTitle.innerText.match(/\((.*)\)/)[1];
-  const wallet = WALLET_ADDRESSES[symbol];
-  const net = wallet.networks.find(n=>n.network===networkSelect.value);
-  walletAddress.innerText = net.address;
+networkSelect.addEventListener('change', async ()=>{
+  const symbol = currentSymbol;
+  const network = networkSelect.value;
+  let { data } = await supabase.from('deposit_wallets').select('*').eq('asset', symbol).eq('network', network).eq('is_active', true);
+  if(data && data.length) walletAddress.innerText = data[0].address;
 });
 
 function closeDepositPanel(){ depositPanel.classList.remove('active'); }
 function copyAddress(){ navigator.clipboard.writeText(walletAddress.innerText).then(()=>alert("Address copied: " + walletAddress.innerText)); }
 function goToDepositForm(){ window.location.href='deposit_form.html'; }
-</script>
 
+// Back button
+function goBack(){ window.history.back(); }
+
+// ---------- Initialize ----------
+fetchCoins();
+fetchBalances();
+
+</script>
 </body>
 </html>
