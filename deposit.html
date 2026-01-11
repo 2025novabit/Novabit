@@ -5,14 +5,15 @@
 <title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="coins.js"></script> <!-- فایل شامل 100 ارز و آیکون -->
+<script src="coins.js"></script> <!-- فایل شامل 100 ارز با آیکون -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body { margin:0; font-family: Roboto, Arial, sans-serif; background:#f5f6fa; }
-header { background:#1a1a2e; color:#fff; padding:15px; text-align:center; position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; align-items:center;}
+header { background:#1a1a2e; color:#fff; padding:15px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50;}
 header h1{margin:0; font-size:18px;}
 button { padding:10px 15px; border:none; border-radius:5px; cursor:pointer; }
+.back-btn { background:#4b49ac; color:#fff; }
 .container{ max-width:1000px; margin:20px auto; padding:0 20px;}
 .search-box { margin-bottom:20px; }
 .search-box input { width:100%; padding:12px; border-radius:8px; border:1px solid #ccc; font-size:16px;}
@@ -25,7 +26,6 @@ button { padding:10px 15px; border:none; border-radius:5px; cursor:pointer; }
 .deposit-panel.active { right:0; }
 .deposit-panel h3 { margin-top:0; font-size:20px; margin-bottom:15px; }
 .close-btn { background:#e74c3c; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-bottom:10px; }
-.back-btn { background:#4b49ac; color:#fff; margin-right:10px; }
 .address-box { background:#f1f1f1; padding:12px; border-radius:6px; word-break:break-all; margin:10px 0; font-family:monospace;}
 .submit-btn { background:#4b49ac; color:#fff; margin-top:10px; padding:10px 15px; border:none; border-radius:5px; cursor:pointer; width:100%; }
 .deposit-note { background:#f1f1f1; padding:10px; border-radius:6px; margin-bottom:10px; font-size:14px; text-align:center; }
@@ -40,18 +40,13 @@ button { padding:10px 15px; border:none; border-radius:5px; cursor:pointer; }
 </header>
 
 <div class="container">
-
-  <!-- جستجو -->
   <div class="search-box">
     <input type="text" id="searchInput" placeholder="Search coin...">
   </div>
 
-  <!-- لیست ارزها -->
-  <div class="coin-list" id="coinList"></div>
-
+  <div class="coin-list" id="coinList">Loading coins...</div>
 </div>
 
-<!-- پنجره واریز -->
 <div class="deposit-panel" id="depositPanel">
   <button class="close-btn" onclick="closeDepositPanel()">Close</button>
   <h3 id="panelCoinTitle"></h3>
@@ -76,18 +71,17 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let walletBalances = {}; // symbol -> balance
-let currentUserId = "demo-user-uuid"; // TODO: Replace with real auth user id
+let currentUserId = "demo-user-uuid"; // TODO: Replace with auth user id
 
-// --- Fetch balances from Supabase ---
+// --- Fetch user balances from Supabase ---
 async function fetchBalances(){
   const { data, error } = await supabase
     .from('wallets')
-    .select('*')
+    .select('asset,balance')
     .eq('user_id', currentUserId);
 
   if(error) console.log(error);
 
-  // Initialize walletBalances
   walletBalances = {};
   if(data && data.length>0){
     data.forEach(w => walletBalances[w.asset] = parseFloat(w.balance));
@@ -97,14 +91,15 @@ async function fetchBalances(){
 // --- Render coins ---
 const coinList = document.getElementById('coinList');
 const searchInput = document.getElementById('searchInput');
+
 function renderCoins(filter=""){
   coinList.innerHTML = "";
   COINS.filter(c => c.symbol.toLowerCase().includes(filter.toLowerCase()) || c.name.toLowerCase().includes(filter.toLowerCase()))
        .forEach(c=>{
-    let bal = walletBalances[c.symbol] || 0;
+    const bal = walletBalances[c.symbol] || 0;
     const div = document.createElement('div');
     div.className="coin";
-    div.innerHTML=`<img src="${c.icon}" alt="${c.symbol}"><div>${c.symbol}</div><div>Balance: ${bal}</div>`;
+    div.innerHTML=`<img src="${c.icon}" alt="${c.symbol}" onerror="this.src='https://via.placeholder.com/48'"><div>${c.symbol}</div><div>Balance: ${bal}</div>`;
     div.onclick=()=>openDepositPanel(c.symbol);
     coinList.appendChild(div);
   });
@@ -143,14 +138,8 @@ networkSelect.addEventListener('change', ()=>{
 });
 
 function closeDepositPanel(){ depositPanel.classList.remove('active'); }
-
-function copyAddress(){
-  navigator.clipboard.writeText(walletAddress.innerText).then(()=>alert("Address copied: " + walletAddress.innerText));
-}
-
-function goToDepositForm(){
-  window.location.href = "deposit_form.html"; // لینک صفحه فرم واریز
-}
+function copyAddress(){ navigator.clipboard.writeText(walletAddress.innerText).then(()=>alert("Address copied: " + walletAddress.innerText)); }
+function goToDepositForm(){ window.location.href="deposit_form.html"; }
 
 // --- Initialize ---
 async function init(){
