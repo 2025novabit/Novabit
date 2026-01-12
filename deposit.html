@@ -2,102 +2,112 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Deposit</title>
+<title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 
 <style>
-body{font-family:Roboto,Arial;background:#f5f6fa;margin:0}
-header{background:#1a1a2e;color:#fff;padding:15px;text-align:center}
-.container{max-width:1000px;margin:20px auto;padding:20px}
-.coin{display:flex;align-items:center;gap:10px;background:#fff;
-border:1px solid #ddd;padding:12px;border-radius:8px;margin-bottom:10px;cursor:pointer}
-.coin img{width:32px;height:32px}
-.panel{position:fixed;right:-400px;top:0;height:100%;width:360px;
-background:#fff;box-shadow:-2px 0 10px rgba(0,0,0,.2);
-padding:20px;transition:.3s}
+body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
+header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px}
+.container{padding:20px}
+
+/* Coin scroll (same as Trade) */
+.coin-scroll{display:flex;overflow-x:auto;gap:10px;padding:10px 0}
+.coin-card{
+  background:#fff;border:1px solid #ccc;border-radius:10px;
+  padding:10px;text-align:center;width:90px;
+  flex-shrink:0;cursor:pointer
+}
+.coin-card:hover{border-color:#4b49ac}
+.coin-card img{width:40px;height:40px;margin-bottom:5px}
+
+/* Deposit panel */
+.panel{
+  position:fixed;top:0;right:-380px;width:360px;height:100%;
+  background:#fff;box-shadow:-2px 0 10px rgba(0,0,0,.2);
+  padding:20px;transition:.3s;z-index:100
+}
 .panel.active{right:0}
-.close{background:#e74c3c;color:#fff;border:none;padding:6px 10px}
-.address{background:#f1f1f1;padding:10px;margin-top:10px;font-family:monospace}
+.close{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px}
+.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px}
 .notice{margin-top:20px;font-size:14px;color:#555}
+button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px}
 </style>
 </head>
 
 <body>
+
 <header>Deposit</header>
 
-<div class="container" id="coinList">Loading coins...</div>
-
-<div class="panel" id="panel">
-  <button class="close" onclick="closePanel()">Close</button>
-  <h3 id="title"></h3>
-  <select id="network"></select>
-  <div class="address" id="address"></div>
-
-  <div class="notice">
-    After making a deposit, please submit your deposit request.
-    <br><br>
-    <button onclick="location.href='deposit-request.html'">
-      Submit Deposit Request
-    </button>
+<div class="container">
+  <h3>Select Coin (Top 100)</h3>
+  <div class="coin-scroll" id="coinScroll">
+    <div>Loading coins...</div>
   </div>
 </div>
 
+<!-- Deposit Panel -->
+<div class="panel" id="panel">
+  <button class="close" onclick="closePanel()">Close</button>
+  <h3 id="panelTitle"></h3>
+
+  <div class="address" id="depositAddress">—</div>
+
+  <div class="notice">
+    After completing your deposit, please submit your deposit request.
+  </div>
+
+  <button class="main" onclick="goToRequest()">
+    Submit Deposit Request
+  </button>
+</div>
+
 <script>
-const supabase = supabaseJs.createClient(
-  "https://YOUR_PROJECT_ID.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
-);
+const coinScroll = document.getElementById('coinScroll');
+const panel = document.getElementById('panel');
+const panelTitle = document.getElementById('panelTitle');
+const depositAddress = document.getElementById('depositAddress');
 
-const coinList = document.getElementById("coinList");
+// mock balances (later from DB)
+const balances = { BTC:0, ETH:0, USDT:0 };
 
-async function loadCoins(){
-  const { data:{ user } } = await supabase.auth.getUser();
+// load coins EXACTLY like Trade
+fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
+.then(res=>res.json())
+.then(data=>{
+  coinScroll.innerHTML = '';
+  data.forEach(coin=>{
+    const symbol = coin.symbol.toUpperCase();
+    if(!(symbol in balances)) balances[symbol]=0;
 
-  if(!user){
-    coinList.innerHTML = "Please login to view deposit coins";
-    return;
-  }
-
-  const { data:assets } = await supabase.from("assets").select("*");
-
-  coinList.innerHTML = "";
-  assets.forEach(a=>{
-    const div=document.createElement("div");
-    div.className="coin";
-    div.innerHTML=`<img src="${a.icon_url}"><b>${a.symbol}</b> ${a.name}`;
-    div.onclick=()=>openPanel(a.symbol,a.name);
-    coinList.appendChild(div);
+    const div = document.createElement('div');
+    div.className = 'coin-card';
+    div.innerHTML = `
+      <img src="${coin.image}">
+      <div><b>${symbol}</b></div>
+      <small>${balances[symbol]}</small>
+    `;
+    div.onclick = ()=>openPanel(symbol);
+    coinScroll.appendChild(div);
   });
+})
+.catch(()=>{
+  coinScroll.innerHTML = 'Failed to load coins';
+});
+
+// open panel
+function openPanel(symbol){
+  panelTitle.innerText = symbol + ' Deposit';
+  depositAddress.innerText = 'Your ' + symbol + ' deposit address will appear here';
+  panel.classList.add('active');
 }
-
-async function openPanel(symbol,name){
-  document.getElementById("title").innerText=name+" ("+symbol+")";
-  const { data } = await supabase
-    .from("deposit_wallets")
-    .select("*")
-    .eq("asset_symbol",symbol)
-    .eq("is_active",true);
-
-  const net=document.getElementById("network");
-  net.innerHTML="";
-  data.forEach(w=>{
-    const o=document.createElement("option");
-    o.value=w.address;
-    o.innerText=w.network;
-    net.appendChild(o);
-  });
-
-  document.getElementById("address").innerText=data[0]?.address||"";
-  net.onchange=()=>document.getElementById("address").innerText=net.value;
-  document.getElementById("panel").classList.add("active");
-}
-
 function closePanel(){
-  document.getElementById("panel").classList.remove("active");
+  panel.classList.remove('active');
 }
-
-loadCoins();
+function goToRequest(){
+  location.href = 'deposit-request.html';
+}
 </script>
+
 </body>
 </html>
