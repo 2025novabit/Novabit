@@ -1,13 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Deposit</title>
+<title>Deposit | Novabit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-body{font-family:Arial;background:#f5f6fa}
-.coin{background:#fff;margin:10px;padding:10px;border-radius:8px;display:flex;align-items:center}
-.coin img{width:32px;height:32px;margin-right:10px}
+body{font-family:Arial,sans-serif;background:#f5f6fa;margin:0;padding:20px;}
+h2{margin-top:0;}
+#coins{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.coin{background:#fff;padding:10px;border-radius:8px;display:flex;align-items:center;cursor:pointer;transition:0.2s;}
+.coin:hover{box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+.coin img{width:32px;height:32px;margin-right:10px;}
+.deposit-panel{position:fixed;top:0;right:-400px;width:380px;height:100%;background:#fff;box-shadow:-2px 0 10px rgba(0,0,0,0.2);padding:20px;transition:right 0.3s;overflow:auto;z-index:100;}
+.deposit-panel.active{right:0;}
+.close-btn{background:#e74c3c;color:#fff;border:none;padding:8px 12px;cursor:pointer;border-radius:5px;margin-bottom:10px;}
+.address-box{background:#f1f1f1;padding:10px;border-radius:6px;word-break:break-all;margin:10px 0;font-family:monospace;}
+.submit-btn{background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -15,34 +24,84 @@ body{font-family:Arial;background:#f5f6fa}
 <h2>Deposit</h2>
 <div id="coins">Loading coins...</div>
 
+<!-- پنجره واریز -->
+<div class="deposit-panel" id="depositPanel">
+  <button class="close-btn" onclick="closeDepositPanel()">Close</button>
+  <h3 id="panelCoinTitle"></h3>
+  <label>Network:</label>
+  <select id="networkSelect"></select>
+  <div class="address-box" id="walletAddress"></div>
+  <p>After deposit, please submit your request.</p>
+  <button class="submit-btn" onclick="goToDepositForm()">Submit Deposit Request</button>
+</div>
+
 <script>
 const supabase = supabaseJs.createClient(
   "https://iecnioogmafgxwarmkxz.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ"
 );
 
-async function load(){
-  const {data,error} = await supabase.from('assets').select('*');
+const coinsDiv = document.getElementById('coins');
+const depositPanel = document.getElementById('depositPanel');
+const panelCoinTitle = document.getElementById('panelCoinTitle');
+const networkSelect = document.getElementById('networkSelect');
+const walletAddress = document.getElementById('walletAddress');
 
-  if(error){
-    document.getElementById('coins').innerText = error.message;
-    return;
-  }
+let selectedCoin = null;
+let coinWallets = {}; // symbol -> wallet info
 
-  const box = document.getElementById('coins');
-  box.innerHTML = "";
-
+// ۱) بارگذاری ارزها
+async function loadCoins(){
+  const {data,error} = await supabase.from('assets').select('*').eq('is_active',true);
+  if(error){ coinsDiv.innerText = error.message; return; }
+  coinsDiv.innerHTML = "";
   data.forEach(c=>{
-    box.innerHTML += `
-      <div class="coin">
-        <img src="${c.icon}">
-        <b>${c.symbol}</b> — ${c.name}
-      </div>
-    `;
+    const div = document.createElement('div');
+    div.className = "coin";
+    div.innerHTML = `<img src="${c.icon}" alt="${c.symbol}"><b>${c.symbol}</b> - ${c.name}`;
+    div.onclick = ()=>openDepositPanel(c);
+    coinsDiv.appendChild(div);
   });
 }
 
-load();
+loadCoins();
+
+// ۲) باز کردن پنجره واریز
+function openDepositPanel(coin){
+  selectedCoin = coin;
+  panelCoinTitle.innerText = coin.name + " (" + coin.symbol + ")";
+  networkSelect.innerHTML = "";
+  // Fetch wallets from deposit_wallets table
+  supabase.from('deposit_wallets').select('*').eq('asset',coin.symbol).then(({data,error})=>{
+    if(error || !data || data.length===0){
+      walletAddress.innerText = "No wallet available";
+      return;
+    }
+    coinWallets[coin.symbol] = data;
+    data.forEach(w=>{
+      let opt = document.createElement('option');
+      opt.value = w.network;
+      opt.innerText = w.network;
+      networkSelect.appendChild(opt);
+    });
+    walletAddress.innerText = data[0].address;
+    depositPanel.classList.add('active');
+  });
+}
+
+// ۳) تغییر شبکه
+networkSelect.addEventListener('change',()=>{
+  const w = coinWallets[selectedCoin.symbol].find(x=>x.network===networkSelect.value);
+  walletAddress.innerText = w.address;
+});
+
+// ۴) بستن پنجره
+function closeDepositPanel(){ depositPanel.classList.remove('active'); }
+
+// ۵) هدایت به فرم واریز
+function goToDepositForm(){
+  window.location.href = "deposit_form.html?coin="+selectedCoin.symbol;
+}
 </script>
 </body>
 </html>
