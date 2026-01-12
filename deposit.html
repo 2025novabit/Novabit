@@ -3,57 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <title>Deposit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-body{font-family:Arial;background:#f5f6fa;margin:0}
-header{background:#1a1a2e;color:#fff;padding:15px}
-.coin{display:flex;align-items:center;padding:10px;background:#fff;margin:10px;border-radius:8px;cursor:pointer}
+body{margin:0;font-family:Arial;background:#f5f6fa}
+header{background:#1a1a2e;color:#fff;padding:15px;display:flex;align-items:center;gap:10px}
+button{padding:6px 12px;border:none;border-radius:5px;cursor:pointer}
+.coin{display:flex;align-items:center;background:#fff;margin:10px;border-radius:8px;padding:10px;cursor:pointer}
 .coin img{width:32px;height:32px;margin-right:10px}
 </style>
 </head>
+
 <body>
 
 <header>
   <button onclick="history.back()">← Back</button>
-  Deposit
+  <strong>Deposit</strong>
 </header>
 
-<div id="coins">Loading coins...</div>
+<div id="coinList">Loading coins...</div>
 
 <script>
+/* ✅ اتصال صحیح به Supabase */
 const supabase = supabaseJs.createClient(
- "https://iecnioogmafgxwarmkxz.supabase.co",
- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
+  "https://iecnioogmafgxwarmkxz.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ"
 );
 
+/* ✅ دریافت ارزها از دیتابیس */
 async function loadCoins(){
- const {data,error} = await supabase
-  .from('assets')
-  .select('*')
-  .eq('is_active',true)
-  .order('symbol');
+  const { data, error } = await supabase
+    .from('assets')
+    .select('symbol,name,icon')
+    .eq('is_active', true)
+    .order('symbol');
 
- if(error){
-   document.getElementById('coins').innerText = error.message;
-   return;
- }
+  if(error){
+    document.getElementById('coinList').innerText = error.message;
+    return;
+  }
 
- document.getElementById('coins').innerHTML = '';
- data.forEach(c=>{
-  const div=document.createElement('div');
-  div.className='coin';
-  div.innerHTML=`<img src="${c.icon}"><b>${c.symbol}</b> - ${c.name}`;
-  div.onclick=()=>openDeposit(c.symbol);
-  document.getElementById('coins').appendChild(div);
- });
-}
+  const list = document.getElementById('coinList');
+  list.innerHTML = "";
 
-function openDeposit(symbol){
- alert("Open deposit for "+symbol);
- // اینجا بعداً فرم ثبت واریز می‌آید
+  data.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'coin';
+    div.innerHTML = `
+      <img src="${c.icon}" onerror="this.src='https://via.placeholder.com/32'">
+      <div>
+        <b>${c.symbol}</b><br>
+        <small>${c.name}</small>
+      </div>
+    `;
+    div.onclick = () => alert(
+      "After deposit, please submit your deposit request.\n\nCoin: " + c.symbol
+    );
+    list.appendChild(div);
+  });
 }
 
 loadCoins();
 </script>
+
 </body>
 </html>
