@@ -96,11 +96,19 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // بارگذاری بالانس ها از دیتابیس
 let balances = {};
 
-// Load coins from CoinGecko API
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
-.then(res=>res.json())
-.then(async data=>{
+.then(res => {
+  if (!res.ok) throw new Error('Network response was not ok');
+  return res.json();
+})
+.then(data=>{
   coinScroll.innerHTML = '';
+  // populate coins
+})
+.catch(err=>{
+  console.error(err);
+  coinScroll.innerHTML = 'Failed to load coins';
+});
 
   // بارگذاری بالانس ها برای همه کوین ها از دیتابیس
   const balanceRes = await fetch(`${SUPABASE_URL}/rest/v1/user_balances`, {
