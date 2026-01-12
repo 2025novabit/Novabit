@@ -1,185 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Deposit | Novabit</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- Supabase -->
+<title>Deposit</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-body{margin:0;font-family:Roboto,Arial;background:#f5f6fa}
-header{
-  background:#1a1a2e;color:#fff;
-  padding:15px;display:flex;
-  align-items:center;gap:15px
-}
-header button{
-  background:#4b49ac;border:none;
-  color:#fff;padding:6px 12px;
-  border-radius:5px;cursor:pointer
-}
-.container{max-width:1100px;margin:20px auto;padding:0 20px}
-
-.coin-list{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:15px
-}
-.coin{
-  background:#fff;border:1px solid #ddd;
-  border-radius:10px;padding:15px;
-  text-align:center;cursor:pointer;
-  transition:.2s
-}
-.coin:hover{border-color:#4b49ac;box-shadow:0 4px 8px rgba(0,0,0,.1)}
-.coin img{width:40px;height:40px;margin-bottom:8px}
-
-.panel{
-  position:fixed;top:0;right:-420px;
-  width:400px;height:100%;
-  background:#fff;box-shadow:-2px 0 15px rgba(0,0,0,.2);
-  padding:25px;transition:.3s;z-index:100
-}
-.panel.active{right:0}
-.address{
-  background:#f1f1f1;padding:12px;
-  border-radius:6px;font-family:monospace;
-  word-break:break-all;margin:10px 0
-}
-.primary{
-  width:100%;padding:12px;
-  background:#4b49ac;color:#fff;
-  border:none;border-radius:6px;
-  cursor:pointer;margin-top:15px
-}
-@media(max-width:768px){.panel{width:100%}}
+body{font-family:Arial;background:#f5f6fa;margin:0}
+header{background:#1a1a2e;color:#fff;padding:15px}
+.coin{display:flex;align-items:center;padding:10px;background:#fff;margin:10px;border-radius:8px;cursor:pointer}
+.coin img{width:32px;height:32px;margin-right:10px}
 </style>
 </head>
-
 <body>
 
 <header>
-  <button onclick="history.back()">⬅ Back</button>
-  <div>Deposit</div>
+  <button onclick="history.back()">← Back</button>
+  Deposit
 </header>
 
-<div class="container">
-  <div id="coinList" class="coin-list">Loading coins...</div>
-</div>
-
-<!-- Deposit Panel -->
-<div class="panel" id="panel">
-  <button onclick="closePanel()">Close</button>
-  <h3 id="panelTitle"></h3>
-
-  <label>Network</label>
-  <select id="networkSelect"></select>
-
-  <div class="address" id="walletAddress"></div>
-
-  <p style="font-size:14px;color:#555">
-    After completing your deposit, please submit your deposit request.
-  </p>
-
-  <button class="primary" onclick="goToForm()">
-    Submit Deposit Request
-  </button>
-</div>
+<div id="coins">Loading coins...</div>
 
 <script>
-/* ================= Supabase ================= */
-const supabase = window.supabase.createClient(
-  "https://iecnioogmafgxwarmkxz.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+const supabase = supabaseJs.createClient(
+ "https://iecnioogmafgxwarmkxz.supabase.co",
+ "PUBLIC_ANON_KEY"
 );
 
-/* ================= State ================= */
-let walletsByAsset = {};
-let currentAsset = "";
+async function loadCoins(){
+ const {data,error} = await supabase
+  .from('assets')
+  .select('*')
+  .eq('is_active',true)
+  .order('symbol');
 
-/* ================= Load Data ================= */
-async function loadAssets(){
-  const coinList = document.getElementById("coinList");
-  coinList.innerHTML = "Loading coins...";
+ if(error){
+   document.getElementById('coins').innerText = error.message;
+   return;
+ }
 
-  // Assets
-  const {data:assets,error:aErr} = await supabase
-    .from("assets")
-    .select("symbol,name,icon")
-    .eq("is_active",true);
-
-  if(aErr){
-    coinList.innerText="Failed to load assets";
-    return;
-  }
-
-  // Deposit wallets
-  const {data:wallets} = await supabase
-    .from("deposit_wallet")
-    .select("*")
-    .eq("is_active",true);
-
-  wallets.forEach(w=>{
-    if(!walletsByAsset[w.asset]) walletsByAsset[w.asset]=[];
-    walletsByAsset[w.asset].push(w);
-  });
-
-  coinList.innerHTML="";
-  assets.forEach(a=>{
-    const div=document.createElement("div");
-    div.className="coin";
-    div.innerHTML=`
-      <img src="${a.icon}" onerror="this.src='https://via.placeholder.com/40'">
-      <div>${a.symbol}</div>
-    `;
-    div.onclick=()=>openPanel(a);
-    coinList.appendChild(div);
-  });
+ document.getElementById('coins').innerHTML = '';
+ data.forEach(c=>{
+  const div=document.createElement('div');
+  div.className='coin';
+  div.innerHTML=`<img src="${c.icon}"><b>${c.symbol}</b> - ${c.name}`;
+  div.onclick=()=>openDeposit(c.symbol);
+  document.getElementById('coins').appendChild(div);
+ });
 }
 
-loadAssets();
-
-/* ================= Panel ================= */
-const panel=document.getElementById("panel");
-const title=document.getElementById("panelTitle");
-const networkSelect=document.getElementById("networkSelect");
-const walletAddress=document.getElementById("walletAddress");
-
-function openPanel(asset){
-  const list = walletsByAsset[asset.symbol];
-  if(!list){
-    alert("Deposit not available for this asset");
-    return;
-  }
-  currentAsset = asset.symbol;
-  title.innerText = asset.name + " ("+asset.symbol+")";
-  networkSelect.innerHTML="";
-
-  list.forEach(w=>{
-    const o=document.createElement("option");
-    o.value=w.address;
-    o.textContent=w.network;
-    networkSelect.appendChild(o);
-  });
-
-  walletAddress.innerText = list[0].address;
-  panel.classList.add("active");
+function openDeposit(symbol){
+ alert("Open deposit for "+symbol);
+ // اینجا بعداً فرم ثبت واریز می‌آید
 }
 
-networkSelect.onchange=()=>{
-  walletAddress.innerText = networkSelect.value;
-}
-
-function closePanel(){
-  panel.classList.remove("active");
-}
-
-function goToForm(){
-  window.location.href = "deposit-form.html";
-}
+loadCoins();
 </script>
-
 </body>
 </html>
