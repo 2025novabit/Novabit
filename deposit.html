@@ -127,10 +127,10 @@ function openPanel(symbol){
   depositAddress.querySelector('span').innerText = 'Loading address...';
 
   // fetch deposit wallets از جدول asset
-  fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${encodeURIComponent(symbol)}&is_active=eq.true`, {
-    headers:{
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY
+  fetch(`https://iecnioogmafgxwarmkxz.supabase.co/rest/v1/deposit_wallets?asset=eq.${symbol}&is_active=eq.true`, {
+  headers:{
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY
     }
   })
   .then(res=>res.json())
