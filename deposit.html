@@ -126,7 +126,7 @@ function openPanel(symbol){
   networkSelect.innerHTML = '';
   depositAddress.querySelector('span').innerText = 'Loading address...';
 
-  // modal را اول فعال کن
+  // modal فعال
   panel.classList.add('active');
 
   // fetch deposit wallets با ستون asset
@@ -139,7 +139,6 @@ function openPanel(symbol){
   .then(res=>res.json())
   .then(data=>{
     if(data.length > 0){
-      // populate networks
       data.forEach((net,i)=>{
         const option = document.createElement('option');
         option.value = net.network;
