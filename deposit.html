@@ -6,12 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px}
 .container{padding:20px}
-
-/* Coin scroll (same as Trade) */
 .coin-scroll{display:flex;overflow-x:auto;gap:10px;padding:10px 0}
 .coin-card{
   background:#fff;border:1px solid #ccc;border-radius:10px;
@@ -20,8 +20,6 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
 }
 .coin-card:hover{border-color:#4b49ac}
 .coin-card img{width:40px;height:40px;margin-bottom:5px}
-
-/* Deposit panel */
 .panel{
   position:fixed;top:0;right:-380px;width:360px;height:100%;
   background:#fff;box-shadow:-2px 0 10px rgba(0,0,0,.2);
@@ -63,15 +61,21 @@ button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10
 </div>
 
 <script>
+// Supabase
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ";
+
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const coinScroll = document.getElementById('coinScroll');
 const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panelTitle');
 const depositAddress = document.getElementById('depositAddress');
 
-// mock balances (later from DB)
+// mock balances
 const balances = { BTC:0, ETH:0, USDT:0 };
 
-// load coins EXACTLY like Trade
+// load coins like Trade page
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(res=>res.json())
 .then(data=>{
@@ -95,12 +99,47 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
   coinScroll.innerHTML = 'Failed to load coins';
 });
 
-// open panel
-function openPanel(symbol){
+// open deposit panel
+async function openPanel(symbol){
   panelTitle.innerText = symbol + ' Deposit';
-  depositAddress.innerText = 'Your ' + symbol + ' deposit address will appear here';
+  depositAddress.innerText = 'Loading address...';
   panel.classList.add('active');
+
+  // بررسی احراز هویت
+  const { data: sessionData } = await supabase.auth.getSession();
+  const session = sessionData?.session;
+  if(!session){
+    depositAddress.innerText = "You must be logged in to see the deposit address";
+    return;
+  }
+
+  // آدرس واقعی از جدول deposit_wallets
+  const { data, error } = await supabase
+    .from('deposit_wallets')
+    .select('network,address')
+    .eq('symbol', symbol)
+    .eq('is_active', true);
+
+  if(error){
+    depositAddress.innerText = "Failed to load address";
+    console.error(error);
+    return;
+  }
+
+  if(!data || data.length === 0){
+    depositAddress.innerText = "No deposit address available";
+    return;
+  }
+
+  // نمایش همه شبکه‌ها
+  let html = '';
+  data.forEach(row=>{
+    html += `<b>${row.network}</b><br>${row.address}<br><br>`;
+  });
+
+  depositAddress.innerHTML = html;
 }
+
 function closePanel(){
   panel.classList.remove('active');
 }
