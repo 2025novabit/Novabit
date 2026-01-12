@@ -12,19 +12,21 @@ body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px}
 .container{padding:20px}
 
-.coin-scroll{display:flex;overflow-x:auto;gap:10px;padding:10px 0}
+/* Coin scroll عمودی */
+.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;padding:10px 0;max-height:70vh}
 .coin-card{
   background:#fff;border:1px solid #ccc;border-radius:10px;
   padding:10px;text-align:center;width:90px;
-  flex-shrink:0;cursor:pointer
+  cursor:pointer
 }
 .coin-card:hover{border-color:#4b49ac}
 .coin-card img{width:40px;height:40px;margin-bottom:5px}
 
+/* Deposit panel */
 .panel{
   position:fixed;top:0;right:-380px;width:360px;height:100%;
   background:#fff;box-shadow:-2px 0 10px rgba(0,0,0,.2);
-  padding:20px;transition:.3s;z-index:100;overflow:auto
+  padding:20px;transition:.3s;z-index:100
 }
 .panel.active{right:0}
 .close{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px}
@@ -41,7 +43,7 @@ button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10
 <div class="container">
   <h3>Select Coin (Top 100)</h3>
   <div class="coin-scroll" id="coinScroll">
-    Loading coins...
+    <div>Loading coins...</div>
   </div>
 </div>
 
@@ -49,6 +51,7 @@ button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10
 <div class="panel" id="panel">
   <button class="close" onclick="closePanel()">Close</button>
   <h3 id="panelTitle"></h3>
+
   <div class="address" id="depositAddress">—</div>
 
   <div class="notice">
@@ -73,20 +76,24 @@ const panelTitle = document.getElementById('panelTitle');
 const depositAddress = document.getElementById('depositAddress');
 
 /* ================= LOAD COINS ================= */
+const balances = {}; // بعداً اگر بخواهی موجودی واقعی اضافه شود
+
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(res=>res.json())
 .then(data=>{
   coinScroll.innerHTML='';
   data.forEach(coin=>{
     const symbol = coin.symbol.toUpperCase();
+    if(!(symbol in balances)) balances[symbol]=0;
 
-    const div=document.createElement('div');
-    div.className='coin-card';
-    div.innerHTML=`
+    const div = document.createElement('div');
+    div.className = 'coin-card';
+    div.innerHTML = `
       <img src="${coin.image}" alt="${symbol}">
       <div><b>${symbol}</b></div>
+      <small>${balances[symbol]}</small>
     `;
-    div.onclick=()=>openPanel(symbol);
+    div.onclick = ()=>openPanel(symbol);
     coinScroll.appendChild(div);
   });
 })
@@ -100,6 +107,7 @@ async function openPanel(symbol){
   depositAddress.innerText = 'Loading address...';
   panel.classList.add('active');
 
+  // آدرس واقعی از دیتابیس
   const { data, error } = await supabase
     .from('deposit_wallets')
     .select('network,address')
