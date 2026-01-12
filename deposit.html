@@ -3,70 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <title>Deposit</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-body{margin:0;font-family:Arial;background:#f5f6fa}
-header{background:#1a1a2e;color:#fff;padding:15px;display:flex;align-items:center;gap:10px}
-button{padding:6px 12px;border:none;border-radius:5px;cursor:pointer}
-.coin{display:flex;align-items:center;background:#fff;margin:10px;border-radius:8px;padding:10px;cursor:pointer}
+body{font-family:Arial;background:#f5f6fa}
+.coin{background:#fff;margin:10px;padding:10px;border-radius:8px;display:flex;align-items:center}
 .coin img{width:32px;height:32px;margin-right:10px}
 </style>
 </head>
-
 <body>
 
-<header>
-  <button onclick="history.back()">← Back</button>
-  <strong>Deposit</strong>
-</header>
-
-<div id="coinList">Loading coins...</div>
+<h2>Deposit</h2>
+<div id="coins">Loading coins...</div>
 
 <script>
-/* ✅ اتصال صحیح به Supabase */
 const supabase = supabaseJs.createClient(
   "https://iecnioogmafgxwarmkxz.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ"
 );
 
-/* ✅ دریافت ارزها از دیتابیس */
-async function loadCoins(){
-  const { data, error } = await supabase
-    .from('assets')
-    .select('symbol,name,icon')
-    .eq('is_active', true)
-    .order('symbol');
+async function load(){
+  const {data,error} = await supabase.from('assets').select('*');
 
   if(error){
-    document.getElementById('coinList').innerText = error.message;
+    document.getElementById('coins').innerText = error.message;
     return;
   }
 
-  const list = document.getElementById('coinList');
-  list.innerHTML = "";
+  const box = document.getElementById('coins');
+  box.innerHTML = "";
 
   data.forEach(c=>{
-    const div = document.createElement('div');
-    div.className = 'coin';
-    div.innerHTML = `
-      <img src="${c.icon}" onerror="this.src='https://via.placeholder.com/32'">
-      <div>
-        <b>${c.symbol}</b><br>
-        <small>${c.name}</small>
+    box.innerHTML += `
+      <div class="coin">
+        <img src="${c.icon}">
+        <b>${c.symbol}</b> — ${c.name}
       </div>
     `;
-    div.onclick = () => alert(
-      "After deposit, please submit your deposit request.\n\nCoin: " + c.symbol
-    );
-    list.appendChild(div);
   });
 }
 
-loadCoins();
+load();
 </script>
-
 </body>
 </html>
