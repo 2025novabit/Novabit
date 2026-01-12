@@ -21,11 +21,26 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
 .coin-card:hover{border-color:#4b49ac}
 .coin-card img{width:40px;height:40px;margin:0}
 
-/* Deposit panel */
+<!-- تغییر CSS panel -->
+<style>
+/* Deposit panel وسط صفحه به شکل مستطیل */
 .panel{
-  position:fixed;top:0;right:-380px;width:360px;height:100%;
-  background:#fff;box-shadow:-2px 0 10px rgba(0,0,0,.2);
-  padding:20px;transition:.3s;z-index:100
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  width:360px;
+  max-height:80%;
+  overflow-y:auto;
+  background:#fff;
+  box-shadow:0 0 15px rgba(0,0,0,.3);
+  padding:20px;
+  transition:.3s;
+  z-index:100;
+  display:none;
+}
+.panel.active{display:block}
+</style>
 }
 .panel.active{right:0}
 .close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
