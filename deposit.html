@@ -126,8 +126,8 @@ function openPanel(symbol){
   networkSelect.innerHTML = '';
   depositAddress.querySelector('span').innerText = 'Loading address...';
 
-  // fetch deposit wallets
-  fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${symbol}&is_active=eq.true`, {
+  // fetch deposit wallets از جدول asset
+  fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${encodeURIComponent(symbol)}&is_active=eq.true`, {
     headers:{
       'apikey': SUPABASE_KEY,
       'Authorization': 'Bearer ' + SUPABASE_KEY
@@ -155,7 +155,7 @@ function openPanel(symbol){
   // تغییر آدرس وقتی شبکه تغییر کرد
   networkSelect.onchange = ()=>{
     const selected = networkSelect.value;
-    fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${symbol}&network=eq.${selected}&is_active=eq.true`, {
+    fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${encodeURIComponent(symbol)}&network=eq.${encodeURIComponent(selected)}&is_active=eq.true`, {
       headers:{
         'apikey': SUPABASE_KEY,
         'Authorization': 'Bearer ' + SUPABASE_KEY
