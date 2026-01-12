@@ -24,13 +24,16 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
 .coin-symbol{font-weight:600;font-size:16px}
 .coin-balance{font-size:14px;color:#4b49ac;font-weight:600;margin-top:3px}
 
-/* Deposit panel */
+/* Deposit modal وسط صفحه */
 .panel{
-  position:fixed;top:0;right:-400px;width. 50%;max width 360px;height:100%;
-  background:#fff;box-shadow:-2px 0 10px rgba(0,0,0,.2);
-  padding:20px;transition:.3s;z-index:100
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%, -50%);
+  width:360px;height:auto; max-height:80%; overflow-y:auto;
+  background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);
+  padding:20px;transition:.3s;z-index:100;
+  display:none;
 }
-.panel.active{right:0}
+.panel.active{display:block}
 .close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px;margin-bottom:10px;cursor:pointer}
 .address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px;display:flex;justify-content:space-between;align-items:center}
 .notice{margin-top:20px;font-size:14px;color:#555}
@@ -54,7 +57,7 @@ select.network{
   </div>
 </div>
 
-<!-- Deposit Panel -->
+<!-- Deposit Modal -->
 <div class="panel" id="panel">
   <button class="close" onclick="closePanel()">Close</button>
   <h3 id="panelTitle"></h3>
@@ -86,7 +89,7 @@ const networkSelect = document.getElementById('networkSelect');
 
 // Supabase credentials
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsb25lIiwiaWF0IjoxNjc2Nzk2MDQ4LCJleHAiOjIwODM3MzIwNDh9.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
 
 // mock balances initially
 const balances = {};
@@ -117,7 +120,7 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
   coinScroll.innerHTML = 'Failed to load coins';
 });
 
-// باز کردن پنل و دریافت آدرس واقعی از Supabase
+// باز کردن modal و دریافت آدرس واقعی از Supabase
 function openPanel(symbol){
   panelTitle.innerText = symbol + ' Deposit';
   networkSelect.innerHTML = '';
@@ -168,7 +171,7 @@ function openPanel(symbol){
 
 // دکمه ها
 function closePanel(){ panel.classList.remove('active'); }
-function goToRequest(){ location.href='deposit_request.html'; }
+function goToRequest(){ location.href='deposit-request.html'; }
 function goBack(){ history.back(); }
 function copyAddress(){
   const text = depositAddress.querySelector('span').innerText;
