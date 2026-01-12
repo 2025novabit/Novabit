@@ -5,19 +5,18 @@
 <title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px}
 .container{padding:20px}
 
-/* Coin scroll عمودی */
-.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;padding:10px 0;max-height:70vh}
+/* Coin scroll (same as Trade) */
+.coin-scroll{display:flex;overflow-x:auto;gap:10px;padding:10px 0}
 .coin-card{
   background:#fff;border:1px solid #ccc;border-radius:10px;
   padding:10px;text-align:center;width:90px;
-  cursor:pointer
+  flex-shrink:0;cursor:pointer
 }
 .coin-card:hover{border-color:#4b49ac}
 .coin-card img{width:40px;height:40px;margin-bottom:5px}
@@ -64,24 +63,20 @@ button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10
 </div>
 
 <script>
-/* ================= SUPABASE ================= */
-const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ";
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-/* ================= ELEMENTS ================= */
+// عناصر
 const coinScroll = document.getElementById('coinScroll');
 const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panelTitle');
 const depositAddress = document.getElementById('depositAddress');
 
-/* ================= LOAD COINS ================= */
-const balances = {}; // بعداً اگر بخواهی موجودی واقعی اضافه شود
+// mock balances
+const balances = { BTC:0, ETH:0, USDT:0 };
 
+// لیست کوین ها از API CoinGecko
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(res=>res.json())
 .then(data=>{
-  coinScroll.innerHTML='';
+  coinScroll.innerHTML = '';
   data.forEach(coin=>{
     const symbol = coin.symbol.toUpperCase();
     if(!(symbol in balances)) balances[symbol]=0;
@@ -98,41 +93,42 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
   });
 })
 .catch(()=>{
-  coinScroll.innerHTML='Failed to load coins';
+  coinScroll.innerHTML = 'Failed to load coins';
 });
 
-/* ================= PANEL ================= */
-async function openPanel(symbol){
+// باز کردن پنل و دریافت آدرس واقعی از Supabase
+function openPanel(symbol){
   panelTitle.innerText = symbol + ' Deposit';
-  depositAddress.innerText = 'Loading address...';
+
+  // fetch آدرس واقعی از دیتابیس
+  fetch(`https://iecnioogmafgxwarmkxz.supabase.co/rest/v1/deposit_wallets?symbol=eq.${symbol}`, {
+    headers: {
+      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA',
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA'
+    }
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.length > 0){
+      depositAddress.innerText = data[0].address;
+    } else {
+      depositAddress.innerText = 'No address available';
+    }
+  })
+  .catch(()=>{
+    depositAddress.innerText = 'Failed to fetch address';
+  });
+
   panel.classList.add('active');
-
-  // آدرس واقعی از دیتابیس
-  const { data, error } = await supabase
-    .from('deposit_wallets')
-    .select('network,address')
-    .eq('symbol', symbol)
-    .eq('is_active', true);
-
-  if(error){
-    depositAddress.innerText = 'Error loading address';
-    console.error(error);
-    return;
-  }
-
-  if(!data || data.length===0){
-    depositAddress.innerText = 'No deposit address available';
-    return;
-  }
-
-  depositAddress.innerHTML = data.map(d=>`
-    <b>${d.network}</b><br>
-    ${d.address}<br><br>
-  `).join('');
 }
 
-function closePanel(){ panel.classList.remove('active'); }
-function goToRequest(){ location.href='deposit-request.html'; }
+function closePanel(){
+  panel.classList.remove('active');
+}
+
+function goToRequest(){
+  location.href = 'deposit-request.html';
+}
 </script>
 
 </body>
