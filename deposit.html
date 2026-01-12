@@ -21,9 +21,7 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
 .coin-card:hover{border-color:#4b49ac}
 .coin-card img{width:40px;height:40px;margin:0}
 
-<!-- تغییر CSS panel -->
-<style>
-/* Deposit panel وسط صفحه به شکل مستطیل */
+/* Deposit panel وسط صفحه */
 .panel{
   position:fixed;
   top:50%;
@@ -40,11 +38,8 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
   display:none;
 }
 .panel.active{display:block}
-</style>
-}
-.panel.active{right:0}
 .close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
-.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px}
+.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
 .notice{margin-top:20px;font-size:14px;color:#555}
 button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
 select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
@@ -73,8 +68,10 @@ select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1
   <label for="networkSelect">Network:</label>
   <select id="networkSelect" class="network"></select>
 
-  <div class="address" id="depositAddress">—</div>
-  <button class="main" onclick="copyAddress()">Copy Address</button>
+  <div class="address" id="depositAddress">
+    <span>—</span>
+    <button onclick="copyAddress()" style="background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-radius:4px;cursor:pointer">Copy</button>
+  </div>
 
   <div class="notice">
     After completing your deposit, please submit your deposit request.
@@ -99,7 +96,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // balances will be fetched from DB later
 let balances = {};
 
-// Load coins from API
+// Load coins from CoinGecko API
 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
 .then(res=>res.json())
 .then(data=>{
@@ -112,7 +109,7 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
     div.className = 'coin-card';
     div.innerHTML = `
       <img src="${coin.image}" alt="${symbol}">
-      <div><b>${symbol}</b> <small>${balances[symbol]}</small></div>
+      <div><b>${symbol}</b> <small>Balance: ${balances[symbol]}</small></div>
     `;
     div.onclick = ()=>openPanel(symbol);
     coinScroll.appendChild(div);
@@ -124,7 +121,7 @@ fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
 function openPanel(symbol){
   panelTitle.innerText = symbol + ' Deposit';
   networkSelect.innerHTML = '';
-  depositAddress.innerText = 'Loading address...';
+  depositAddress.querySelector('span').innerText = 'Loading address...';
 
   // fetch deposit wallets
   fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${symbol}&is_active=eq.true`, {
@@ -141,21 +138,20 @@ function openPanel(symbol){
         const opt = document.createElement('option');
         opt.value = w.network;
         opt.innerText = w.network;
-        if(idx===0) opt.selected=true;
         networkSelect.appendChild(opt);
+        if(idx===0) depositAddress.querySelector('span').innerText = w.address;
       });
-      depositAddress.innerText = data[0].address;
 
       // change address when network changes
       networkSelect.onchange = ()=>{
         const selected = data.find(d=>d.network===networkSelect.value);
-        depositAddress.innerText = selected.address;
+        depositAddress.querySelector('span').innerText = selected.address;
       };
     } else {
-      depositAddress.innerText = 'No address available';
+      depositAddress.querySelector('span').innerText = 'No address available';
     }
   })
-  .catch(()=>{ depositAddress.innerText = 'Failed to fetch address'; });
+  .catch(()=>{ depositAddress.querySelector('span').innerText = 'Failed to fetch address'; });
 
   panel.classList.add('active');
 }
@@ -165,9 +161,8 @@ function goToRequest(){ location.href='deposit-request.html'; }
 
 // copy address
 function copyAddress(){
-  navigator.clipboard.writeText(depositAddress.innerText).then(()=>{
-    alert('Address copied: ' + depositAddress.innerText);
-  });
+  const text = depositAddress.querySelector('span').innerText;
+  navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
 }
 </script>
 
