@@ -2,177 +2,169 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Deposit | Novabit</title>
+<title>Wallet | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 <style>
-body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
-header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
-.container{padding:20px}
-.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:70vh;padding:10px 0}
-.coin-card{
-  background:#fff;border:1px solid #ccc;border-radius:10px;
-  padding:10px;text-align:center;width:100%;
-  cursor:pointer; display:flex; align-items:center; gap:10px;
-}
-.coin-card:hover{border-color:#4b49ac}
-.coin-card img{width:40px;height:40px;margin:0}
-.panel{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%, -50%);
-  width:360px;
-  max-height:80%;
-  overflow-y:auto;
-  background:#fff;
-  box-shadow:0 0 15px rgba(0,0,0,.3);
-  padding:20px;
-  transition:.3s;
-  z-index:100;
-  display:none;
-}
-.panel.active{display:block}
-.close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
-.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
-.notice{margin-top:20px;font-size:14px;color:#555}
-button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
-select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
+body{margin:0;font-family:Arial,Roboto,sans-serif;background:#f8f9fa;padding-bottom:70px;}
+header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;}
+header h1{margin:0;font-size:20px;}
+#menuBtn{background:#4b49ac;color:#fff;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;}
+#sideMenu{position:fixed;top:0;right:-400px;width:33%;height:100%;background:#fff;box-shadow:-2px 0 6px rgba(0,0,0,.2);transition:right 0.3s;padding:20px;z-index:100;}
+#sideMenu.active{right:0;}
+#sideMenu h2{margin-top:0;}
+#sideMenu a{display:block;margin:15px 0;color:#1a1a2e;text-decoration:none;font-weight:500;}
+#closeMenu{background:#e74c3c;color:#fff;border:none;padding:8px 12px;border-radius:5px;cursor:pointer;margin-bottom:15px;}
+
+.container{padding:20px;}
+.card{background:#fff;padding:25px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:20px;}
+.card h2{margin-top:0;}
+.total-balance{font-size:32px;font-weight:bold;margin:10px 0 20px;}
+button{padding:10px 20px;margin-right:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:500;}
+button:disabled{background:#999;cursor:not-allowed;}
+.table-container{max-height:400px;overflow:auto;margin-top:10px;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;font-size:14px;text-align:left;}
+th{background:#1a1a2e;color:#fff;position:sticky;top:0;}
+tr:nth-child(even){background:#f1f1f1;}
+.bottom-nav{position:fixed;bottom:0;width:100%;background:#1a1a2e;display:flex;justify-content:space-around;padding:10px 0;z-index:20;}
+.bottom-nav a{color:#fff;text-decoration:none;font-size:14px;display:flex;flex-direction:column;align-items:center;}
+.bottom-nav a.active{color:#4b49ac;}
 </style>
 </head>
 <body>
 
 <header>
-  <button class="back" onclick="history.back()">Back</button>
-  Deposit
+  <h1>Wallet</h1>
+  <button id="menuBtn" onclick="toggleMenu()">Menu</button>
 </header>
 
+<div id="sideMenu">
+  <button id="closeMenu" onclick="toggleMenu()">Close</button>
+  <h2>Menu</h2>
+  <a href="profile.html">Profile</a>
+  <a href="kyc.html">KYC</a>
+  <a href="changepassword.html">Change Password</a>
+  <a href="2fa.html">2FA Settings</a>
+  <a href="fee.html">Fee</a>
+  <a href="referral.html">Referral</a>
+</div>
+
 <div class="container">
-  <h3>Select Coin (Top 100)</h3>
-  <div class="coin-scroll" id="coinScroll">
-    <div>Loading coins...</div>
+
+<!-- TOTAL BALANCE -->
+<div class="card">
+  <h2>Total Balance</h2>
+  <div class="total-balance" id="totalBalance">$0.00</div>
+  <button onclick="window.location.href='deposit.html'">Deposit</button>
+  <button onclick="window.location.href='withdraw.html'">Withdraw</button>
+  <div id="withdrawNote" style="margin-top:10px;color:#e74c3c;font-weight:500;"></div>
+</div>
+
+<!-- ASSETS -->
+<div class="card">
+  <h2>Assets (Top 100)</h2>
+  <div class="table-container">
+    <table id="walletTable">
+      <thead>
+        <tr>
+          <th>Coin</th>
+          <th>Price (USD)</th>
+          <th>Balance</th>
+          <th>Value (USD)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 </div>
 
-<div class="panel" id="panel">
-  <button class="close" onclick="closePanel()">Close</button>
-  <h3 id="panelTitle"></h3>
-
-  <label for="networkSelect">Network:</label>
-  <select id="networkSelect" class="network"></select>
-
-  <div class="address" id="depositAddress">
-    <span>—</span>
-    <button onclick="copyAddress()" style="background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-radius:4px;cursor:pointer">Copy</button>
-  </div>
-
-  <div class="notice">
-    After completing your deposit, please submit your deposit request.
-  </div>
-
-  <button class="main" onclick="goToRequest()">Submit Deposit Request</button>
 </div>
 
+<div class="bottom-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="wallet.html" class="active">Wallet</a>
+  <a href="market.html">Market</a>
+  <a href="trade.html">Trade</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const coinScroll = document.getElementById('coinScroll');
-const panel = document.getElementById('panel');
-const panelTitle = document.getElementById('panelTitle');
-const depositAddress = document.getElementById('depositAddress');
-const networkSelect = document.getElementById('networkSelect');
+// Menu Toggle
+function toggleMenu(){
+  document.getElementById('sideMenu').classList.toggle('active');
+}
 
-// Supabase config
+// ---------- 2FA LOGIC ----------
+function check2FA(){
+  const enabled = localStorage.getItem('demo2fa_enabled') === 'true';
+  const btn = document.getElementById('withdrawBtn');
+  const note = document.getElementById('withdrawNote');
+  if(!enabled){
+    btn.disabled = true;
+    note.innerText = "Withdraw locked: Enable 2FA to withdraw";
+  } else {
+    btn.disabled = false;
+    note.innerText = "";
+  }
+}
+
+// ---------- WALLET DATA ----------
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
 const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-async function loadCoins() {
-  coinScroll.innerHTML = '<div>Loading coins...</div>';
+async function loadWallet(){
+  const tbody = document.querySelector('#walletTable tbody');
+  tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
 
-  try {
+  try{
     // 1️⃣ لیست 100 ارز از CoinGecko
     const coinRes = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
     const coins = await coinRes.json();
 
-    // 2️⃣ دریافت بالانس از جدول wallets
+    // 2️⃣ موجودی واقعی کاربر از جدول wallets
+    const user = supabase.auth.user(); // اگر از Supabase auth استفاده می‌کنید
     let balances = {};
-    const user = supabase.auth.user(); // کاربر فعلی
-    if(user) {
-      const { data: walletData, error } = await supabase
+    if(user){
+      const { data, error } = await supabase
         .from('wallets')
-        .select('*')
+        .select('asset,balance')
         .eq('user_id', user.id);
-
-      if(!error && walletData) {
-        walletData.forEach(w => balances[w.asset.toUpperCase()] = parseFloat(w.balance));
-      }
+      if(!error && data) data.forEach(w=>balances[w.asset.toUpperCase()]=parseFloat(w.balance));
     }
 
-    coinScroll.innerHTML = '';
-    coins.forEach(coin => {
-      const symbol = coin.symbol.toUpperCase();
-      const balance = balances[symbol] || 0;
+    tbody.innerHTML = '';
+    let total = 0;
 
-      const div = document.createElement('div');
-      div.className = 'coin-card';
-      div.innerHTML = `
-        <img src="${coin.image}" alt="${symbol}">
-        <div><b>${symbol}</b> <small>Balance: ${balance.toFixed(4)}</small></div>
+    coins.forEach(coin=>{
+      const symbol = coin.symbol.toUpperCase();
+      const price = coin.current_price || 0;
+      const balance = balances[symbol] || 0;
+      const value = balance * price;
+      total += value;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${symbol}</td>
+        <td>$${price.toLocaleString()}</td>
+        <td>${balance.toFixed(4)}</td>
+        <td>$${value.toFixed(2)}</td>
       `;
-      div.onclick = ()=>openPanel(symbol);
-      coinScroll.appendChild(div);
+      tbody.appendChild(tr);
     });
 
-  } catch(e) {
+    document.getElementById('totalBalance').innerText = `$${total.toFixed(2)}`;
+
+  }catch(e){
     console.error(e);
-    coinScroll.innerHTML = 'Failed to load coins';
+    tbody.innerHTML = '<tr><td colspan="4">Failed to load wallet</td></tr>';
   }
 }
 
-function openPanel(symbol){
-  panelTitle.innerText = symbol + ' Deposit';
-  networkSelect.innerHTML = '';
-  depositAddress.querySelector('span').innerText = 'Loading address...';
-
-  fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${symbol}&is_active=eq.true`, {
-    headers:{
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY
-    }
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    if(data.length>0){
-      data.forEach((w, idx)=>{
-        const opt = document.createElement('option');
-        opt.value = w.network;
-        opt.innerText = w.network;
-        networkSelect.appendChild(opt);
-        if(idx===0) depositAddress.querySelector('span').innerText = w.address;
-      });
-      networkSelect.onchange = ()=>{
-        const selected = data.find(d=>d.network===networkSelect.value);
-        depositAddress.querySelector('span').innerText = selected.address;
-      };
-    } else {
-      depositAddress.querySelector('span').innerText = 'No address available';
-    }
-  })
-  .catch(()=>{ depositAddress.querySelector('span').innerText = 'Failed to fetch address'; });
-
-  panel.classList.add('active');
-}
-
-function closePanel(){ panel.classList.remove('active'); }
-function goToRequest(){ location.href='deposit-request.html'; }
-function copyAddress(){
-  const text = depositAddress.querySelector('span').innerText;
-  navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
-}
-
 // اجرا
-loadCoins();
+loadWallet();
+check2FA();
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </body>
 </html>
