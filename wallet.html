@@ -18,10 +18,7 @@ header h1{margin:0;font-size:20px;}
 .container{padding:20px;}
 .card{background:#fff;padding:25px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:20px;}
 .card h2{margin-top:0;}
-.total-balance{font-size:32px;font-weight:bold;margin:10px 0 20px;}
-button{padding:10px 20px;margin-right:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:500;}
-button:disabled{background:#999;cursor:not-allowed;}
-.table-container{max-height:400px;overflow:auto;margin-top:10px;}
+.table-container{max-height:500px;overflow:auto;margin-top:10px;}
 table{width:100%;border-collapse:collapse;}
 th,td{padding:10px;font-size:14px;text-align:left;}
 th{background:#1a1a2e;color:#fff;position:sticky;top:0;}
@@ -51,14 +48,6 @@ tr:nth-child(even){background:#f1f1f1;}
 
 <div class="container">
 
-<!-- TOTAL BALANCE -->
-<div class="card">
-  <h2>Total Balance</h2>
-  <div class="total-balance" id="totalBalance">$0.00</div>
-  <button onclick="window.location.href='deposit.html'">Deposit</button>
-  <button onclick="window.location.href='withdraw.html'">Withdraw</button>
-</div>
-
 <!-- ASSETS -->
 <div class="card">
   <h2>Assets (Top 100)</h2>
@@ -87,65 +76,54 @@ tr:nth-child(even){background:#f1f1f1;}
   <a href="trade.html">Trade</a>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Menu Toggle
-function toggleMenu(){
-  document.getElementById('sideMenu').classList.toggle('active');
-}
-
-// Supabase config
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE'; // جایگزین کلید واقعی
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Fetch wallet balances from table
-async function fetchWalletBalances() {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/wallet?user_id=eq.${auth.user.id}`, {
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY
-      }
-    });
-    const data = await res.json();
-    const balances = {};
-    data.forEach(w => balances[w.asset.toUpperCase()] = parseFloat(w.balance));
-    return balances;
-  } catch(err) {
-    console.error('Failed to fetch wallet balances', err);
-    return {};
-  }
-}
+const walletTableBody = document.querySelector('#walletTable tbody');
 
-// Load coins and merge with wallet balances
 async function loadWallet() {
-  const balances = await fetchWalletBalances();
   try {
+    // ۱️⃣ گرفتن موجودی‌های کاربر از جدول wallets
+    const { data: balances, error } = await supabase
+      .from('wallets')
+      .select('asset,balance')
+      .eq('user_id', supabase.auth.user()?.id); // کاربر فعلی
+    if (error) throw error;
+
+    // ۲️⃣ گرفتن قیمت‌ها از CoinGecko
     const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
     const coins = await res.json();
-    const tbody = document.querySelector('#walletTable tbody');
-    tbody.innerHTML = '';
-    let totalUSD = 0;
+
+    walletTableBody.innerHTML = '';
 
     coins.forEach(coin => {
       const symbol = coin.symbol.toUpperCase();
-      const balance = balances[symbol] || 0;
+      const balanceObj = balances.find(b => b.asset === symbol);
+      const balance = balanceObj ? balanceObj.balance : 0;
       const valueUSD = balance * coin.current_price;
-      totalUSD += valueUSD;
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${symbol}</td>
-        <td>$${coin.current_price.toFixed(4)}</td>
+        <td>$${coin.current_price.toLocaleString()}</td>
         <td>${balance.toFixed(4)}</td>
-        <td>$${valueUSD.toFixed(2)}</td>
+        <td>$${valueUSD.toLocaleString()}</td>
       `;
-      tbody.appendChild(tr);
+      walletTableBody.appendChild(tr);
     });
 
-    document.getElementById('totalBalance').innerText = `$${totalUSD.toFixed(2)}`;
-  } catch(err) {
-    console.error(err);
+  } catch (err) {
+    console.error('Failed to load wallet', err);
+    walletTableBody.innerHTML = `<tr><td colspan="4">Failed to load wallet data</td></tr>`;
   }
+}
+
+// منو
+function toggleMenu() {
+  document.getElementById('sideMenu').classList.toggle('active');
 }
 
 // اجرا
