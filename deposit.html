@@ -8,41 +8,64 @@
 
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
-header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
+header{background:#1a1a2e;color:#fff;padding:15px;font-size:18px;
+display:flex;justify-content:space-between;align-items:center}
 .container{padding:20px}
 
-/* Coin scroll vertical */
-.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:70vh;padding:10px 0}
+/* coin list */
+.coin-scroll{display:flex;flex-direction:column;gap:10px;max-height:70vh;overflow-y:auto}
 .coin-card{
   background:#fff;border:1px solid #ccc;border-radius:10px;
-  padding:10px;text-align:center;width:100%;
-  cursor:pointer; display:flex; align-items:center; gap:10px;
+  padding:10px;display:flex;align-items:center;gap:10px;cursor:pointer
 }
 .coin-card:hover{border-color:#4b49ac}
-.coin-card img{width:40px;height:40px;margin:0}
+.coin-card img{width:36px;height:36px}
+.coin-info b{font-size:15px}
+.coin-info small{color:#4b49ac;font-weight:600}
 
-/* Deposit panel وسط صفحه */
+/* modal */
 .panel{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%, -50%);
-  width:360px;
-  max-height:80%;
-  overflow-y:auto;
-  background:#fff;
-  box-shadow:0 0 15px rgba(0,0,0,.3);
-  padding:20px;
-  transition:.3s;
-  z-index:100;
-  display:none;
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:360px;max-height:80%;
+  background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);
+  padding:20px;display:none;z-index:100
 }
 .panel.active{display:block}
-.close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
-.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
-.notice{margin-top:20px;font-size:14px;color:#555}
-button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
-select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
+.close,.back{
+  background:#e74c3c;color:#fff;border:none;
+  padding:6px 10px;border-radius:5px;cursor:pointer
+}
+
+/* balance */
+.balance-box{
+  background:#eef0ff;border-radius:8px;
+  padding:10px;margin-bottom:15px;font-size:14px
+}
+.balance-box div{display:flex;justify-content:space-between;margin-bottom:5px}
+.balance-box b{color:#1a1a2e}
+
+/* networks */
+.network-list{display:flex;gap:10px;margin:10px 0}
+.network-card{
+  padding:8px 12px;border:1px solid #ccc;
+  border-radius:6px;cursor:pointer;font-size:13px
+}
+.network-card.active{
+  background:#4b49ac;color:#fff;border-color:#4b49ac
+}
+
+/* address */
+.address{
+  background:#f1f1f1;padding:10px;border-radius:6px;
+  font-family:monospace;display:flex;justify-content:space-between;
+  align-items:center
+}
+.notice{margin-top:15px;font-size:14px;color:#555}
+button.main{
+  margin-top:15px;background:#4b49ac;color:#fff;
+  border:none;padding:10px;border-radius:5px;cursor:pointer;width:100%
+}
 </style>
 </head>
 
@@ -55,135 +78,126 @@ select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1
 
 <div class="container">
   <h3>Select Coin (Top 100)</h3>
-  <div class="coin-scroll" id="coinScroll">
-    <div>Loading coins...</div>
-  </div>
+  <div class="coin-scroll" id="coinScroll">Loading coins...</div>
 </div>
 
-<!-- Deposit Panel -->
+<!-- Deposit Modal -->
 <div class="panel" id="panel">
   <button class="close" onclick="closePanel()">Close</button>
   <h3 id="panelTitle"></h3>
 
-  <label for="networkSelect">Network:</label>
-  <select id="networkSelect" class="network"></select>
+  <div id="balanceBox"></div>
+  <div id="networkList" class="network-list"></div>
 
-  <div class="address" id="depositAddress">
-    <span>—</span>
-    <button onclick="copyAddress()" style="background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-radius:4px;cursor:pointer">Copy</button>
+  <div class="address">
+    <span id="addressText">—</span>
+    <button onclick="copyAddress()">Copy</button>
   </div>
 
   <div class="notice">
     After completing your deposit, please submit your deposit request.
   </div>
 
-  <button class="main" onclick="goToRequest()">
-    Submit Deposit Request
-  </button>
+  <button class="main" onclick="goToRequest()">Submit Deposit Request</button>
 </div>
 
 <script>
+const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
+const SUPABASE_KEY = 'YOUR_PUBLIC_ANON_KEY';
+
 const coinScroll = document.getElementById('coinScroll');
 const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panelTitle');
-const depositAddress = document.getElementById('depositAddress');
-const networkSelect = document.getElementById('networkSelect');
+const balanceBox = document.getElementById('balanceBox');
+const networkList = document.getElementById('networkList');
+const addressText = document.getElementById('addressText');
 
-// Supabase config
-const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
+let balances = {};
 
-// 1️⃣ Fetch balances از دیتابیس Supabase
-async function fetchBalances() {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?is_active=eq.true`, {
-      headers:{
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY
-      }
-    });
-    const data = await res.json();
-    const balances = {};
-    data.forEach(item => {
-      balances[item.asset] = item.balance || 0; // فرض کردیم ستون balance در دیتابیس موجود است
-    });
-    return balances;
-  } catch(err){
-    console.error('Failed to fetch balances', err);
-    return {};
-  }
+// fetch balances from wallets table
+async function fetchBalances(){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/wallets`,{
+    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}
+  });
+  const data = await res.json();
+  data.forEach(w=>{
+    balances[w.asset]={
+      balance:w.balance,
+      locked:w.locked_balance
+    };
+  });
 }
 
-// 2️⃣ Load coins from CoinGecko API
-async function loadCoins() {
-  const balances = await fetchBalances();
-  try{
-    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
-    const data = await res.json();
-    coinScroll.innerHTML = '';
-    data.forEach(coin=>{
-      const symbol = coin.symbol.toUpperCase();
-      if(!(symbol in balances)) balances[symbol]=0;
-      const div = document.createElement('div');
-      div.className = 'coin-card';
-      div.innerHTML = `
-        <img src="${coin.image}" alt="${symbol}">
-        <div><b>${symbol}</b> <small>Balance: ${balances[symbol]}</small></div>
-      `;
-      div.onclick = ()=>openPanel(symbol);
-      coinScroll.appendChild(div);
-    });
-  } catch(err){
-    console.error(err);
-    coinScroll.innerHTML = 'Failed to load coins';
-  }
+// load coins
+async function loadCoins(){
+  await fetchBalances();
+  const res = await fetch(
+    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1'
+  );
+  const data = await res.json();
+
+  coinScroll.innerHTML='';
+  data.forEach(c=>{
+    const s=c.symbol.toUpperCase();
+    const b=balances[s]?.balance||0;
+
+    const div=document.createElement('div');
+    div.className='coin-card';
+    div.innerHTML=`
+      <img src="${c.image}">
+      <div class="coin-info">
+        <b>${s}</b><br>
+        <small>Available: ${b}</small>
+      </div>
+    `;
+    div.onclick=()=>openPanel(s);
+    coinScroll.appendChild(div);
+  });
 }
 
-// Open panel
+// open deposit panel
 function openPanel(symbol){
-  panelTitle.innerText = symbol + ' Deposit';
-  networkSelect.innerHTML = '';
-  depositAddress.querySelector('span').innerText = 'Loading address...';
-
-  fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${symbol}&is_active=eq.true`, {
-    headers:{
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY
-    }
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    if(data.length>0){
-      data.forEach((w, idx)=>{
-        const opt = document.createElement('option');
-        opt.value = w.network;
-        opt.innerText = w.network;
-        networkSelect.appendChild(opt);
-        if(idx===0) depositAddress.querySelector('span').innerText = w.address;
-      });
-      networkSelect.onchange = ()=>{
-        const selected = data.find(d=>d.network===networkSelect.value);
-        depositAddress.querySelector('span').innerText = selected.address;
-      };
-    } else {
-      depositAddress.querySelector('span').innerText = 'No address available';
-    }
-  })
-  .catch(()=>{ depositAddress.querySelector('span').innerText = 'Failed to fetch address'; });
-
+  panelTitle.innerText=symbol+' Deposit';
   panel.classList.add('active');
+  networkList.innerHTML='';
+  addressText.innerText='Loading...';
+
+  const b=balances[symbol]||{balance:0,locked:0};
+  balanceBox.innerHTML=`
+    <div class="balance-box">
+      <div><span>Available</span><b>${b.balance}</b></div>
+      <div><span>Locked</span><b>${b.locked}</b></div>
+      <div><span>Total</span><b>${b.balance+b.locked}</b></div>
+    </div>
+  `;
+
+  fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${symbol}&is_active=eq.true`,{
+    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    data.forEach((w,i)=>{
+      const n=document.createElement('div');
+      n.className='network-card'+(i===0?' active':'');
+      n.innerText=w.network;
+      n.onclick=()=>{
+        document.querySelectorAll('.network-card').forEach(x=>x.classList.remove('active'));
+        n.classList.add('active');
+        addressText.innerText=w.address;
+      };
+      networkList.appendChild(n);
+      if(i===0) addressText.innerText=w.address;
+    });
+  });
 }
 
-function closePanel(){ panel.classList.remove('active'); }
-function goToRequest(){ location.href='deposit-request.html'; }
-
-// copy address
+function closePanel(){panel.classList.remove('active')}
+function goToRequest(){location.href='deposit-request.html'}
 function copyAddress(){
-  const text = depositAddress.querySelector('span').innerText;
-  navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
+  navigator.clipboard.writeText(addressText.innerText);
+  alert('Address copied');
 }
 
-// اجرا
 loadCoins();
 </script>
 
