@@ -47,8 +47,6 @@ tr:nth-child(even){background:#f1f1f1;}
 </div>
 
 <div class="container">
-
-<!-- ASSETS -->
 <div class="card">
   <h2>Assets (Top 100)</h2>
   <div class="table-container">
@@ -65,10 +63,8 @@ tr:nth-child(even){background:#f1f1f1;}
     </table>
   </div>
 </div>
-
 </div>
 
-<!-- Bottom Nav -->
 <div class="bottom-nav">
   <a href="dashboard.html">Dashboard</a>
   <a href="wallet.html" class="active">Wallet</a>
@@ -78,52 +74,54 @@ tr:nth-child(even){background:#f1f1f1;}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE'; // جایگزین کلید واقعی
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// تنظیم Supabase
+const SUPABASE_URL = 'https://YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const walletTableBody = document.querySelector('#walletTable tbody');
+// منو
+function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); }
 
+// بارگذاری موجودی واقعی
 async function loadWallet() {
+  const tbody = document.querySelector('#walletTable tbody');
+  tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+
   try {
-    // ۱️⃣ گرفتن موجودی‌های کاربر از جدول wallets
-    const { data: balances, error } = await supabase
+    // دریافت موجودی کاربر فعلی
+    const { data: walletData, error } = await supabase
       .from('wallets')
-      .select('asset,balance')
-      .eq('user_id', supabase.auth.user()?.id); // کاربر فعلی
-    if (error) throw error;
+      .select('*')
+      .eq('user_id', supabase.auth.user()?.id || '')  // اگر کاربر لاگین است
+      .order('asset', { ascending: true });
 
-    // ۲️⃣ گرفتن قیمت‌ها از CoinGecko
-    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
-    const coins = await res.json();
+    if(error) throw error;
 
-    walletTableBody.innerHTML = '';
+    // دریافت قیمت‌ها
+    const coinRes = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
+    const coins = await coinRes.json();
+
+    tbody.innerHTML = '';
 
     coins.forEach(coin => {
-      const symbol = coin.symbol.toUpperCase();
-      const balanceObj = balances.find(b => b.asset === symbol);
-      const balance = balanceObj ? balanceObj.balance : 0;
+      const walletItem = walletData.find(w => w.asset === coin.symbol.toUpperCase());
+      const balance = walletItem ? parseFloat(walletItem.balance) : 0;
       const valueUSD = balance * coin.current_price;
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${symbol}</td>
+        <td>${coin.symbol.toUpperCase()}</td>
         <td>$${coin.current_price.toLocaleString()}</td>
         <td>${balance.toFixed(4)}</td>
         <td>$${valueUSD.toLocaleString()}</td>
       `;
-      walletTableBody.appendChild(tr);
+      tbody.appendChild(tr);
     });
 
-  } catch (err) {
-    console.error('Failed to load wallet', err);
-    walletTableBody.innerHTML = `<tr><td colspan="4">Failed to load wallet data</td></tr>`;
+  } catch(err) {
+    tbody.innerHTML = '<tr><td colspan="4">Failed to load wallet</td></tr>';
+    console.error(err);
   }
-}
-
-// منو
-function toggleMenu() {
-  document.getElementById('sideMenu').classList.toggle('active');
 }
 
 // اجرا
