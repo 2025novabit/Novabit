@@ -15,18 +15,17 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
 .coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:70vh;padding:10px 0}
 .coin-card{
   background:#fff;border:1px solid #ccc;border-radius:10px;
-  padding:10px;text-align:center;width:100%;
+  padding:10px;width:100%;
   cursor:pointer; display:flex; align-items:center; gap:10px;
 }
 .coin-card:hover{border-color:#4b49ac}
-.coin-card img{width:40px;height:40px;margin:0}
+.coin-card img{width:40px;height:40px}
 
-/* 🔹 ظاهر بهتر بالانس (ویرایش) */
+/* ✅ فقط ظاهر بالانس (ویرایش) */
 .balance{
   font-size:13px;
   color:#4b49ac;
   font-weight:600;
-  margin-top:2px;
 }
 
 /* Deposit panel وسط صفحه */
@@ -41,24 +40,34 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
   background:#fff;
   box-shadow:0 0 15px rgba(0,0,0,.3);
   padding:20px;
-  transition:.3s;
   z-index:100;
   display:none;
 }
 .panel.active{display:block}
-.close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
-.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
+
+.close,.back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px;cursor:pointer}
+
+.address{
+  background:#f1f1f1;
+  padding:10px;
+  border-radius:5px;
+  font-family:monospace;
+  margin-top:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
 .notice{margin-top:20px;font-size:14px;color:#555}
 button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
 
-/* 🔹 ظاهر بهتر تغییر شبکه (ویرایش) */
+/* ✅ فقط ظاهر تغییر شبکه (ویرایش) */
 select.network{
   width:100%;
   padding:10px;
   margin-top:10px;
   border-radius:8px;
   border:1px solid #4b49ac;
-  background:#f8f9fa;
   font-weight:600;
 }
 </style>
@@ -106,9 +115,9 @@ const depositAddress = document.getElementById('depositAddress');
 const networkSelect = document.getElementById('networkSelect');
 
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'YOUR_KEY';
+const SUPABASE_KEY = 'YOUR_REAL_KEY_HERE';
 
-// 🔹 فقط این تابع ویرایش شده (اتصال به جدول wallets)
+/* ✅ فقط این بخش اضافه شده – بدون دست زدن به آدرس */
 async function fetchBalances(){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/wallets`,{
@@ -120,7 +129,7 @@ async function fetchBalances(){
     const data = await res.json();
     const balances = {};
     data.forEach(w=>{
-      balances[w.asset] = w.balance;
+      balances[w.asset]=w.balance;
     });
     return balances;
   }catch{
@@ -146,7 +155,7 @@ async function loadCoins(){
         <img src="${coin.image}">
         <div>
           <b>${symbol}</b>
-          <div class="balance">${balance} ${symbol}</div>
+          <div class="balance">Balance: ${balance}</div>
         </div>
       `;
       div.onclick=()=>openPanel(symbol);
@@ -157,6 +166,7 @@ async function loadCoins(){
   }
 }
 
+/* 🔒 کد آدرس واریز = دقیقاً مثل خودت */
 function openPanel(symbol){
   panelTitle.innerText = symbol+' Deposit';
   networkSelect.innerHTML='';
