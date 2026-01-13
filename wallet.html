@@ -57,7 +57,6 @@ tr:nth-child(even){background:#f1f1f1;}
   <div class="total-balance" id="totalBalance">$0.00</div>
   <button onclick="window.location.href='deposit.html'">Deposit</button>
   <button onclick="window.location.href='withdraw.html'">Withdraw</button>
-  <div id="withdrawNote" style="margin-top:10px;color:#e74c3c;font-weight:500;"></div>
 </div>
 
 <!-- ASSETS -->
@@ -87,65 +86,58 @@ tr:nth-child(even){background:#f1f1f1;}
   <a href="trade.html">Trade</a>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // Menu Toggle
 function toggleMenu(){
   document.getElementById('sideMenu').classList.toggle('active');
 }
 
-// ---------- WALLET DATA ----------
+// Supabase config
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA'; // جایگزین با کلید واقعی
 
+// Fetch Wallet Balances و نمایش ارزها
 async function loadWallet() {
-  const tbody = document.querySelector('#walletTable tbody');
-  tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
-
   try {
-    // 1️⃣ لیست 100 ارز از CoinGecko
-    const coinRes = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
-    const coins = await coinRes.json();
+    // fetch top 100 coins
+    const coinsRes = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
+    const coins = await coinsRes.json();
 
-    // 2️⃣ موجودی واقعی کاربر از جدول wallets
-    // **برای تست، یک user_id ثابت بگذارید یا auth استفاده کنید**
-    const userId = 'YOUR_USER_ID_HERE';
-    const { data: balancesData, error } = await supabase
-      .from('wallets')
-      .select('asset,balance')
-      .eq('user_id', userId);
+    // fetch user balances از جدول wallets با RLS
+    const balancesRes = await fetch(`${SUPABASE_URL}/rest/v1/wallets?select=asset,balance&is_active=eq.true`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY
+      }
+    });
+    const balancesData = await balancesRes.json();
+    const balances = {};
+    balancesData.forEach(b => balances[b.asset] = parseFloat(b.balance));
 
-    let balances = {};
-    if(!error && balancesData){
-      balancesData.forEach(w=>balances[w.asset.toUpperCase()]=parseFloat(w.balance));
-    }
-
+    const tbody = document.querySelector('#walletTable tbody');
     tbody.innerHTML = '';
     let totalUSD = 0;
 
-    coins.forEach(coin=>{
+    coins.forEach(coin => {
       const symbol = coin.symbol.toUpperCase();
-      const price = coin.current_price || 0;
       const balance = balances[symbol] || 0;
-      const value = balance * price;
-      totalUSD += value;
+      const valueUSD = balance * coin.current_price;
+      totalUSD += valueUSD;
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${symbol}</td>
-        <td>$${price.toLocaleString()}</td>
+        <td>$${coin.current_price.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
         <td>${balance.toFixed(4)}</td>
-        <td>$${value.toFixed(2)}</td>
+        <td>$${valueUSD.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
       `;
       tbody.appendChild(tr);
     });
 
-    document.getElementById('totalBalance').innerText = `$${totalUSD.toFixed(2)}`;
-
-  } catch (e) {
+    document.getElementById('totalBalance').innerText = `$${totalUSD.toLocaleString(undefined,{maximumFractionDigits:2})}`;
+  } catch(e){
     console.error(e);
-    tbody.innerHTML = '<tr><td colspan="4">Failed to load wallet</td></tr>';
+    alert('Failed to load wallet data');
   }
 }
 
