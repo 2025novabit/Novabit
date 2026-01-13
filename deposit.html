@@ -15,20 +15,24 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
 .coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:70vh;padding:10px 0}
 .coin-card{
   background:#fff;border:1px solid #ccc;border-radius:10px;
-  padding:10px;text-align:center;width:100%;
+  padding:12px;text-align:center;width:100%;
   cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+  transition:0.2s;
 }
-.coin-card:hover{border-color:#4b49ac}
+.coin-card:hover{border-color:#4b49ac; background:#f0f4ff;}
 .coin-card img{width:40px;height:40px;margin:0}
 
-/* Balance ظاهر بهتر */
+/* Balance ظاهر بهتر شبیه صرافی */
 .coin-balance{
-  background:#e0e7ff;
-  color:#4b49ac;
+  background:#e5f0ff;
+  color:#1a1aaf;
   font-weight:700;
-  padding:4px 8px;
-  border-radius:8px;
-  font-size:14px;
+  padding:4px 10px;
+  border-radius:12px;
+  font-size:15px;
+  min-width:80px;
+  text-align:right;
+  display:inline-block;
 }
 
 /* Deposit panel وسط صفحه */
@@ -37,27 +41,29 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
   top:50%;
   left:50%;
   transform:translate(-50%, -50%);
-  width:360px;
+  width:380px;
   max-height:80%;
   overflow-y:auto;
   background:#fff;
-  box-shadow:0 0 15px rgba(0,0,0,.3);
-  padding:20px;
+  box-shadow:0 0 20px rgba(0,0,0,.25);
+  padding:25px;
+  border-radius:12px;
   transition:.3s;
   z-index:100;
   display:none;
 }
 .panel.active{display:block}
-.close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
+.close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer; font-weight:600;}
 
 /* Address box */
 .address{
-  background:#f1f1f1;
-  padding:10px;
-  border-radius:5px;
+  background:#f5f7ff;
+  padding:12px;
+  border-radius:8px;
   font-family:monospace;
   margin-top:10px;
   display:flex; justify-content:space-between; align-items:center;
+  border:1px solid #d0d4e0;
 }
 
 /* شبکه ظاهر بهتر */
@@ -65,21 +71,25 @@ select.network{
   width:100%;
   padding:10px;
   margin-top:10px;
-  border-radius:5px;
+  border-radius:8px;
   border:1px solid #4b49ac;
   font-weight:500;
   background:#f0f4ff;
   cursor:pointer;
 }
 
-select.network option:selected{
+select.network option{
+  padding:6px;
+}
+
+select.network option[selected]{
   background:#4b49ac;
   color:#fff;
 }
 
 /* دکمه ها */
 .notice{margin-top:20px;font-size:14px;color:#555}
-button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
+button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer;font-weight:600;}
 </style>
 </head>
 
@@ -128,10 +138,10 @@ const networkSelect = document.getElementById('networkSelect');
 
 // Supabase config
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'YOUR_SUPABASE_KEY';
-const USER_ID = 'current_user_id'; // ← شناسه کاربر فعلی
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
+const USER_ID = 'current_user_id'; // شناسه کاربر
 
-// 1️⃣ Fetch balances از جدول wallet برای کاربر مشخص
+// Fetch balances
 async function fetchBalances() {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/wallet?user_id=eq.${USER_ID}`, {
@@ -142,9 +152,7 @@ async function fetchBalances() {
     });
     const data = await res.json();
     const balances = {};
-    data.forEach(item => {
-      balances[item.asset] = item.balance || 0;
-    });
+    data.forEach(item => { balances[item.asset] = item.balance || 0; });
     return balances;
   } catch(err){
     console.error('Failed to fetch balances', err);
@@ -152,7 +160,7 @@ async function fetchBalances() {
   }
 }
 
-// 2️⃣ Load coins from CoinGecko API و نمایش بالانس واقعی
+// Load coins with balances
 async function loadCoins() {
   const balances = await fetchBalances();
   try{
@@ -165,11 +173,11 @@ async function loadCoins() {
       const div = document.createElement('div');
       div.className = 'coin-card';
       div.innerHTML = `
-        <img src="${coin.image}" alt="${symbol}">
-        <div>
-          <b>${symbol}</b> 
-          <span class="coin-balance">${balance}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="${coin.image}" alt="${symbol}">
+          <b>${symbol}</b>
         </div>
+        <span class="coin-balance">${balance}</span>
       `;
       div.onclick = ()=>openPanel(symbol);
       coinScroll.appendChild(div);
@@ -180,7 +188,7 @@ async function loadCoins() {
   }
 }
 
-// Open panel بدون تغییر آدرس واریز
+// Open panel بدون خراب کردن آدرس
 function openPanel(symbol){
   panelTitle.innerText = symbol + ' Deposit';
   networkSelect.innerHTML = '';
