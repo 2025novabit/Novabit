@@ -2,40 +2,97 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Deposit | Novabit Pro</title>
+<title>Deposit | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
-header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center;font-size:18px;}
+header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
 .container{padding:20px}
 
-/* Coin Cards */
-.coin-scroll{display:flex;flex-direction:column;gap:12px;max-height:70vh;overflow-y:auto;}
+/* Coin scroll vertical */
+.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:70vh;padding:10px 0}
 .coin-card{
-  background:#fff;border-radius:12px;padding:15px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 6px rgba(0,0,0,.1);cursor:pointer;transition:0.2s;
+  background:#fff;border:1px solid #ccc;border-radius:10px;
+  padding:12px;text-align:center;width:100%;
+  cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+  transition:0.2s;
 }
-.coin-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.2);}
-.coin-info{display:flex;align-items:center;gap:12px;}
-.coin-info img{width:40px;height:40px;}
-.coin-name{font-weight:700;font-size:16px;}
-.coin-balance{background:#e5f0ff;color:#1a1aaf;font-weight:700;padding:4px 10px;border-radius:12px;font-size:14px;min-width:80px;text-align:right;}
+.coin-card:hover{border-color:#4b49ac; background:#f0f4ff;}
+.coin-card img{width:40px;height:40px;margin:0}
 
-/* Modal panel */
-.panel{
-  position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);
-  width:400px;max-height:80%;overflow-y:auto;background:#fff;
-  box-shadow:0 0 25px rgba(0,0,0,.3);padding:25px;border-radius:14px;
-  display:none;z-index:100;transition:.3s;
+/* Balance ظاهر بهتر شبیه صرافی */
+.coin-balance{
+  background:#e5f0ff;
+  color:#1a1aaf;
+  font-weight:700;
+  padding:4px 10px;
+  border-radius:12px;
+  font-size:15px;
+  min-width:80px;
+  text-align:right;
+  display:inline-block;
 }
-.panel.active{display:block;}
-.close{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px;cursor:pointer;font-weight:600;margin-bottom:10px;}
-.network-select{width:100%;padding:10px;border-radius:8px;border:1px solid #4b49ac;background:#f0f4ff;margin-top:10px;font-weight:500;cursor:pointer;}
-.address-box{background:#f5f7ff;padding:12px;border-radius:8px;font-family:monospace;margin-top:12px;display:flex;justify-content:space-between;align-items:center;border:1px solid #d0d4e0;}
-.notice{margin-top:15px;font-size:14px;color:#555;}
-button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:6px;cursor:pointer;font-weight:600;}
+
+/* Deposit panel وسط صفحه */
+.panel{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  width:380px;
+  max-height:80%;
+  overflow-y:auto;
+  background:#fff;
+  box-shadow:0 0 20px rgba(0,0,0,.25);
+  padding:25px;
+  border-radius:12px;
+  transition:.3s;
+  z-index:100;
+  display:none;
+}
+.panel.active{display:block}
+.close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer; font-weight:600;}
+
+/* Address box */
+.address{
+  background:#f5f7ff;
+  padding:12px;
+  border-radius:8px;
+  font-family:monospace;
+  margin-top:10px;
+  display:flex; justify-content:space-between; align-items:center;
+  border:1px solid #d0d4e0;
+}
+
+/* شبکه ظاهر بهتر */
+select.network{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #4b49ac;
+  font-weight:500;
+  background:#f0f4ff;
+  cursor:pointer;
+}
+
+select.network option{
+  padding:6px;
+}
+
+select.network option[selected]{
+  background:#4b49ac;
+  color:#fff;
+}
+
+/* دکمه ها */
+.notice{margin-top:20px;font-size:14px;color:#555}
+button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer;font-weight:600;}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -44,21 +101,21 @@ button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10
 </header>
 
 <div class="container">
-  <h3>Top 100 Coins</h3>
+  <h3>Select Coin (Top 100)</h3>
   <div class="coin-scroll" id="coinScroll">
     <div>Loading coins...</div>
   </div>
 </div>
 
-<!-- Deposit Modal -->
+<!-- Deposit Panel -->
 <div class="panel" id="panel">
   <button class="close" onclick="closePanel()">Close</button>
   <h3 id="panelTitle"></h3>
 
-  <label for="networkSelect">Select Network:</label>
-  <select id="networkSelect" class="network-select"></select>
+  <label for="networkSelect">Network:</label>
+  <select id="networkSelect" class="network"></select>
 
-  <div class="address-box" id="depositAddress">
+  <div class="address" id="depositAddress">
     <span>—</span>
     <button onclick="copyAddress()" style="background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-radius:4px;cursor:pointer">Copy</button>
   </div>
@@ -67,7 +124,9 @@ button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10
     After completing your deposit, please submit your deposit request.
   </div>
 
-  <button class="main" onclick="goToRequest()">Submit Deposit Request</button>
+  <button class="main" onclick="goToRequest()">
+    Submit Deposit Request
+  </button>
 </div>
 
 <script>
@@ -80,7 +139,7 @@ const networkSelect = document.getElementById('networkSelect');
 // Supabase config
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
 const SUPABASE_KEY = 'YOUR_SUPABASE_KEY';
-const USER_ID = 'current_user_id'; // کاربر جاری
+const USER_ID = 'current_user_id'; // شناسه کاربر جاری
 
 // Fetch balances واقعی از جدول wallet
 async function fetchBalances() {
@@ -88,12 +147,12 @@ async function fetchBalances() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/wallet?user_id=eq.${USER_ID}`, {
       headers:{
         'apikey': SUPABASE_KEY,
-        'Authorization':'Bearer ' + SUPABASE_KEY
+        'Authorization': 'Bearer ' + SUPABASE_KEY
       }
     });
     const data = await res.json();
     const balances = {};
-    data.forEach(item=>balances[item.asset]=item.balance||0);
+    data.forEach(item => { balances[item.asset] = item.balance || 0; });
     return balances;
   } catch(err){
     console.error('Failed to fetch balances', err);
@@ -101,7 +160,7 @@ async function fetchBalances() {
   }
 }
 
-// Load coins و نمایش بالانس
+// Load coins with real balances
 async function loadCoins() {
   const balances = await fetchBalances();
   try{
@@ -114,13 +173,13 @@ async function loadCoins() {
       const div = document.createElement('div');
       div.className = 'coin-card';
       div.innerHTML = `
-        <div class="coin-info">
+        <div style="display:flex;align-items:center;gap:10px">
           <img src="${coin.image}" alt="${symbol}">
-          <div class="coin-name">${symbol}</div>
+          <b>${symbol}</b>
         </div>
-        <div class="coin-balance">${balance}</div>
+        <span class="coin-balance">${balance}</span>
       `;
-      div.onclick=()=>openPanel(symbol);
+      div.onclick = ()=>openPanel(symbol);
       coinScroll.appendChild(div);
     });
   } catch(err){
@@ -129,44 +188,51 @@ async function loadCoins() {
   }
 }
 
-// Open modal با آدرس واقعی و تغییر شبکه
+// Open deposit panel با آدرس واقعی
 function openPanel(symbol){
   panelTitle.innerText = symbol + ' Deposit';
-  networkSelect.innerHTML='';
-  depositAddress.querySelector('span').innerText='Loading address...';
+  networkSelect.innerHTML = '';
+  depositAddress.querySelector('span').innerText = 'Loading address...';
 
-  fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${symbol}`,{
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+  fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${symbol}`, {
+    headers:{
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY
+    }
   })
   .then(res=>res.json())
   .then(data=>{
     if(data.length>0){
-      data.forEach((w,idx)=>{
-        const opt=document.createElement('option');
-        opt.value=w.network; opt.innerText=w.network;
+      data.forEach((w, idx)=>{
+        const opt = document.createElement('option');
+        opt.value = w.network;
+        opt.innerText = w.network;
         networkSelect.appendChild(opt);
-        if(idx===0) depositAddress.querySelector('span').innerText=w.address;
+        if(idx===0) depositAddress.querySelector('span').innerText = w.address;
       });
-      networkSelect.onchange=()=>{
-        const selected=data.find(d=>d.network===networkSelect.value);
-        depositAddress.querySelector('span').innerText=selected.address;
+      networkSelect.onchange = ()=>{
+        const selected = data.find(d=>d.network===networkSelect.value);
+        depositAddress.querySelector('span').innerText = selected.address;
       };
-    } else depositAddress.querySelector('span').innerText='No address available';
+    } else {
+      depositAddress.querySelector('span').innerText = 'No address available';
+    }
   })
-  .catch(()=>depositAddress.querySelector('span').innerText='Failed to fetch address');
+  .catch(()=>{ depositAddress.querySelector('span').innerText = 'Failed to fetch address'; });
 
   panel.classList.add('active');
 }
 
-function closePanel(){panel.classList.remove('active');}
-function goToRequest(){location.href='deposit-request.html';}
+function closePanel(){ panel.classList.remove('active'); }
+function goToRequest(){ location.href='deposit-request.html'; }
 function copyAddress(){
-  const text=depositAddress.querySelector('span').innerText;
-  navigator.clipboard.writeText(text).then(()=>alert('Address copied: '+text));
+  const text = depositAddress.querySelector('span').innerText;
+  navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
 }
 
 // اجرا
 loadCoins();
 </script>
+
 </body>
 </html>
