@@ -94,54 +94,42 @@ function toggleMenu(){
   document.getElementById('sideMenu').classList.toggle('active');
 }
 
-// ---------- 2FA LOGIC ----------
-function check2FA(){
-  const enabled = localStorage.getItem('demo2fa_enabled') === 'true';
-  const btn = document.getElementById('withdrawBtn');
-  const note = document.getElementById('withdrawNote');
-  if(!enabled){
-    btn.disabled = true;
-    note.innerText = "Withdraw locked: Enable 2FA to withdraw";
-  } else {
-    btn.disabled = false;
-    note.innerText = "";
-  }
-}
-
 // ---------- WALLET DATA ----------
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
+const SUPABASE_KEY = 'YOUR_SUPABASE_KEY';
 const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-async function loadWallet(){
+async function loadWallet() {
   const tbody = document.querySelector('#walletTable tbody');
   tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
 
-  try{
+  try {
     // 1️⃣ لیست 100 ارز از CoinGecko
     const coinRes = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
     const coins = await coinRes.json();
 
     // 2️⃣ موجودی واقعی کاربر از جدول wallets
-    const user = supabase.auth.user(); // اگر از Supabase auth استفاده می‌کنید
+    // **برای تست، یک user_id ثابت بگذارید یا auth استفاده کنید**
+    const userId = 'YOUR_USER_ID_HERE';
+    const { data: balancesData, error } = await supabase
+      .from('wallets')
+      .select('asset,balance')
+      .eq('user_id', userId);
+
     let balances = {};
-    if(user){
-      const { data, error } = await supabase
-        .from('wallets')
-        .select('asset,balance')
-        .eq('user_id', user.id);
-      if(!error && data) data.forEach(w=>balances[w.asset.toUpperCase()]=parseFloat(w.balance));
+    if(!error && balancesData){
+      balancesData.forEach(w=>balances[w.asset.toUpperCase()]=parseFloat(w.balance));
     }
 
     tbody.innerHTML = '';
-    let total = 0;
+    let totalUSD = 0;
 
     coins.forEach(coin=>{
       const symbol = coin.symbol.toUpperCase();
       const price = coin.current_price || 0;
       const balance = balances[symbol] || 0;
       const value = balance * price;
-      total += value;
+      totalUSD += value;
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -153,9 +141,9 @@ async function loadWallet(){
       tbody.appendChild(tr);
     });
 
-    document.getElementById('totalBalance').innerText = `$${total.toFixed(2)}`;
+    document.getElementById('totalBalance').innerText = `$${totalUSD.toFixed(2)}`;
 
-  }catch(e){
+  } catch (e) {
     console.error(e);
     tbody.innerHTML = '<tr><td colspan="4">Failed to load wallet</td></tr>';
   }
@@ -163,7 +151,6 @@ async function loadWallet(){
 
 // اجرا
 loadWallet();
-check2FA();
 </script>
 
 </body>
