@@ -31,7 +31,7 @@ tr:nth-child(even){background:#f1f1f1;}
 .bottom-nav a.active{color:#4b49ac;}
 </style>
 </head>
-<body onload="check2FA();">
+<body>
 
 <header>
   <h1>Wallet</h1>
@@ -55,10 +55,8 @@ tr:nth-child(even){background:#f1f1f1;}
 <div class="card">
   <h2>Total Balance</h2>
   <div class="total-balance" id="totalBalance">$0.00</div>
-  <!-- Deposit now active -->
   <button onclick="window.location.href='deposit.html'">Deposit</button>
   <button onclick="window.location.href='withdraw.html'">Withdraw</button>
-  <div id="withdrawNote" style="margin-top:10px;color:#e74c3c;font-weight:500;"></div>
 </div>
 
 <!-- ASSETS -->
@@ -79,31 +77,6 @@ tr:nth-child(even){background:#f1f1f1;}
   </div>
 </div>
 
-<!-- TRANSACTION HISTORY -->
-<div class="card">
-  <h2>Transaction History</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Type</th>
-        <th>Asset</th>
-        <th>Amount</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>—</td>
-        <td>—</td>
-        <td>—</td>
-        <td>0.0000</td>
-        <td>No Transactions</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
 </div>
 
 <!-- Bottom Nav -->
@@ -120,48 +93,63 @@ function toggleMenu(){
   document.getElementById('sideMenu').classList.toggle('active');
 }
 
-/* ---------- 2FA LOGIC ---------- */
-function check2FA(){
-  const enabled = localStorage.getItem('demo2fa_enabled') === 'true';
-  const btn = document.getElementById('withdrawBtn');
-  const note = document.getElementById('withdrawNote');
+// Supabase config
+const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
+const SUPABASE_KEY = 'YOUR_SUPABASE_KEY_HERE';
 
-  if(!enabled){
-    btn.disabled = true;
-    note.innerText = "Withdraw locked: Enable 2FA to withdraw";
-  } else {
-    btn.disabled = false;
-    note.innerText = "";
+// Fetch wallet balances from table
+async function fetchWalletBalances() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/wallet?user_id=eq.${auth.user.id}`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY
+      }
+    });
+    const data = await res.json();
+    const balances = {};
+    data.forEach(w => balances[w.asset.toUpperCase()] = parseFloat(w.balance));
+    return balances;
+  } catch(err) {
+    console.error('Failed to fetch wallet balances', err);
+    return {};
   }
 }
 
-function withdraw(){
-  const code = Math.floor(100000 + Math.random()*900000);
-  localStorage.setItem('demo_withdraw_code', code);
-  alert("Demo Withdraw Code sent (for test): " + code);
+// Load coins and merge with wallet balances
+async function loadWallet() {
+  const balances = await fetchWalletBalances();
+  try {
+    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
+    const coins = await res.json();
+    const tbody = document.querySelector('#walletTable tbody');
+    tbody.innerHTML = '';
+    let totalUSD = 0;
+
+    coins.forEach(coin => {
+      const symbol = coin.symbol.toUpperCase();
+      const balance = balances[symbol] || 0;
+      const valueUSD = balance * coin.current_price;
+      totalUSD += valueUSD;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${symbol}</td>
+        <td>$${coin.current_price.toFixed(4)}</td>
+        <td>${balance.toFixed(4)}</td>
+        <td>$${valueUSD.toFixed(2)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('totalBalance').innerText = `$${totalUSD.toFixed(2)}`;
+  } catch(err) {
+    console.error(err);
+  }
 }
 
-/* ---------- WALLET DATA ---------- */
-fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1')
-.then(res => res.json())
-.then(data => {
-  const tbody = document.querySelector('#walletTable tbody');
-  tbody.innerHTML = '';
-  let totalUSD = 0;
-
-  data.forEach(coin => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${coin.symbol.toUpperCase()}</td>
-      <td>$${coin.current_price.toLocaleString()}</td>
-      <td>0.0000</td>
-      <td>$0.00</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  document.getElementById('totalBalance').innerText = `$${totalUSD.toFixed(2)}`;
-});
+// اجرا
+loadWallet();
 </script>
 
 </body>
