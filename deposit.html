@@ -8,63 +8,58 @@
 
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
-header{background:#1a1a2e;color:#fff;padding:15px;font-size:18px;
-display:flex;justify-content:space-between;align-items:center}
+header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
 .container{padding:20px}
 
-/* coin list */
-.coin-scroll{display:flex;flex-direction:column;gap:10px;max-height:70vh;overflow-y:auto}
+/* Coin scroll vertical */
+.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:70vh;padding:10px 0}
 .coin-card{
   background:#fff;border:1px solid #ccc;border-radius:10px;
-  padding:10px;display:flex;align-items:center;gap:10px;cursor:pointer
+  padding:10px;text-align:center;width:100%;
+  cursor:pointer; display:flex; align-items:center; gap:10px;
 }
 .coin-card:hover{border-color:#4b49ac}
-.coin-card img{width:36px;height:36px}
-.coin-info b{font-size:15px}
-.coin-info small{color:#4b49ac;font-weight:600}
+.coin-card img{width:40px;height:40px;margin:0}
 
-/* modal */
+/* 🔹 ظاهر بهتر بالانس (ویرایش) */
+.balance{
+  font-size:13px;
+  color:#4b49ac;
+  font-weight:600;
+  margin-top:2px;
+}
+
+/* Deposit panel وسط صفحه */
 .panel{
-  position:fixed;top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  width:360px;max-height:80%;
-  background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);
-  padding:20px;display:none;z-index:100
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  width:360px;
+  max-height:80%;
+  overflow-y:auto;
+  background:#fff;
+  box-shadow:0 0 15px rgba(0,0,0,.3);
+  padding:20px;
+  transition:.3s;
+  z-index:100;
+  display:none;
 }
 .panel.active{display:block}
-.close,.back{
-  background:#e74c3c;color:#fff;border:none;
-  padding:6px 10px;border-radius:5px;cursor:pointer
-}
+.close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
+.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
+.notice{margin-top:20px;font-size:14px;color:#555}
+button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
 
-/* balance */
-.balance-box{
-  background:#eef0ff;border-radius:8px;
-  padding:10px;margin-bottom:15px;font-size:14px
-}
-.balance-box div{display:flex;justify-content:space-between;margin-bottom:5px}
-.balance-box b{color:#1a1a2e}
-
-/* networks */
-.network-list{display:flex;gap:10px;margin:10px 0}
-.network-card{
-  padding:8px 12px;border:1px solid #ccc;
-  border-radius:6px;cursor:pointer;font-size:13px
-}
-.network-card.active{
-  background:#4b49ac;color:#fff;border-color:#4b49ac
-}
-
-/* address */
-.address{
-  background:#f1f1f1;padding:10px;border-radius:6px;
-  font-family:monospace;display:flex;justify-content:space-between;
-  align-items:center
-}
-.notice{margin-top:15px;font-size:14px;color:#555}
-button.main{
-  margin-top:15px;background:#4b49ac;color:#fff;
-  border:none;padding:10px;border-radius:5px;cursor:pointer;width:100%
+/* 🔹 ظاهر بهتر تغییر شبکه (ویرایش) */
+select.network{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #4b49ac;
+  background:#f8f9fa;
+  font-weight:600;
 }
 </style>
 </head>
@@ -78,20 +73,22 @@ button.main{
 
 <div class="container">
   <h3>Select Coin (Top 100)</h3>
-  <div class="coin-scroll" id="coinScroll">Loading coins...</div>
+  <div class="coin-scroll" id="coinScroll">
+    <div>Loading coins...</div>
+  </div>
 </div>
 
-<!-- Deposit Modal -->
+<!-- Deposit Panel -->
 <div class="panel" id="panel">
   <button class="close" onclick="closePanel()">Close</button>
   <h3 id="panelTitle"></h3>
 
-  <div id="balanceBox"></div>
-  <div id="networkList" class="network-list"></div>
+  <label for="networkSelect">Network:</label>
+  <select id="networkSelect" class="network"></select>
 
-  <div class="address">
-    <span id="addressText">—</span>
-    <button onclick="copyAddress()">Copy</button>
+  <div class="address" id="depositAddress">
+    <span>—</span>
+    <button onclick="copyAddress()" style="background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-radius:4px;cursor:pointer">Copy</button>
   </div>
 
   <div class="notice">
@@ -102,100 +99,101 @@ button.main{
 </div>
 
 <script>
-const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'YOUR_PUBLIC_ANON_KEY';
-
 const coinScroll = document.getElementById('coinScroll');
 const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panelTitle');
-const balanceBox = document.getElementById('balanceBox');
-const networkList = document.getElementById('networkList');
-const addressText = document.getElementById('addressText');
+const depositAddress = document.getElementById('depositAddress');
+const networkSelect = document.getElementById('networkSelect');
 
-let balances = {};
+const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
+const SUPABASE_KEY = 'YOUR_KEY';
 
-// fetch balances from wallets table
+// 🔹 فقط این تابع ویرایش شده (اتصال به جدول wallets)
 async function fetchBalances(){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/wallets`,{
-    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}
-  });
-  const data = await res.json();
-  data.forEach(w=>{
-    balances[w.asset]={
-      balance:w.balance,
-      locked:w.locked_balance
-    };
-  });
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/wallets`,{
+      headers:{
+        'apikey':SUPABASE_KEY,
+        'Authorization':'Bearer '+SUPABASE_KEY
+      }
+    });
+    const data = await res.json();
+    const balances = {};
+    data.forEach(w=>{
+      balances[w.asset] = w.balance;
+    });
+    return balances;
+  }catch{
+    return {};
+  }
 }
 
-// load coins
 async function loadCoins(){
-  await fetchBalances();
-  const res = await fetch(
-    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1'
-  );
-  const data = await res.json();
+  const balances = await fetchBalances();
 
-  coinScroll.innerHTML='';
-  data.forEach(c=>{
-    const s=c.symbol.toUpperCase();
-    const b=balances[s]?.balance||0;
+  try{
+    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
+    const data = await res.json();
 
-    const div=document.createElement('div');
-    div.className='coin-card';
-    div.innerHTML=`
-      <img src="${c.image}">
-      <div class="coin-info">
-        <b>${s}</b><br>
-        <small>Available: ${b}</small>
-      </div>
-    `;
-    div.onclick=()=>openPanel(s);
-    coinScroll.appendChild(div);
-  });
+    coinScroll.innerHTML='';
+    data.forEach(coin=>{
+      const symbol = coin.symbol.toUpperCase();
+      const balance = balances[symbol] || 0;
+
+      const div = document.createElement('div');
+      div.className='coin-card';
+      div.innerHTML=`
+        <img src="${coin.image}">
+        <div>
+          <b>${symbol}</b>
+          <div class="balance">${balance} ${symbol}</div>
+        </div>
+      `;
+      div.onclick=()=>openPanel(symbol);
+      coinScroll.appendChild(div);
+    });
+  }catch{
+    coinScroll.innerHTML='Failed to load coins';
+  }
 }
 
-// open deposit panel
 function openPanel(symbol){
-  panelTitle.innerText=symbol+' Deposit';
-  panel.classList.add('active');
-  networkList.innerHTML='';
-  addressText.innerText='Loading...';
-
-  const b=balances[symbol]||{balance:0,locked:0};
-  balanceBox.innerHTML=`
-    <div class="balance-box">
-      <div><span>Available</span><b>${b.balance}</b></div>
-      <div><span>Locked</span><b>${b.locked}</b></div>
-      <div><span>Total</span><b>${b.balance+b.locked}</b></div>
-    </div>
-  `;
+  panelTitle.innerText = symbol+' Deposit';
+  networkSelect.innerHTML='';
+  depositAddress.querySelector('span').innerText='Loading address...';
 
   fetch(`${SUPABASE_URL}/rest/v1/deposit_wallets?asset=eq.${symbol}&is_active=eq.true`,{
-    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}
+    headers:{
+      'apikey':SUPABASE_KEY,
+      'Authorization':'Bearer '+SUPABASE_KEY
+    }
   })
-  .then(r=>r.json())
+  .then(res=>res.json())
   .then(data=>{
-    data.forEach((w,i)=>{
-      const n=document.createElement('div');
-      n.className='network-card'+(i===0?' active':'');
-      n.innerText=w.network;
-      n.onclick=()=>{
-        document.querySelectorAll('.network-card').forEach(x=>x.classList.remove('active'));
-        n.classList.add('active');
-        addressText.innerText=w.address;
+    if(data.length){
+      data.forEach((w,i)=>{
+        const o=document.createElement('option');
+        o.value=w.network;
+        o.innerText=w.network;
+        networkSelect.appendChild(o);
+        if(i===0) depositAddress.querySelector('span').innerText=w.address;
+      });
+      networkSelect.onchange=()=>{
+        depositAddress.querySelector('span').innerText =
+          data.find(d=>d.network===networkSelect.value).address;
       };
-      networkList.appendChild(n);
-      if(i===0) addressText.innerText=w.address;
-    });
+    }else{
+      depositAddress.querySelector('span').innerText='No address available';
+    }
   });
+
+  panel.classList.add('active');
 }
 
 function closePanel(){panel.classList.remove('active')}
 function goToRequest(){location.href='deposit-request.html'}
 function copyAddress(){
-  navigator.clipboard.writeText(addressText.innerText);
-  alert('Address copied');
+  navigator.clipboard.writeText(depositAddress.querySelector('span').innerText);
 }
 
 loadCoins();
