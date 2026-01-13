@@ -139,9 +139,9 @@ const networkSelect = document.getElementById('networkSelect');
 // Supabase config
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
-const USER_ID = 'current_user_id'; // شناسه کاربر
+const USER_ID = 'current_user_id'; // شناسه کاربر جاری
 
-// Fetch balances
+// Fetch balances واقعی از جدول wallet
 async function fetchBalances() {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/wallet?user_id=eq.${USER_ID}`, {
@@ -160,7 +160,7 @@ async function fetchBalances() {
   }
 }
 
-// Load coins with balances
+// Load coins with real balances
 async function loadCoins() {
   const balances = await fetchBalances();
   try{
@@ -188,7 +188,7 @@ async function loadCoins() {
   }
 }
 
-// Open panel بدون خراب کردن آدرس
+// Open deposit panel با آدرس واقعی
 function openPanel(symbol){
   panelTitle.innerText = symbol + ' Deposit';
   networkSelect.innerHTML = '';
@@ -225,8 +225,6 @@ function openPanel(symbol){
 
 function closePanel(){ panel.classList.remove('active'); }
 function goToRequest(){ location.href='deposit-request.html'; }
-
-// copy address
 function copyAddress(){
   const text = depositAddress.querySelector('span').innerText;
   navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
