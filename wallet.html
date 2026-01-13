@@ -31,7 +31,7 @@ tr:nth-child(even){background:#f1f1f1;}
 .bottom-nav a.active{color:#4b49ac;}
 </style>
 </head>
-<body>
+<body onload="check2FA();">
 
 <header>
   <h1>Wallet</h1>
@@ -57,6 +57,7 @@ tr:nth-child(even){background:#f1f1f1;}
   <div class="total-balance" id="totalBalance">$0.00</div>
   <button onclick="window.location.href='deposit.html'">Deposit</button>
   <button onclick="window.location.href='withdraw.html'">Withdraw</button>
+  <div id="withdrawNote" style="margin-top:10px;color:#e74c3c;font-weight:500;"></div>
 </div>
 
 <!-- ASSETS -->
@@ -79,6 +80,7 @@ tr:nth-child(even){background:#f1f1f1;}
 
 </div>
 
+<!-- Bottom Nav -->
 <div class="bottom-nav">
   <a href="dashboard.html">Dashboard</a>
   <a href="wallet.html" class="active">Wallet</a>
@@ -92,35 +94,52 @@ function toggleMenu(){
   document.getElementById('sideMenu').classList.toggle('active');
 }
 
-// Supabase config
-const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA'; // جایگزین با کلید واقعی
+/* ---------- 2FA LOGIC ---------- */
+function check2FA(){
+  const enabled = localStorage.getItem('demo2fa_enabled') === 'true';
+  const btn = document.getElementById('withdrawBtn');
+  const note = document.getElementById('withdrawNote');
 
-// Load Wallet with real balances and prices
-async function loadWallet() {
+  if(!enabled){
+    btn.disabled = true;
+    note.innerText = "Withdraw locked: Enable 2FA to withdraw";
+  } else {
+    btn.disabled = false;
+    note.innerText = "";
+  }
+}
+
+/* ---------- WALLET DATA ---------- */
+const SUPABASE_URL = 'https://YOUR-SUPABASE-URL.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
+
+async function loadWallet(){
+  const tbody = document.querySelector('#walletTable tbody');
+  tbody.innerHTML = '';
+  let totalUSD = 0;
+
   try {
-    // Fetch top 100 coins
+    // 1️⃣ دریافت 100 ارز از CoinGecko
     const coinsRes = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
     const coins = await coinsRes.json();
 
-    // Fetch user balances from wallets table (RLS applies)
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/wallets?select=asset,balance&is_active=eq.true`, {
+    // 2️⃣ دریافت بالانس از جدول wallets
+    const balancesRes = await fetch(`${SUPABASE_URL}/rest/v1/wallets`, {
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': 'Bearer ' + SUPABASE_KEY
       }
     });
-    const userBalances = await res.json();
+    const balancesData = await balancesRes.json();
     const balancesMap = {};
-    userBalances.forEach(b => balancesMap[b.asset.toUpperCase()] = parseFloat(b.balance));
+    balancesData.forEach(w => {
+      balancesMap[w.asset.toUpperCase()] = w.balance || 0; // همیشه صفر fallback
+    });
 
-    const tbody = document.querySelector('#walletTable tbody');
-    tbody.innerHTML = '';
-    let totalUSD = 0;
-
+    // 3️⃣ ساخت جدول
     coins.forEach(coin => {
       const symbol = coin.symbol.toUpperCase();
-      const balance = balancesMap[symbol] || 0;
+      const balance = balancesMap[symbol] !== undefined ? balancesMap[symbol] : 0;
       const value = balance * coin.current_price;
       totalUSD += value;
 
@@ -135,8 +154,10 @@ async function loadWallet() {
     });
 
     document.getElementById('totalBalance').innerText = `$${totalUSD.toLocaleString(undefined,{maximumFractionDigits:2})}`;
+
   } catch(err){
-    console.error('Failed to load wallet:', err);
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="4">Failed to load wallet data</td></tr>`;
   }
 }
 
