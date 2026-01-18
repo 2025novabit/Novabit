@@ -45,18 +45,21 @@ const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function loadRequests() {
   const { data, error } = await supabase
-    .from('deposit_requests')
-    .select('*')
+    .from('deposit_requests') // نام جدول دقیق
+    .select('id,user_id,asset,network,amount,status')
     .order('created_at', { ascending: false });
 
-  if(error) return console.error('Failed to load requests:', error);
+  if(error) {
+    console.error('Failed to load requests:', error);
+    document.getElementById('requestTable').innerHTML = '<tr><td colspan="6">Failed to load requests</td></tr>';
+    return;
+  }
 
   const tbody = document.getElementById('requestTable');
   tbody.innerHTML = '';
 
   data.forEach(req => {
     const tr = document.createElement('tr');
-
     tr.innerHTML = `
       <td>${req.user_id}</td>
       <td>${req.asset}</td>
@@ -73,26 +76,24 @@ async function loadRequests() {
 }
 
 async function handleRequest(requestId, approve) {
-  // مقدار اصلاح شده
   const amountInput = document.getElementById('amt_' + requestId);
   const newAmount = parseFloat(amountInput.value);
 
-  // تایید: موجودی ولت بروزرسانی شود
   if(approve) {
-    const { data: request, error } = await supabase
+    // دریافت اطلاعات درخواست
+    const { data: reqData, error: reqErr } = await supabase
       .from('deposit_requests')
       .select('*')
       .eq('id', requestId)
       .single();
-    if(error) return console.error(error);
+    if(reqErr) return console.error(reqErr);
 
-    // بروزرسانی ولت
-    const { data: walletData, error: walletErr } = await supabase
+    // بروزرسانی موجودی کیف پول
+    const { error: walletErr } = await supabase
       .from('wallets')
       .update({ balance: supabase.raw('balance + ?', [newAmount]) })
-      .eq('user_id', request.user_id)
-      .eq('coin_symbol', request.asset);
-
+      .eq('user_id', reqData.user_id)
+      .eq('coin_symbol', reqData.asset);
     if(walletErr) return console.error(walletErr);
   }
 
@@ -101,20 +102,15 @@ async function handleRequest(requestId, approve) {
     .from('deposit_requests')
     .update({ status: approve ? 'approved' : 'rejected', amount: newAmount })
     .eq('id', requestId);
-
   if(statusErr) return console.error(statusErr);
 
-  alert(`Request ${approve ? 'approved' : 'rejected'}`);
   loadRequests();
 }
 
-// بررسی لاگین
+// بررسی لاگین ادمین
 supabase.auth.getUser().then(({ data })=>{
-  if(!data.user) {
-    window.location.href = '/login.html';
-  } else {
-    loadRequests();
-  }
+  if(!data.user) window.location.href = '/login.html';
+  else loadRequests();
 });
 </script>
 </body>
