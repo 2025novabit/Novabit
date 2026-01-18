@@ -14,6 +14,12 @@ label{display:block;margin-top:12px;font-size:14px}
 select,input{width:100%;padding:8px;margin-top:5px;border-radius:5px;border:1px solid #ccc}
 button{margin-top:20px;width:100%;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer}
 .back{background:#e74c3c;width:auto;padding:6px 12px}
+.history{margin-top:30px}
+.history-item{background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;margin-bottom:10px;font-size:14px}
+.status{font-weight:bold}
+.status.pending{color:#f39c12}
+.status.approved{color:#2ecc71}
+.status.rejected{color:#e74c3c}
 </style>
 </head>
 
@@ -25,6 +31,7 @@ button{margin-top:20px;width:100%;padding:10px;background:#4b49ac;color:#fff;bor
 </header>
 
 <div class="container">
+
   <label>Coin</label>
   <select id="coinSelect"></select>
 
@@ -32,12 +39,18 @@ button{margin-top:20px;width:100%;padding:10px;background:#4b49ac;color:#fff;bor
   <select id="networkSelect"></select>
 
   <label>Amount</label>
-  <input type="number" id="amountInput" placeholder="Enter amount">
+  <input type="number" id="amountInput">
 
   <label>TXID</label>
-  <input type="text" id="txidInput" placeholder="Transaction ID">
+  <input type="text" id="txidInput">
 
   <button onclick="submitRequest()">Submit Request</button>
+
+  <!-- History -->
+  <div class="history" id="history">
+    <h3>Deposit History</h3>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -45,99 +58,94 @@ button{margin-top:20px;width:100%;padding:10px;background:#4b49ac;color:#fff;bor
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth:{
-    persistSession:true,
-    autoRefreshToken:true,
-    detectSessionInUrl:true
-  }
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY,{
+  auth:{persistSession:true}
 });
 
-let userId = null;
-const coinSelect = document.getElementById('coinSelect');
-const networkSelect = document.getElementById('networkSelect');
+let userId=null;
+
+const coinSelect=document.getElementById('coinSelect');
+const networkSelect=document.getElementById('networkSelect');
+const historyDiv=document.getElementById('history');
 
 async function init(){
-  const { data } = await supabaseClient.auth.getSession();
-
+  const {data}=await supabaseClient.auth.getSession();
   if(!data.session){
-    location.href = 'login.html';
+    location.href='login.html';
     return;
   }
-
-  userId = data.session.user.id;
-  await loadWalletCoins();
+  userId=data.session.user.id;
+  await loadCoins();
+  await loadHistory();
 }
 
-async function loadWalletCoins(){
-  const { data, error } = await supabaseClient
+async function loadCoins(){
+  const {data}=await supabaseClient
     .from('wallets')
     .select('coin_symbol')
-    .eq('user_id', userId);
+    .eq('user_id',userId);
 
-  if(error){
-    alert('Failed to load wallets');
-    return;
-  }
-
-  coinSelect.innerHTML = '';
-  [...new Set(data.map(w=>w.coin_symbol))].forEach(symbol=>{
-    const opt = document.createElement('option');
-    opt.value = symbol;
-    opt.innerText = symbol;
-    coinSelect.appendChild(opt);
+  coinSelect.innerHTML='';
+  [...new Set(data.map(i=>i.coin_symbol))].forEach(s=>{
+    const o=document.createElement('option');
+    o.value=s;o.textContent=s;
+    coinSelect.appendChild(o);
   });
-
   loadNetworks();
 }
 
 async function loadNetworks(){
-  networkSelect.innerHTML = '';
-
-  const { data, error } = await supabaseClient
+  const {data}=await supabaseClient
     .from('deposit_wallets')
     .select('network')
-    .eq('asset', coinSelect.value)
-    .eq('is_active', true);
+    .eq('asset',coinSelect.value)
+    .eq('is_active',true);
 
-  if(error) return;
-
+  networkSelect.innerHTML='';
   data.forEach(n=>{
-    const opt = document.createElement('option');
-    opt.value = n.network;
-    opt.innerText = n.network;
-    networkSelect.appendChild(opt);
+    const o=document.createElement('option');
+    o.value=n.network;o.textContent=n.network;
+    networkSelect.appendChild(o);
   });
 }
 
-coinSelect.addEventListener('change', loadNetworks);
+coinSelect.addEventListener('change',loadNetworks);
 
 async function submitRequest(){
-  const amount = document.getElementById('amountInput').value;
-  const txid = document.getElementById('txidInput').value;
+  const amount=document.getElementById('amountInput').value;
+  const txid=document.getElementById('txidInput').value;
 
-  if(!amount){
-    alert('Amount required');
-    return;
-  }
+  await supabaseClient.from('deposit_requests').insert({
+    user_id:userId,
+    asset:coinSelect.value,
+    network:networkSelect.value,
+    amount:amount,
+    txid:txid,
+    status:'pending'
+  });
 
-  const { error } = await supabaseClient
+  await loadHistory();
+}
+
+async function loadHistory(){
+  historyDiv.innerHTML='<h3>Deposit History</h3>';
+
+  const {data}=await supabaseClient
     .from('deposit_requests')
-    .insert({
-      user_id: userId,
-      asset: coinSelect.value,
-      network: networkSelect.value,
-      amount: amount,
-      txid: txid,
-      status: 'pending'
-    });
+    .select('asset,network,amount,status,created_at')
+    .eq('user_id',userId)
+    .order('created_at',{ascending:false});
 
-  if(error){
-    alert('Submit failed');
-  }else{
-    alert('Deposit request submitted');
-    history.back();
-  }
+  data.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='history-item';
+    d.innerHTML=`
+      <div><b>${r.asset}</b> | ${r.network}</div>
+      <div>Amount: ${r.amount}</div>
+      <div class="status ${r.status}">Status: ${r.status}</div>
+    `;
+    historyDiv.appendChild(d);
+  });
 }
 
 init();
