@@ -77,11 +77,6 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let allCoins = [];
 let userBalances = {};
 
-// تابع فرمت حرفه‌ای بالانس
-function formatBalance(balance){
-  return Number(balance).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 8});
-}
-
 async function loadUserBalances() {
   const { data: auth } = await supabaseClient.auth.getUser();
   if(!auth.user) return {};
@@ -104,27 +99,16 @@ async function loadUserBalances() {
 async function loadCoins() {
   userBalances = await loadUserBalances();
   try{
-    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=150&page=1');
+    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
     const data = await res.json();
-    
-    // فیلتر کردن برای اینکه هر نماد فقط یک بار نمایش داده شود
-    const uniqueSymbols = new Set();
-    const filteredData = [];
-    data.forEach(coin => {
-      const baseSymbol = coin.symbol.toUpperCase();
-      if(!uniqueSymbols.has(baseSymbol)){
-        uniqueSymbols.add(baseSymbol);
-        filteredData.push(coin);
-      }
-    });
-
-    allCoins = filteredData.slice(0, 100); // فقط 100 ارز برتر بعد از فیلتر
-    renderCoins(allCoins);
+    allCoins = data;
+    renderCoins(data);
   } catch(err){
     console.error(err);
     coinScroll.innerHTML = 'Failed to load coins';
   }
 }
+
 function renderCoins(coins){
   coinScroll.innerHTML = '';
   coins.forEach(coin=>{
@@ -134,7 +118,7 @@ function renderCoins(coins){
     div.className = 'coin-card';
     div.innerHTML = `
       <img src="${coin.image}" alt="${symbol}">
-      <div><b>${symbol}</b> <small>Balance: <b>${formatBalance(balance)}</b></small></div>
+      <div><b>${symbol}</b> <small>Balance: ${balance}</small></div>
     `;
     div.onclick = ()=>openPanel(symbol);
     coinScroll.appendChild(div);
@@ -188,7 +172,7 @@ function copyAddress(){
   navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
 }
 
-loadCoins();
+loadCoins();و
 </script>
 
 </body>
