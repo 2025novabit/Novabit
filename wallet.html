@@ -106,40 +106,46 @@ async function loadWallet() {
 
   const { data: wallets, error } = await supabaseClient
     .from('wallets')
-    .select('*')
+    .select(`
+      coin_symbol,
+      balance
+    `)
     .eq('user_id', auth.user.id);
 
   if (error) {
-    console.error(error);
+    console.error('Failed to load wallet data', error);
     return;
   }
 
   const tbody = document.querySelector('#walletTable tbody');
   tbody.innerHTML = '';
 
-  const coinSymbols = wallets.map(w => w.asset).join(',');
+  // IDs برای Coingecko
+  const ids = wallets.map(w => w.coin_symbol.toLowerCase()).join(',');
+
   let prices = {};
-  if (coinSymbols) {
-    prices = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinSymbols}&vs_currencies=usd`)
+  if (ids) {
+    prices = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`)
       .then(r => r.json())
-      .catch(()=>{ console.error('Failed to fetch prices'); });
+      .catch(()=>{});
   }
 
   let total = 0;
   wallets.forEach(w => {
-    const price = prices[w.asset]?.usd || 0;
-    let formattedPrice = 0;
-    if (price > 10) formattedPrice = price.toFixed(2);
-    else if (price >= 1) formattedPrice = price.toFixed(4);
-    else formattedPrice = price.toFixed(6);
-
+    const price = prices[w.coin_symbol.toLowerCase()]?.usd || 0;
     const value = price * Number(w.balance);
     total += value;
 
+    // تعیین تعداد اعشار
+    let decimals = 2;
+    if(price > 10) decimals = 2;
+    else if(price > 1) decimals = 4;
+    else decimals = 6;
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${w.asset}</td>
-      <td>$${formattedPrice}</td>
+      <td>${w.coin_symbol}</td>
+      <td>$${price.toFixed(decimals)}</td>
       <td>${Number(w.balance).toFixed(6)}</td>
       <td>$${value.toFixed(2)}</td>
     `;
