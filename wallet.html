@@ -115,16 +115,13 @@ tr:nth-child(even){background:#f1f1f1;}
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-const supabaseClient = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-function toggleMenu(){
+function toggleMenu() {
   document.getElementById('sideMenu').classList.toggle('active');
 }
 
-async function loadWallet(){
+async function loadWallet() {
   const { data: auth } = await supabaseClient.auth.getUser();
   if (!auth.user) {
     window.location.href = "login.html";
@@ -164,7 +161,6 @@ async function loadWallet(){
   }
 
   let total = 0;
-
   wallets.forEach(w => {
     const price = prices[w.coins?.coingecko_id]?.usd || 0;
     const value = price * Number(w.balance);
@@ -180,8 +176,7 @@ async function loadWallet(){
     tbody.appendChild(tr);
   });
 
-  document.getElementById('totalBalance').innerText =
-    `$${total.toFixed(2)}`;
+  document.getElementById('totalBalance').innerText = `$${total.toFixed(2)}`;
 }
 
 document.addEventListener('DOMContentLoaded', loadWallet);
