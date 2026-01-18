@@ -11,7 +11,10 @@ body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
 .container{padding:20px}
 
-/* Coin list خارج از کادر */
+/* جستجو */
+#searchCoin{width:100%;padding:8px;margin-bottom:10px;border-radius:5px;border:1px solid #ccc}
+
+/* Coin list */
 .coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:none;padding:10px 0}
 .coin-card{
   background:#fff;border:1px solid #ccc;border-radius:10px;
@@ -54,7 +57,8 @@ select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1
 </header>
 
 <div class="container">
-  <h3>Select Coin (Top 100)</h3>
+  <h3>Select Coin</h3>
+  <input type="text" id="searchCoin" placeholder="Search coin...">
   <div class="coin-scroll" id="coinScroll">
     <div>Loading coins...</div>
   </div>
@@ -82,41 +86,62 @@ select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1
   </button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const coinScroll = document.getElementById('coinScroll');
 const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panelTitle');
 const depositAddress = document.getElementById('depositAddress');
 const networkSelect = document.getElementById('networkSelect');
+const searchCoin = document.getElementById('searchCoin');
 
-// Supabase config
-const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
-
-// Load coins from CoinGecko API (فقط لیست ارز بدون بالانس)
+// بارگذاری کوین‌ها با موجودی کاربر
 async function loadCoins() {
+  const { data: auth } = await supabase.auth.getUser();
+  if(!auth.user){
+    window.location.href = "login.html";
+    return;
+  }
+
   try{
-    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
-    const data = await res.json();
+    // گرفتن لیست کوین‌ها و موجودی کاربر
+    const { data: coinsData, error } = await supabase
+      .from('coins')
+      .select(`
+        symbol,
+        image,
+        wallets:wallets!inner(balance,user_id)
+      `)
+      .order('symbol',{ascending:true});
+
+    if(error){ throw error; }
+
     coinScroll.innerHTML = '';
-    data.forEach(coin=>{
-      const symbol = coin.symbol.toUpperCase();
+    coinsData.forEach(coin=>{
+      const userWallet = coin.wallets.find(w=>w.user_id===auth.user.id);
+      const balance = userWallet ? Number(userWallet.balance).toFixed(6) : '0.000000';
       const div = document.createElement('div');
       div.className = 'coin-card';
+      div.dataset.symbol = coin.symbol;
       div.innerHTML = `
-        <img src="${coin.image}" alt="${symbol}">
-        <div><b>${symbol}</b></div>
+        <img src="${coin.image}" alt="${coin.symbol}">
+        <div><b>${coin.symbol}</b> - ${balance}</div>
       `;
-      div.onclick = ()=>openPanel(symbol);
+      div.onclick = ()=>openPanel(coin.symbol);
       coinScroll.appendChild(div);
     });
-  } catch(err){
+
+  }catch(err){
     console.error(err);
     coinScroll.innerHTML = 'Failed to load coins';
   }
 }
 
-// Open panel
+// پنل واریز
 function openPanel(symbol){
   panelTitle.innerText = symbol + ' Deposit';
   networkSelect.innerHTML = '';
@@ -153,11 +178,18 @@ function openPanel(symbol){
 
 function closePanel(){ panel.classList.remove('active'); }
 function goToRequest(){ location.href='deposit-request.html'; }
-
 function copyAddress(){
   const text = depositAddress.querySelector('span').innerText;
   navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
 }
+
+// جستجو در کوین‌ها
+searchCoin.addEventListener('input', ()=>{
+  const term = searchCoin.value.toLowerCase();
+  document.querySelectorAll('.coin-card').forEach(card=>{
+    card.style.display = card.dataset.symbol.toLowerCase().includes(term)?'flex':'none';
+  });
+});
 
 // اجرا
 loadCoins();
