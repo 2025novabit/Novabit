@@ -1,68 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin | Deposits</title>
+<title>Admin | Deposit Approvals</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{font-family:Arial;background:#f4f6fa;padding:20px}
-.card{background:#fff;padding:15px;margin-bottom:10px;border-radius:6px}
-button{margin-right:5px;padding:6px 10px}
-.approve{background:#2ecc71;color:#fff;border:none}
-.reject{background:#e74c3c;color:#fff;border:none}
+body{font-family:Arial,sans-serif;background:#f4f6fa;margin:0;padding:20px;}
+header{background:#1a1a2e;color:#fff;padding:15px;font-size:18px;text-align:center;}
+.card{background:#fff;padding:15px;margin-bottom:10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+.card h4{margin:0 0 8px 0;}
+.card p{margin:4px 0;}
+button{padding:6px 12px;margin-right:5px;border:none;border-radius:5px;cursor:pointer;}
+button.approve{background:#2ecc71;color:#fff;}
+button.reject{background:#e74c3c;color:#fff;}
 </style>
 </head>
 <body>
 
-<h2>Pending Deposit Requests</h2>
-<div id="list"></div>
+<header>
+Admin Deposit Approval
+</header>
+
+<div id="deposits"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const supabase = supabase.createClient(
-  'https://iecnioogmafgxwarmkxz.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ',
-  {auth:{persistSession:true}}
-);
+const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ';
 
-const list=document.getElementById('list');
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {auth:{persistSession:true}});
 
-async function load(){
-  const {data}=await supabase
+const depositsDiv = document.getElementById('deposits');
+
+async function loadDeposits() {
+  const { data, error } = await supabase
     .from('deposit_requests')
     .select('*')
     .eq('status','pending')
     .order('created_at',{ascending:true});
 
-  list.innerHTML='';
-  data.forEach(r=>{
-    const d=document.createElement('div');
-    d.className='card';
-    d.innerHTML=`
-      <b>${r.asset}</b> | ${r.network}<br>
-      User: ${r.user_id}<br>
-      Amount: ${r.amount}<br>
-      TXID: ${r.txid}<br><br>
-      <button class="approve" onclick="approve('${r.id}')">Approve</button>
-      <button class="reject" onclick="rejectReq('${r.id}')">Reject</button>
+  if(error){ depositsDiv.innerHTML='Failed to load deposits'; console.error(error); return; }
+
+  depositsDiv.innerHTML='';
+  data.forEach(d=>{
+    const card = document.createElement('div');
+    card.className='card';
+    card.id=`card-${d.id}`;
+    card.innerHTML=`
+      <h4>${d.asset} Deposit</h4>
+      <p><b>User:</b> ${d.user_id}</p>
+      <p><b>Network:</b> ${d.network}</p>
+      <p><b>Amount:</b> ${d.amount}</p>
+      <p><b>TXID:</b> ${d.txid || '—'}</p>
+      <button class="approve" onclick="approve('${d.id}')">Approve</button>
+      <button class="reject" onclick="reject('${d.id}')">Reject</button>
     `;
-    list.appendChild(d);
+    depositsDiv.appendChild(card);
   });
 }
 
 async function approve(id){
-  await supabase.rpc('approve_deposit',{p_request_id:id});
-  load();
+  try{
+    await supabase.rpc('approve_deposit',{p_request_id:id});
+    const card = document.getElementById('card-'+id);
+    if(card) card.remove();
+  }catch(e){ console.error(e); alert('Failed to approve'); }
 }
 
-async function rejectReq(id){
-  await supabase
+async function reject(id){
+  const { error } = await supabase
     .from('deposit_requests')
     .update({status:'rejected'})
     .eq('id',id);
-  load();
+
+  if(error){ console.error(error); alert('Failed to reject'); return; }
+  const card = document.getElementById('card-'+id);
+  if(card) card.remove();
 }
 
-load();
+loadDeposits();
 </script>
 
 </body>
