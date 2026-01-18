@@ -46,7 +46,7 @@ button.back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-ra
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -57,7 +57,7 @@ const msg = document.getElementById('msg');
 let userId = null;
 let wallets = [];
 
-/* ---------- AUTH CHECK ---------- */
+/* ---------- AUTH ---------- */
 async function checkAuth(){
   const { data: { session } } = await supabaseClient.auth.getSession();
   if(!session){
@@ -72,23 +72,23 @@ async function checkAuth(){
 async function loadAssets(){
   const { data, error } = await supabaseClient
     .from('wallets')
-    .select('asset, network')
+    .select('coin_symbol, network')
     .eq('user_id', userId);
 
   if(error){
-    msg.innerText = 'Failed to load assets';
+    msg.innerText = 'Failed to load wallets';
     return;
   }
 
   wallets = data;
 
-  const assets = [...new Set(wallets.map(w => w.asset))];
+  const assets = [...new Set(wallets.map(w => w.coin_symbol))];
   assetSelect.innerHTML = '';
 
-  assets.forEach(a=>{
+  assets.forEach(asset=>{
     const opt = document.createElement('option');
-    opt.value = a;
-    opt.innerText = a;
+    opt.value = asset;
+    opt.innerText = asset;
     assetSelect.appendChild(opt);
   });
 
@@ -96,13 +96,13 @@ async function loadAssets(){
   loadNetworks();
 }
 
-/* ---------- LOAD NETWORKS BASED ON ASSET ---------- */
+/* ---------- LOAD NETWORKS ---------- */
 function loadNetworks(){
   const asset = assetSelect.value;
   networkSelect.innerHTML = '';
 
   wallets
-    .filter(w => w.asset === asset)
+    .filter(w => w.coin_symbol === asset)
     .forEach(w=>{
       const opt = document.createElement('option');
       opt.value = w.network;
@@ -143,7 +143,6 @@ async function submitRequest(){
   msg.innerText = 'Deposit request submitted successfully';
 }
 
-/* ---------- INIT ---------- */
 checkAuth();
 </script>
 
