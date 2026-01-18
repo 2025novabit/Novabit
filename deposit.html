@@ -113,7 +113,7 @@ async function loadCoins() {
     coinScroll.innerHTML = 'Failed to load coins';
   }
 }
-
+<script>
 function renderCoins(coins){
   coinScroll.innerHTML = '';
   coins.forEach(coin=>{
@@ -122,9 +122,10 @@ function renderCoins(coins){
 
     let balanceHtml = '';
     if(balance === 0){
+      // ۸ خط کوچک برای صفر
       balanceHtml = '<div class="zero-cells">';
       for(let i=0;i<8;i++){
-        balanceHtml += '<span class="zero-cell">-</span>';
+        balanceHtml += '<span class="zero-cell">—</span>';
       }
       balanceHtml += '</div>';
     } else {
@@ -135,12 +136,23 @@ function renderCoins(coins){
     div.className = 'coin-card';
     div.innerHTML = `
       <img src="${coin.image}" alt="${symbol}">
-      <div class="coin-balance">${balanceHtml} <span>Balance</span></div>
+      <div>
+        <div><b>${symbol}</b></div>
+        <div class="coin-balance">${balanceHtml}</div>
+      </div>
     `;
     div.onclick = ()=>openPanel(symbol);
     coinScroll.appendChild(div);
   });
 }
+</script>
+
+<style>
+.zero-cells { display:flex; gap:3px; margin-top:4px; }
+.zero-cell { width:6px; height:2px; background:#999; display:inline-block; border-radius:1px; }
+.coin-balance b { font-weight:bold; font-size:14px; }
+</style>
+
 
 searchInput.addEventListener('input', ()=>{
   const query = searchInput.value.toLowerCase();
