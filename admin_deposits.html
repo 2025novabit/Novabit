@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin | Deposits</title>
+<style>
+body{font-family:Arial;background:#f4f6fa;padding:20px}
+.card{background:#fff;padding:15px;margin-bottom:10px;border-radius:6px}
+button{margin-right:5px;padding:6px 10px}
+.approve{background:#2ecc71;color:#fff;border:none}
+.reject{background:#e74c3c;color:#fff;border:none}
+</style>
+</head>
+<body>
+
+<h2>Pending Deposit Requests</h2>
+<div id="list"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabase = supabase.createClient(
+  'https://iecnioogmafgxwarmkxz.supabase.co',
+  'YOUR_ANON_KEY',
+  {auth:{persistSession:true}}
+);
+
+const list=document.getElementById('list');
+
+async function load(){
+  const {data}=await supabase
+    .from('deposit_requests')
+    .select('*')
+    .eq('status','pending')
+    .order('created_at',{ascending:true});
+
+  list.innerHTML='';
+  data.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='card';
+    d.innerHTML=`
+      <b>${r.asset}</b> | ${r.network}<br>
+      User: ${r.user_id}<br>
+      Amount: ${r.amount}<br>
+      TXID: ${r.txid}<br><br>
+      <button class="approve" onclick="approve('${r.id}')">Approve</button>
+      <button class="reject" onclick="rejectReq('${r.id}')">Reject</button>
+    `;
+    list.appendChild(d);
+  });
+}
+
+async function approve(id){
+  await supabase.rpc('approve_deposit',{p_request_id:id});
+  load();
+}
+
+async function rejectReq(id){
+  await supabase
+    .from('deposit_requests')
+    .update({status:'rejected'})
+    .eq('id',id);
+  load();
+}
+
+load();
+</script>
+
+</body>
+</html>
