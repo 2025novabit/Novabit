@@ -88,15 +88,7 @@ tr:nth-child(even){background:#f1f1f1;}
         <th>Status</th>
       </tr>
     </thead>
-    <tbody>
-      <tr>
-        <td>—</td>
-        <td>—</td>
-        <td>—</td>
-        <td>0.0000</td>
-        <td>No Transactions</td>
-      </tr>
-    </tbody>
+    <tbody></tbody> <!-- پاک کردن تاریخچه -->
   </table>
 </div>
 
@@ -137,8 +129,7 @@ async function loadWallet() {
         coingecko_id
       )
     `)
-    .eq('user_id', auth.user.id)
-    .order('coin_symbol');
+    .eq('user_id', auth.user.id);
 
   if (error) {
     console.error(error);
@@ -160,23 +151,34 @@ async function loadWallet() {
     ).then(r => r.json());
   }
 
-  let total = 0;
-  wallets.forEach(w => {
+  // آرایه با value برای مرتب سازی
+  const walletWithValue = wallets.map(w => {
     const price = prices[w.coins?.coingecko_id]?.usd || 0;
     const value = price * Number(w.balance);
-    total += value;
+    return { ...w, price, value };
+  });
 
+  // مرتب سازی از بالا به پایین
+  walletWithValue.sort((a, b) => b.value - a.value);
+
+  let total = 0;
+  walletWithValue.forEach(w => {
+    total += w.value;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${w.coin_symbol}</td>
-      <td>$${price.toLocaleString()}</td>
+      <td>$${w.price.toLocaleString()}</td>
       <td>${Number(w.balance).toFixed(6)}</td>
-      <td>$${value.toFixed(2)}</td>
+      <td>$${w.value.toFixed(2)}</td>
     `;
     tbody.appendChild(tr);
   });
 
   document.getElementById('totalBalance').innerText = `$${total.toFixed(2)}`;
+
+  // پاک کردن تاریخچه
+  const historyTbody = document.querySelectorAll('.card table tbody')[1];
+  historyTbody.innerHTML = '';
 }
 
 document.addEventListener('DOMContentLoaded', loadWallet);
