@@ -51,7 +51,6 @@ tr:nth-child(even){background:#f1f1f1;}
 
 <div class="container">
 
-<!-- TOTAL BALANCE -->
 <div class="card">
   <h2>Total Balance</h2>
   <div class="total-balance" id="totalBalance">$0.00</div>
@@ -60,7 +59,6 @@ tr:nth-child(even){background:#f1f1f1;}
   <div id="withdrawNote" style="margin-top:10px;color:#e74c3c;font-weight:500;"></div>
 </div>
 
-<!-- ASSETS -->
 <div class="card">
   <h2>Assets (Top 100)</h2>
   <div class="table-container">
@@ -76,6 +74,22 @@ tr:nth-child(even){background:#f1f1f1;}
       <tbody></tbody>
     </table>
   </div>
+</div>
+
+<div class="card">
+  <h2>Transaction History</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Asset</th>
+        <th>Amount</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody> <!-- پاک کردن تاریخچه -->
+  </table>
 </div>
 
 </div>
@@ -108,49 +122,63 @@ async function loadWallet() {
 
   const { data: wallets, error } = await supabaseClient
     .from('wallets')
-    .select('asset,balance')
+    .select(`
+      coin_symbol,
+      balance,
+      coins:coins!wallets_coin_symbol_fkey (
+        coingecko_id
+      )
+    `)
     .eq('user_id', auth.user.id);
 
   if (error) {
     console.error(error);
-    const tbody = document.querySelector('#walletTable tbody');
-    tbody.innerHTML = '<tr><td colspan="4">Failed to load wallet data</td></tr>';
     return;
   }
 
   const tbody = document.querySelector('#walletTable tbody');
   tbody.innerHTML = '';
 
-  // گرفتن قیمت‌ها
-  const ids = wallets.map(w => w.asset.toLowerCase()).join(',');
+  const ids = wallets
+    .map(w => w.coins?.coingecko_id)
+    .filter(Boolean)
+    .join(',');
+
   let prices = {};
   if (ids) {
-    prices = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`)
-      .then(r => r.json())
-      .catch(() => ({}));
+    prices = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
+    ).then(r => r.json());
   }
 
-  let total = 0;
-
-  wallets.forEach(w => {
-    const price = prices[w.asset.toLowerCase()]?.usd || 0;
+  // آرایه با value برای مرتب سازی
+  const walletWithValue = wallets.map(w => {
+    const price = prices[w.coins?.coingecko_id]?.usd || 0;
     const value = price * Number(w.balance);
-    total += value;
+    return { ...w, price, value };
+  });
 
-    // فقط تغییر: اگر قیمت > 1 دلار دو رقم اعشار شود
-    const displayPrice = price > 1 ? price.toFixed(2) : price;
+  // مرتب سازی از بالا به پایین
+  walletWithValue.sort((a, b) => b.value - a.value);
 
+  let total = 0;
+  walletWithValue.forEach(w => {
+    total += w.value;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${w.asset}</td>
-      <td>$${displayPrice}</td>
+      <td>${w.coin_symbol}</td>
+      <td>$${w.price.toLocaleString()}</td>
       <td>${Number(w.balance).toFixed(6)}</td>
-      <td>$${value.toFixed(2)}</td>
+      <td>$${w.value.toFixed(2)}</td>
     `;
     tbody.appendChild(tr);
   });
 
   document.getElementById('totalBalance').innerText = `$${total.toFixed(2)}`;
+
+  // پاک کردن تاریخچه
+  const historyTbody = document.querySelectorAll('.card table tbody')[1];
+  historyTbody.innerHTML = '';
 }
 
 document.addEventListener('DOMContentLoaded', loadWallet);
