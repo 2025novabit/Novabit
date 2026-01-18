@@ -108,7 +108,10 @@ async function loadWallet() {
     .from('wallets')
     .select(`
       coin_symbol,
-      balance
+      balance,
+      coins:coins!wallets_coin_symbol_fkey (
+        coingecko_id
+      )
     `)
     .eq('user_id', auth.user.id);
 
@@ -120,23 +123,25 @@ async function loadWallet() {
   const tbody = document.querySelector('#walletTable tbody');
   tbody.innerHTML = '';
 
-  // IDs برای Coingecko
-  const ids = wallets.map(w => w.coin_symbol.toLowerCase()).join(',');
+  const ids = wallets
+    .map(w => w.coins?.coingecko_id)
+    .filter(Boolean)
+    .join(',');
 
   let prices = {};
   if (ids) {
-    prices = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`)
-      .then(r => r.json())
-      .catch(()=>{});
+    prices = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
+    ).then(r => r.json());
   }
 
   let total = 0;
   wallets.forEach(w => {
-    const price = prices[w.coin_symbol.toLowerCase()]?.usd || 0;
+    const price = prices[w.coins?.coingecko_id]?.usd || 0;
     const value = price * Number(w.balance);
     total += value;
 
-    // تعیین تعداد اعشار
+    // تنظیم اعشار طبق درخواست
     let decimals = 2;
     if(price > 10) decimals = 2;
     else if(price > 1) decimals = 4;
