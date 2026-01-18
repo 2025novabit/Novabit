@@ -131,17 +131,22 @@ async function loadWallet(){
     return;
   }
 
-  const { data: wallets } = await supabaseClient
+  const { data: wallets, error } = await supabaseClient
     .from('wallets')
     .select(`
       coin_symbol,
       balance,
-      coins (
+      coins:coins!wallets_coin_symbol_fkey (
         coingecko_id
       )
     `)
     .eq('user_id', auth.user.id)
     .order('coin_symbol');
+
+  if (error) {
+    console.error(error);
+    return;
+  }
 
   const tbody = document.querySelector('#walletTable tbody');
   tbody.innerHTML = '';
@@ -162,7 +167,7 @@ async function loadWallet(){
 
   wallets.forEach(w => {
     const price = prices[w.coins?.coingecko_id]?.usd || 0;
-    const value = price * w.balance;
+    const value = price * Number(w.balance);
     total += value;
 
     const tr = document.createElement('tr');
