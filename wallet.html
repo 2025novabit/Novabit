@@ -4,10 +4,6 @@
 <meta charset="UTF-8">
 <title>Wallet | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 body{margin:0;font-family:Arial,Roboto,sans-serif;background:#f8f9fa;padding-bottom:70px;}
 header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;}
@@ -18,6 +14,7 @@ header h1{margin:0;font-size:20px;}
 #sideMenu h2{margin-top:0;}
 #sideMenu a{display:block;margin:15px 0;color:#1a1a2e;text-decoration:none;font-weight:500;}
 #closeMenu{background:#e74c3c;color:#fff;border:none;padding:8px 12px;border-radius:5px;cursor:pointer;margin-bottom:15px;}
+
 .container{padding:20px;}
 .card{background:#fff;padding:25px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:20px;}
 .card h2{margin-top:0;}
@@ -34,7 +31,6 @@ tr:nth-child(even){background:#f1f1f1;}
 .bottom-nav a.active{color:#4b49ac;}
 </style>
 </head>
-
 <body>
 
 <header>
@@ -60,6 +56,7 @@ tr:nth-child(even){background:#f1f1f1;}
   <div class="total-balance" id="totalBalance">$0.00</div>
   <button onclick="window.location.href='deposit.html'">Deposit</button>
   <button onclick="window.location.href='withdraw.html'">Withdraw</button>
+  <div id="withdrawNote" style="margin-top:10px;color:#e74c3c;font-weight:500;"></div>
 </div>
 
 <div class="card">
@@ -79,6 +76,30 @@ tr:nth-child(even){background:#f1f1f1;}
   </div>
 </div>
 
+<div class="card">
+  <h2>Transaction History</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Asset</th>
+        <th>Amount</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>0.0000</td>
+        <td>No Transactions</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 </div>
 
 <div class="bottom-nav">
@@ -88,73 +109,74 @@ tr:nth-child(even){background:#f1f1f1;}
   <a href="trade.html">Trade</a>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-/* ================= CONFIG ================= */
-const SUPABASE_URL = "https://https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ";
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
-/* ================= MENU ================= */
 function toggleMenu(){
   document.getElementById('sideMenu').classList.toggle('active');
 }
 
-/* ================= AUTH ================= */
-async function getUser(){
-  const { data } = await supabase.auth.getUser();
-  if(!data.user){
-    window.location.href = "login.html";
-    return null;
-  }
-  return data.user;
-}
-
-/* ================= LOAD WALLET ================= */
 async function loadWallet(){
-  const user = await getUser();
-  if(!user) return;
+  const { data: auth } = await supabaseClient.auth.getUser();
+  if (!auth.user) {
+    window.location.href = "login.html";
+    return;
+  }
 
-  const { data: wallets, error } = await supabase
+  const { data: wallets } = await supabaseClient
     .from('wallets')
     .select(`
       coin_symbol,
       balance,
-      coins ( coingecko_id )
+      coins (
+        coingecko_id
+      )
     `)
-    .eq('user_id', user.id)
+    .eq('user_id', auth.user.id)
     .order('coin_symbol');
-
-  if(error){
-    console.error(error);
-    return;
-  }
-
-  const ids = wallets.map(w => w.coins.coingecko_id).join(',');
-  const prices = await fetch(
-    `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
-  ).then(r => r.json());
 
   const tbody = document.querySelector('#walletTable tbody');
   tbody.innerHTML = '';
+
+  const ids = wallets
+    .map(w => w.coins?.coingecko_id)
+    .filter(Boolean)
+    .join(',');
+
+  let prices = {};
+  if (ids) {
+    prices = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
+    ).then(r => r.json());
+  }
+
   let total = 0;
 
   wallets.forEach(w => {
-    const price = prices[w.coins.coingecko_id]?.usd || 0;
-    const value = w.balance * price;
+    const price = prices[w.coins?.coingecko_id]?.usd || 0;
+    const value = price * w.balance;
     total += value;
 
-    tbody.innerHTML += `
-      <tr>
-        <td>${w.coin_symbol}</td>
-        <td>$${price.toLocaleString()}</td>
-        <td>${Number(w.balance).toFixed(6)}</td>
-        <td>$${value.toFixed(2)}</td>
-      </tr>
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${w.coin_symbol}</td>
+      <td>$${price.toLocaleString()}</td>
+      <td>${Number(w.balance).toFixed(6)}</td>
+      <td>$${value.toFixed(2)}</td>
     `;
+    tbody.appendChild(tr);
   });
 
-  document.getElementById('totalBalance').innerText = `$${total.toFixed(2)}`;
+  document.getElementById('totalBalance').innerText =
+    `$${total.toFixed(2)}`;
 }
 
 document.addEventListener('DOMContentLoaded', loadWallet);
