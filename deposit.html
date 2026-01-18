@@ -10,36 +10,12 @@
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
 .container{padding:20px}
-
-/* جستجو */
-#searchInput{width:100%;padding:8px;border-radius:5px;border:1px solid #ccc;margin-bottom:10px;}
-
-/* Coin scroll vertical */
+#searchInput{width:100%;padding:8px;border-radius:5px;border:1px solid #ccc;margin-bottom:10px}
 .coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:70vh;padding:10px 0}
-.coin-card{
-  background:#fff;border:1px solid #ccc;border-radius:10px;
-  padding:10px;text-align:center;width:100%;
-  cursor:pointer; display:flex; align-items:center; gap:10px;
-}
+.coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;width:100%;cursor:pointer; display:flex; align-items:center; gap:10px}
 .coin-card:hover{border-color:#4b49ac}
 .coin-card img{width:40px;height:40px;margin:0}
-
-/* Deposit panel وسط صفحه */
-.panel{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%, -50%);
-  width:360px;
-  max-height:80%;
-  overflow-y:auto;
-  background:#fff;
-  box-shadow:0 0 15px rgba(0,0,0,.3);
-  padding:20px;
-  transition:.3s;
-  z-index:100;
-  display:none;
-}
+.panel{position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:360px;max-height:80%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;transition:.3s;z-index:100;display:none}
 .panel.active{display:block}
 .close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
 .address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
@@ -85,7 +61,6 @@ select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 const coinScroll = document.getElementById('coinScroll');
 const panel = document.getElementById('panel');
@@ -102,27 +77,27 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let allCoins = [];
 let userBalances = {};
 
-async function loadWalletBalances() {
+async function loadUserBalances() {
   const { data: auth } = await supabaseClient.auth.getUser();
-  if (!auth.user) return {};
+  if(!auth.user) return {};
 
   const { data, error } = await supabaseClient
     .from('wallets')
-    .select('asset,balance')
+    .select('coin_symbol,balance')
     .eq('user_id', auth.user.id);
 
-  if (error) {
+  if(error) {
     console.error(error);
     return {};
   }
 
   const balances = {};
-  data.forEach(w => { balances[w.asset] = Number(w.balance) || 0; });
+  data.forEach(w => { balances[w.coin_symbol] = Number(w.balance) || 0; });
   return balances;
 }
 
 async function loadCoins() {
-  userBalances = await loadWalletBalances();
+  userBalances = await loadUserBalances();
   try{
     const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
     const data = await res.json();
@@ -134,7 +109,7 @@ async function loadCoins() {
   }
 }
 
-function renderCoins(coins) {
+function renderCoins(coins){
   coinScroll.innerHTML = '';
   coins.forEach(coin=>{
     const symbol = coin.symbol.toUpperCase();
@@ -156,7 +131,6 @@ searchInput.addEventListener('input', ()=>{
   renderCoins(filtered);
 });
 
-// Open panel
 function openPanel(symbol){
   panelTitle.innerText = symbol + ' Deposit';
   networkSelect.innerHTML = '';
@@ -198,7 +172,6 @@ function copyAddress(){
   navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
 }
 
-// اجرا
 loadCoins();
 </script>
 
