@@ -10,6 +10,7 @@ header{background:#1a1a2e;color:#fff;padding:15px;font-size:18px;text-align:cent
 .card{background:#fff;padding:15px;margin-bottom:10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 .card h4{margin:0 0 8px 0;}
 .card p{margin:4px 0;}
+input.amount{width:100px;padding:4px;}
 button{padding:6px 12px;margin-right:5px;border:none;border-radius:5px;cursor:pointer;}
 button.approve{background:#2ecc71;color:#fff;}
 button.reject{background:#e74c3c;color:#fff;}
@@ -29,7 +30,6 @@ const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ';
 
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {auth:{persistSession:true}});
-
 const depositsDiv = document.getElementById('deposits');
 
 async function loadDeposits() {
@@ -50,7 +50,7 @@ async function loadDeposits() {
       <h4>${d.asset} Deposit</h4>
       <p><b>User:</b> ${d.user_id}</p>
       <p><b>Network:</b> ${d.network}</p>
-      <p><b>Amount:</b> ${d.amount}</p>
+      <p><b>Amount:</b> <input class="amount" id="amount-${d.id}" value="${d.amount}"></p>
       <p><b>TXID:</b> ${d.txid || '—'}</p>
       <button class="approve" onclick="approve('${d.id}')">Approve</button>
       <button class="reject" onclick="reject('${d.id}')">Reject</button>
@@ -60,11 +60,40 @@ async function loadDeposits() {
 }
 
 async function approve(id){
-  try{
-    await supabase.rpc('approve_deposit',{p_request_id:id});
-    const card = document.getElementById('card-'+id);
-    if(card) card.remove();
-  }catch(e){ console.error(e); alert('Failed to approve'); }
+  const input = document.getElementById('amount-'+id);
+  const amount = parseFloat(input.value);
+  if(isNaN(amount) || amount<=0){ alert('Invalid amount'); return; }
+
+  // بروزرسانی وضعیت درخواست
+  const { error:updateReq } = await supabase
+    .from('deposit_requests')
+    .update({status:'approved',amount:amount})
+    .eq('id',id);
+  if(updateReq){ console.error(updateReq); alert('Failed to approve'); return; }
+
+  // افزودن موجودی به جدول ولت
+  const { data: reqData } = await supabase.from('deposit_requests').select('user_id,asset').eq('id',id).single();
+  if(!reqData){ alert('Request data not found'); return; }
+
+  const { data: walletData, error: walletErr } = await supabase
+    .from('wallets')
+    .select('id,balance')
+    .eq('user_id',reqData.user_id)
+    .eq('coin_symbol',reqData.asset)
+    .single();
+
+  if(walletErr){ console.error(walletErr); alert('Wallet not found'); return; }
+
+  const newBalance = parseFloat(walletData.balance || 0) + amount;
+  const { error: balanceErr } = await supabase
+    .from('wallets')
+    .update({balance:newBalance})
+    .eq('id',walletData.id);
+
+  if(balanceErr){ console.error(balanceErr); alert('Failed to update wallet'); return; }
+
+  const card = document.getElementById('card-'+id);
+  if(card) card.remove();
 }
 
 async function reject(id){
