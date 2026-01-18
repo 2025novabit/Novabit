@@ -142,12 +142,13 @@ async function openPanel(symbol){
   networkSelect.innerHTML = '';
   depositAddress.querySelector('span').innerText = 'Loading address...';
 
-  try{
+    try {
+    // دریافت کوین‌ها از جدول cion
     const { data, error } = await supabaseClient
-      .from('deposit_wallets')
-      .select('*')
-      .eq('asset', symbol)
-      .eq('is_active', true);
+      .from('cion')
+      .select('symbol,name,coingecko_id')
+      .limit(100)
+      .order('symbol', { ascending: true });
 
     if(error) throw error;
 
