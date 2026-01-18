@@ -69,20 +69,23 @@ const networkSelect = document.getElementById('networkSelect');
 const searchInput = document.getElementById('searchInput');
 
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA'; // جایگزین کنید
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA'; // جایگزین با کلید خودت
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let allCoins = [];
 let userBalances = {};
 
 async function loadUserBalances() {
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await supabaseClient.auth.getUser();
   if(!auth.user) return {};
-  const { data, error } = await supabase
+
+  const { data, error } = await supabaseClient
     .from('wallets')
     .select('coin_symbol,balance')
     .eq('user_id', auth.user.id);
+
   if(error) { console.error(error); return {}; }
+
   const balances = {};
   data.forEach(w => balances[w.coin_symbol] = Number(w.balance)||0);
   return balances;
@@ -90,12 +93,13 @@ async function loadUserBalances() {
 
 async function loadCoins() {
   userBalances = await loadUserBalances();
-  try {
-    const { data, error } = await supabase
+  try{
+    const { data, error } = await supabaseClient
       .from('cion')
       .select('symbol,name,coingecko_id')
-      .order('symbol', { ascending: true })
+      .order('symbol', { ascending:true })
       .limit(100);
+
     if(error) throw error;
     allCoins = data;
     renderCoins(data);
@@ -107,13 +111,16 @@ async function loadCoins() {
 
 function renderCoins(coins){
   coinScroll.innerHTML = '';
-  coins.forEach(c=>{
-    const symbol = c.symbol.toUpperCase();
-    const balance = userBalances[symbol]||0;
-    const imgUrl = c.coingecko_id ? `https://assets.coingecko.com/coins/images/${c.coingecko_id}/small.png` : '';
+  coins.forEach(coin=>{
+    const symbol = coin.symbol.toUpperCase();
+    const balance = userBalances[symbol] || 0;
+    const imgUrl = coin.coingecko_id ? `https://assets.coingecko.com/coins/images/${coin.coingecko_id}/small.png` : '';
     const div = document.createElement('div');
     div.className = 'coin-card';
-    div.innerHTML = `<img src="${imgUrl}" alt="${symbol}"><div><b>${symbol}</b> <small>Balance: ${balance}</small></div>`;
+    div.innerHTML = `
+      <img src="${imgUrl}" alt="${symbol}">
+      <div><b>${symbol}</b> <small>Balance: ${balance}</small></div>
+    `;
     div.onclick = ()=>openPanel(symbol);
     coinScroll.appendChild(div);
   });
@@ -130,13 +137,13 @@ function openPanel(symbol){
   networkSelect.innerHTML = '';
   depositAddress.querySelector('span').innerText = 'Loading address...';
 
-  supabase
+  supabaseClient
     .from('deposit_wallets')
     .select('*')
     .eq('asset', symbol)
     .eq('is_active', true)
     .then(({ data, error })=>{
-      if(error || !data.length) { depositAddress.querySelector('span').innerText='No address available'; return; }
+      if(error || !data.length){ depositAddress.querySelector('span').innerText='No address available'; return; }
       data.forEach((w, idx)=>{
         const opt = document.createElement('option');
         opt.value = w.network;
@@ -155,7 +162,7 @@ function openPanel(symbol){
 
 function closePanel(){ panel.classList.remove('active'); }
 function goToRequest(){ location.href='deposit-request.html'; }
-function copyAddress(){ 
+function copyAddress(){
   const text = depositAddress.querySelector('span').innerText;
   navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
 }
