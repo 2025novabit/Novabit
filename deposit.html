@@ -10,38 +10,14 @@
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
 .container{padding:20px}
-
-/* جستجو */
 #searchCoin{width:100%;padding:8px;margin-bottom:10px;border-radius:5px;border:1px solid #ccc}
-
-/* Coin list خارج از کادر */
 .coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:none;padding:10px 0}
-.coin-card{
-  background:#fff;border:1px solid #ccc;border-radius:10px;
-  padding:10px;text-align:center;width:100%;
-  cursor:pointer; display:flex; align-items:center; gap:10px;
-}
+.coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;width:100%;cursor:pointer; display:flex; align-items:center; gap:10px}
 .coin-card:hover{border-color:#4b49ac}
 .coin-card img{width:40px;height:40px;margin:0}
-
-/* Deposit panel وسط صفحه */
-.panel{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%, -50%);
-  width:360px;
-  max-height:80%;
-  overflow-y:auto;
-  background:#fff;
-  box-shadow:0 0 15px rgba(0,0,0,.3);
-  padding:20px;
-  transition:.3s;
-  z-index:100;
-  display:none;
-}
+.panel{position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:360px;max-height:80%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;transition:.3s;z-index:100;display:none}
 .panel.active{display:block}
-.close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
+.close,.back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
 .address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
 .notice{margin-top:20px;font-size:14px;color:#555}
 button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
@@ -59,31 +35,22 @@ select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1
 <div class="container">
   <input type="text" id="searchCoin" placeholder="Search coin...">
   <h3>Select Coin (Top 100)</h3>
-  <div class="coin-scroll" id="coinScroll">
-    <div>Loading coins...</div>
-  </div>
+  <div class="coin-scroll" id="coinScroll"></div>
 </div>
 
-<!-- Deposit Panel -->
 <div class="panel" id="panel">
   <button class="close" onclick="closePanel()">Close</button>
   <h3 id="panelTitle"></h3>
-
   <label for="networkSelect">Network:</label>
   <select id="networkSelect" class="network"></select>
-
   <div class="address" id="depositAddress">
     <span>—</span>
     <button onclick="copyAddress()" style="background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-radius:4px;cursor:pointer">Copy</button>
   </div>
-
   <div class="notice">
     After completing your deposit, please submit your deposit request.
   </div>
-
-  <button class="main" onclick="goToRequest()">
-    Submit Deposit Request
-  </button>
+  <button class="main" onclick="goToRequest()">Submit Deposit Request</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -139,10 +106,12 @@ function copyAddress(){
 }
 
 async function loadCoins(){
+  // ابتدا کاربر را چک کن
   const { data: auth } = await supabase.auth.getUser();
   if(!auth.user){ window.location.href='login.html'; return; }
 
   try{
+    // لیست کوین ها از جدول coins
     const { data: coins, error } = await supabase
       .from('coins')
       .select('*')
@@ -152,13 +121,14 @@ async function loadCoins(){
 
     coinScroll.innerHTML='';
 
+    // برای هر کوین موجودی کاربر
     for(const coin of coins){
-      const { data: wallet, error: wError } = await supabase
+      const { data: wallet } = await supabase
         .from('wallets')
         .select('balance')
         .eq('user_id', auth.user.id)
         .eq('coin_symbol', coin.symbol)
-        .maybeSingle(); // مهم: اگر موجودی صفر هم باشد
+        .maybeSingle();
 
       const balance = wallet?.balance ? Number(wallet.balance).toFixed(6) : '0.000000';
 
