@@ -135,24 +135,32 @@ async function loadWallet() {
     ).then(r => r.json());
   }
 
-  let total = 0;
-  wallets.forEach(w => {
+  // افزودن قیمت و value به هر کیف پول
+  const walletWithPrice = wallets.map(w => {
     const price = prices[w.coins?.coingecko_id]?.usd || 0;
     const value = price * Number(w.balance);
-    total += value;
+    return { ...w, price, value };
+  });
+
+  // مرتب‌سازی بر اساس قیمت از بالا به پایین
+  walletWithPrice.sort((a,b) => b.price - a.price);
+
+  let total = 0;
+  walletWithPrice.forEach(w => {
+    total += w.value;
 
     // تنظیم اعشار طبق درخواست
     let decimals = 2;
-    if(price > 10) decimals = 2;
-    else if(price > 1) decimals = 4;
+    if(w.price > 10) decimals = 2;
+    else if(w.price > 1) decimals = 4;
     else decimals = 6;
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${w.coin_symbol}</td>
-      <td>$${price.toFixed(decimals)}</td>
+      <td>$${w.price.toFixed(decimals)}</td>
       <td>${Number(w.balance).toFixed(6)}</td>
-      <td>$${value.toFixed(2)}</td>
+      <td>$${w.value.toFixed(2)}</td>
     `;
     tbody.appendChild(tr);
   });
