@@ -96,11 +96,17 @@ async function loadUserBalances() {
   return balances;
 }
 
-async function loadCoins() {
+async function loadCoinsFromDB() {
   userBalances = await loadUserBalances();
+
   try{
-    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
-    const data = await res.json();
+    const { data, error } = await supabaseClient
+      .from('coins')
+      .select('symbol,name,image')
+      .order('market_cap_rank', {ascending:true}) // بر اساس رنک بازار
+      .limit(100);
+
+    if(error) throw error;
     allCoins = data;
     renderCoins(data);
   } catch(err){
@@ -172,7 +178,7 @@ function copyAddress(){
   navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
 }
 
-loadCoins();
+loadCoinsFromDB();
 </script>
 
 </body>
