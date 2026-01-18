@@ -77,6 +77,11 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let allCoins = [];
 let userBalances = {};
 
+// تابع فرمت حرفه‌ای بالانس
+function formatBalance(balance){
+  return Number(balance).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 8});
+}
+
 async function loadUserBalances() {
   const { data: auth } = await supabaseClient.auth.getUser();
   if(!auth.user) return {};
@@ -118,7 +123,7 @@ function renderCoins(coins){
     div.className = 'coin-card';
     div.innerHTML = `
       <img src="${coin.image}" alt="${symbol}">
-      <div><b>${symbol}</b> <small>Balance: ${balance}</small></div>
+      <div><b>${symbol}</b> <small><b>Balance</b>: <b>${formatBalance(balance)}</b></small></div>
     `;
     div.onclick = ()=>openPanel(symbol);
     coinScroll.appendChild(div);
@@ -172,7 +177,7 @@ function copyAddress(){
   navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
 }
 
-loadCoins();و
+loadCoins();
 </script>
 
 </body>
