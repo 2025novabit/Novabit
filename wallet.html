@@ -88,6 +88,7 @@ tr:nth-child(even){background:#f1f1f1;}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
@@ -107,11 +108,11 @@ async function loadWallet() {
 
   const { data: wallets, error } = await supabaseClient
     .from('wallets')
-    .select('*')
+    .select('asset,balance')
     .eq('user_id', auth.user.id);
 
   if (error) {
-    console.error('Failed to load wallet:', error);
+    console.error(error);
     const tbody = document.querySelector('#walletTable tbody');
     tbody.innerHTML = '<tr><td colspan="4">Failed to load wallet data</td></tr>';
     return;
@@ -120,27 +121,24 @@ async function loadWallet() {
   const tbody = document.querySelector('#walletTable tbody');
   tbody.innerHTML = '';
 
-  // آماده‌سازی لیست کوین‌ها برای گرفتن قیمت از CoinGecko
+  // گرفتن قیمت‌ها
   const ids = wallets.map(w => w.asset.toLowerCase()).join(',');
-
   let prices = {};
   if (ids) {
-    try {
-      prices = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
-      ).then(r => r.json());
-    } catch (e) {
-      console.error('Failed to fetch prices', e);
-    }
+    prices = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`)
+      .then(r => r.json())
+      .catch(() => ({}));
   }
 
   let total = 0;
+
   wallets.forEach(w => {
     const price = prices[w.asset.toLowerCase()]?.usd || 0;
-    const value = Number(w.balance) * price;
+    const value = price * Number(w.balance);
     total += value;
 
-    let displayPrice = price >= 1 ? price.toFixed(2) : price.toFixed(6);
+    // فقط تغییر: اگر قیمت > 1 دلار دو رقم اعشار شود
+    const displayPrice = price > 1 ? price.toFixed(2) : price;
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
