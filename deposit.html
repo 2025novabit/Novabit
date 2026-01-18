@@ -171,7 +171,7 @@ function openPanel(symbol){
 }
 
 function closePanel(){ panel.classList.remove('active'); }
-function goToRequest(){ location.href='deposit-request.html'; }
+function goToRequest(){ location.href='depoist_request.html'; }
 function copyAddress(){
   const text = depositAddress.querySelector('span').innerText;
   navigator.clipboard.writeText(text).then(()=> alert('Address copied: '+text));
