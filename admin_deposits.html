@@ -3,48 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Deposit Requests</title>
-
+<title>Admin Deposit Approvals</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;}
-header{
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-header button{
-  background:#e74c3c;
-  border:none;
-  color:#fff;
-  padding:8px 14px;
-  border-radius:6px;
-  cursor:pointer;
-}
+header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
+header button{background:#e74c3c;border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;}
 .container{padding:30px;}
 table{width:100%;border-collapse:collapse;}
 th,td{padding:10px;border:1px solid #ccc;text-align:center;}
 th{background:#1a1a2e;color:#fff;}
-input.amount-input{
-  width:100px;
-  padding:5px;
-  text-align:center;
-}
-button.action-btn{
-  padding:6px 12px;
-  margin:2px;
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
-}
-button.approve{background:#27ae60;color:#fff;}
-button.reject{background:#c0392b;color:#fff;}
-button.action-btn:hover{opacity:0.85;}
+button.action-btn{padding:5px 10px;margin:2px;border:none;border-radius:5px;cursor:pointer;}
+button.action-btn.approve{background:#27ae60;color:#fff;}
+button.action-btn.reject{background:#c0392b;color:#fff;}
+button.action-btn:hover{opacity:0.8;}
+input.amount-input{width:80px;text-align:right;padding:3px;}
 </style>
 </head>
-
 <body>
 
 <header>
@@ -61,48 +35,41 @@ button.action-btn:hover{opacity:0.85;}
         <th>Network</th>
         <th>Amount</th>
         <th>Status</th>
-        <th>Date</th>
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody id="depositBody"></tbody>
+    <tbody id="depositBody">
+      <!-- Deposit requests will load here -->
+    </tbody>
   </table>
 </div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-/* 🔑 Supabase */
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
-
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* 🔐 check admin login */
-if (!localStorage.getItem('admin_logged_in')) {
-  alert("Please login as admin");
-  window.location.href = "admin.html";
-}
-
-/* 🔙 back */
-function goBack(){
+// Go back to dashboard
+function goBack() {
   window.location.href = "admin_dashboard.html";
 }
 
-/* 📥 load deposit requests */
-async function loadDeposits(){
+// Load deposit requests
+async function loadDeposits() {
   const { data, error } = await supabase
     .from('deposit_requests')
     .select('*')
-    .order('created_at', { ascending:false });
+    .order('created_at', { ascending: false });
 
   if(error){
-    console.error(error);
+    console.error(error.message);
     return;
   }
 
-  const body = document.getElementById('depositBody');
-  body.innerHTML = '';
+  const tbody = document.getElementById('depositBody');
+  tbody.innerHTML = '';
 
   data.forEach(row=>{
     const tr = document.createElement('tr');
@@ -110,31 +77,28 @@ async function loadDeposits(){
       <td>${row.user_id}</td>
       <td>${row.asset}</td>
       <td>${row.network}</td>
-      <td>
-        <input class="amount-input" type="number" step="0.00000001"
-          value="${row.amount || 0}"
-          id="amount-${row.id}">
-      </td>
+      <td><input type="number" id="amount-${row.id}" class="amount-input" value="${row.amount}" step="0.00000001"></td>
       <td>${row.status || 'pending'}</td>
-      <td>${new Date(row.created_at).toLocaleString()}</td>
       <td>
         <button class="action-btn approve" onclick="approve('${row.id}','${row.user_id}','${row.asset}')">Approve</button>
-        <button class="action-btn reject" onclick="rejectReq('${row.id}')">Reject</button>
+        <button class="action-btn reject" onclick="reject('${row.id}')">Reject</button>
       </td>
     `;
-    body.appendChild(tr);
+    tbody.appendChild(tr);
   });
 }
 
-/* ✅ approve */
+// Approve deposit
 window.approve = async (requestId, userId, asset) => {
-  const amount = Number(document.getElementById(`amount-${requestId}`).value);
-  if(amount <= 0){
+  const inputEl = document.getElementById(`amount-${requestId}`);
+  const amount = parseFloat(inputEl.value);
+  
+  if(isNaN(amount) || amount <= 0){
     alert("Invalid amount");
     return;
   }
 
-  /* update request */
+  // 1️⃣ Update deposit_requests
   const { error:upErr } = await supabase
     .from('deposit_requests')
     .update({ status:'approved', amount })
@@ -145,7 +109,7 @@ window.approve = async (requestId, userId, asset) => {
     return;
   }
 
-  /* get wallet */
+  // 2️⃣ Update wallet balance
   const { data:wallets, error:wErr } = await supabase
     .from('wallets')
     .select('balance')
@@ -154,13 +118,12 @@ window.approve = async (requestId, userId, asset) => {
     .single();
 
   if(wErr){
-    alert("Wallet not found");
+    alert("Wallet not found: " + wErr.message);
     return;
   }
 
-  const newBalance = Number(wallets.balance) + amount;
+  const newBalance = parseFloat(wallets.balance) + amount;
 
-  /* update wallet */
   const { error:bErr } = await supabase
     .from('wallets')
     .update({ balance:newBalance })
@@ -172,15 +135,16 @@ window.approve = async (requestId, userId, asset) => {
     return;
   }
 
+  alert("Deposit approved and wallet updated!");
   loadDeposits();
 };
 
-/* ❌ reject */
-window.rejectReq = async (id) => {
+// Reject deposit
+window.reject = async (requestId) => {
   const { error } = await supabase
     .from('deposit_requests')
     .update({ status:'rejected' })
-    .eq('id', id);
+    .eq('id', requestId);
 
   if(error){
     alert(error.message);
@@ -189,8 +153,9 @@ window.rejectReq = async (id) => {
   loadDeposits();
 };
 
-/* init */
+// Initial load
 window.onload = loadDeposits;
+
 </script>
 
 </body>
