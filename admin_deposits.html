@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -114,13 +113,16 @@ async function loadDeposits(){
       <td>
         <input class="amount-input" type="number" step="0.00000001"
           value="${row.amount || 0}"
-          id="amount-${row.id}">
+          id="amount-${row.id}"
+          ${row.status !== 'pending' ? 'readonly' : ''}>
       </td>
       <td>${row.status || 'pending'}</td>
       <td>${new Date(row.created_at).toLocaleString()}</td>
       <td>
-        <button class="action-btn approve" onclick="approve('${row.id}','${row.user_id}','${row.asset}')">Approve</button>
-        <button class="action-btn reject" onclick="rejectReq('${row.id}')">Reject</button>
+        <button class="action-btn approve" ${row.status !== 'pending' ? 'disabled' : ''}
+          onclick="approve('${row.id}','${row.user_id}','${row.asset}')">Approve</button>
+        <button class="action-btn reject" ${row.status !== 'pending' ? 'disabled' : ''}
+          onclick="rejectReq('${row.id}')">Reject</button>
       </td>
     `;
     body.appendChild(tr);
@@ -129,13 +131,34 @@ async function loadDeposits(){
 
 /* ✅ approve */
 window.approve = async (requestId, userId, asset) => {
+  // 1️⃣ دریافت وضعیت فعلی درخواست
+  const { data:request, error: reqErr } = await supabase
+    .from('deposit_requests')
+    .select('status, amount')
+    .eq('id', requestId)
+    .single();
+
+  if(reqErr){
+    alert(reqErr.message);
+    return;
+  }
+
+  if(request.status === 'approved'){
+    alert("This request is already approved!");
+    return;
+  }
+  if(request.status === 'rejected'){
+    alert("This request has been rejected!");
+    return;
+  }
+
   const amount = Number(document.getElementById(`amount-${requestId}`).value);
   if(amount <= 0){
     alert("Invalid amount");
     return;
   }
 
-  /* update request */
+  // 2️⃣ بروزرسانی وضعیت درخواست به approved
   const { error:upErr } = await supabase
     .from('deposit_requests')
     .update({ status:'approved', amount })
@@ -146,8 +169,8 @@ window.approve = async (requestId, userId, asset) => {
     return;
   }
 
-  /* get wallet */
-  const { data:wallets, error:wErr } = await supabase
+  // 3️⃣ دریافت موجودی فعلی کیف پول
+  const { data:wallet, error:wErr } = await supabase
     .from('wallets')
     .select('balance')
     .eq('user_id', userId)
@@ -159,12 +182,13 @@ window.approve = async (requestId, userId, asset) => {
     return;
   }
 
-  const newBalance = Number(wallets.balance) + amount;
+  // اگر request قبلاً approved نبوده، فقط یک بار موجودی اضافه می‌شود
+  const newBalance = Number(wallet.balance) + amount;
 
-  /* update wallet */
+  // 4️⃣ بروزرسانی کیف پول
   const { error:bErr } = await supabase
     .from('wallets')
-    .update({ balance:newBalance })
+    .update({ balance: newBalance })
     .eq('user_id', userId)
     .eq('coin_symbol', asset);
 
@@ -177,16 +201,33 @@ window.approve = async (requestId, userId, asset) => {
 };
 
 /* ❌ reject */
-window.rejectReq = async (id) => {
-  const { error } = await supabase
+window.rejectReq = async (requestId) => {
+  const { data:request, error } = await supabase
     .from('deposit_requests')
-    .update({ status:'rejected' })
-    .eq('id', id);
+    .select('status')
+    .eq('id', requestId)
+    .single();
 
   if(error){
     alert(error.message);
     return;
   }
+
+  if(request.status !== 'pending'){
+    alert("This request has already been processed!");
+    return;
+  }
+
+  const { error:rejErr } = await supabase
+    .from('deposit_requests')
+    .update({ status:'rejected' })
+    .eq('id', requestId);
+
+  if(rejErr){
+    alert(rejErr.message);
+    return;
+  }
+
   loadDeposits();
 };
 
