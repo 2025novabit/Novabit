@@ -32,7 +32,7 @@ body{
   max-width:95%;
   box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
-  h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
+h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
 .home-btn{
   display:block;
   width:100%;
@@ -46,7 +46,6 @@ body{
   color:#fff;
   cursor:pointer;
 }
-h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
 .toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
 .toggle-btns button{
   flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;
@@ -69,9 +68,7 @@ button.submit-btn{
 
 <body>
 
-
 <div class="container">
-  <!-- Home Button -->
   <button class="home-btn" id="btnHome">Home</button>
 
   <h2>Welcome</h2>
@@ -94,28 +91,20 @@ button.submit-btn{
   <form id="signupForm">
     <label>First Name</label>
     <input type="text" id="signupFirstName">
-
     <label>Last Name</label>
     <input type="text" id="signupLastName">
-
     <label>Date of Birth</label>
     <input type="date" id="signupDOB">
-
     <label>Country</label>
     <select id="signupCountry">
       <option value="">Select Country</option>
     </select>
-
     <label>Email</label>
     <input type="email" id="signupEmail">
-
     <label>Password</label>
     <input type="password" id="signupPassword">
-
     <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
   </form>
-
-  <p id="msg"></p>
 </div>
 
 <script type="module">
@@ -127,7 +116,6 @@ const countries = [
   "Italy","Japan","Netherlands","Norway","Pakistan","Russia","Saudi Arabia",
   "Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
 ];
-
 const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
   const opt=document.createElement('option');
@@ -140,38 +128,30 @@ const btnLogin = document.getElementById('btnLogin');
 const btnSignUp = document.getElementById('btnSignUp');
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
-const msg = document.getElementById('msg');
 
 btnLogin.onclick = ()=>{
   btnLogin.classList.add('active');
   btnSignUp.classList.remove('active');
   loginForm.style.display='flex';
   signupForm.style.display='none';
-  msg.innerText='';
 };
-
 btnSignUp.onclick = ()=>{
   btnSignUp.classList.add('active');
   btnLogin.classList.remove('active');
   signupForm.style.display='flex';
   loginForm.style.display='none';
-  msg.innerText='';
 };
 
 // ===== Login =====
 document.getElementById('loginSubmit').onclick = async ()=>{
   const email = loginEmail.value.trim();
   const password = loginPassword.value.trim();
-
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if(error){
-    msg.innerText = error.message;
-    return;
-  }
+  if(error) return alert(error.message);
   window.location.href = "dashboard.html";
 };
 
-// ===== Sign Up (بدون RLS) =====
+// ===== Sign Up (ساخت ردیف جدید و هدایت به داشبورد) =====
 document.getElementById('signupSubmit').onclick = async ()=>{
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
@@ -181,48 +161,36 @@ document.getElementById('signupSubmit').onclick = async ()=>{
   const country = signupCountry.value;
 
   if(!email || !password || !first_name || !last_name || !dob || !country){
-    msg.innerText = "Please fill all fields.";
-    return;
+    return alert("Please fill all fields.");
   }
 
   // ثبت نام در auth
-  const { error } = await supabase.auth.signUp({
+  const { data: signUpData, error } = await supabase.auth.signUp({
     email,
     password,
     options:{
-      data:{
-        first_name,
-        last_name,
-        dob,
-        country
-      }
+      data:{ first_name, last_name, dob, country }
     }
   });
+  if(error) return alert(error.message);
 
-  if(error){
-    msg.innerText = error.message;
-    return;
-  }
-
-  // درج اطلاعات در جدول users
+  // درج یک row جدید در جدول users
   const { error: insertError } = await supabase.from('users').insert([
-    { 
-      email, 
-      first_name, 
-      last_name, 
-      dob, 
-      country
+    {
+      email,
+      first_name,
+      last_name,
+      dob,
+      country,
+      usdt_balance: 0,
+      btc_balance: 0,
+      user_id: "" // می‌توانید بعداً شناسه auth را اضافه کنید
     }
   ]);
+  if(insertError) return alert("Failed to create user row: " + insertError.message);
 
-  if(insertError){
-    msg.style.color="red";
-    msg.innerText = "Sign up successful, but failed to save user info: " + insertError.message;
-    return;
-  }
-
-  msg.style.color="green";
-  msg.innerText="Registered successfully. Please login.";
+  // هدایت مستقیم به داشبورد
+  window.location.href = "dashboard.html";
 };
 </script>
 
