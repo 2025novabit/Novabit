@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -186,8 +185,25 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     return;
   }
 
-  if (!error) {
-  // ثبت اطلاعات اضافی در جدول "users"
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options:{
+      data:{
+        first_name,
+        last_name,
+        dob,
+        country
+      }
+    }
+  });
+
+  if(error){
+    msg.innerText = error.message;
+    return;
+  }
+
+  // ===== اضافه کردن ذخیره اطلاعات در جدول users =====
   const { error: insertError } = await supabase.from('users').insert([
     { 
       email, 
@@ -203,10 +219,6 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     msg.innerText = "Sign up successful, but failed to save user info: " + insertError.message;
     return;
   }
-
-  msg.style.color="green";
-  msg.innerText="Registered successfully. Please login.";
-}
 
   msg.style.color="green";
   msg.innerText="Registered successfully. Please login.";
