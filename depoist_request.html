@@ -33,12 +33,6 @@ body{
   box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
 h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
-.toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
-.toggle-btns button{
-  flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;
-  background:#f0f0f0;color:#333;cursor:pointer;
-}
-.toggle-btns button.active{background:#4b49ac;color:#fff;}
 form{display:flex;flex-direction:column;}
 label{margin-top:10px;font-weight:500;color:#1a1a2e;}
 input,select{
@@ -118,11 +112,11 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     return;
   }
 
-  // Supabase Auth
+  // ثبت‌نام در Supabase Auth
   const { error: signUpError } = await supabase.auth.signUp({ email, password });
   if(signUpError){ msg.style.color='red'; msg.innerText=signUpError.message; return; }
 
-  // Insert into users table
+  // اضافه کردن رکورد در جدول users
   const { error: insertError } = await supabase.from('users').insert([{
     email, first_name, last_name, dob, country, user_id:""
   }]);
