@@ -186,23 +186,27 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     return;
   }
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options:{
-      data:{
-        first_name,
-        last_name,
-        dob,
-        country
-      }
+  if (!error) {
+  // ثبت اطلاعات اضافی در جدول "users"
+  const { error: insertError } = await supabase.from('users').insert([
+    { 
+      email, 
+      first_name, 
+      last_name, 
+      dob, 
+      country 
     }
-  });
+  ]);
 
-  if(error){
-    msg.innerText = error.message;
+  if(insertError){
+    msg.style.color="red";
+    msg.innerText = "Sign up successful, but failed to save user info: " + insertError.message;
     return;
   }
+
+  msg.style.color="green";
+  msg.innerText="Registered successfully. Please login.";
+}
 
   msg.style.color="green";
   msg.innerText="Registered successfully. Please login.";
