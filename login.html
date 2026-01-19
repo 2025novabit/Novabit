@@ -151,26 +151,36 @@ loginSubmit.onclick = async ()=>{
   window.location.href="dashboard.html";
 };
 
-// Sign Up + FIX SESSION
+// Sign Up + FIX SESSION + Insert users
 signupSubmit.onclick = async ()=>{
-  const email = signupEmail.value;
-  const password = signupPassword.value;
-  const first_name = signupFirstName.value;
-  const last_name = signupLastName.value;
+  const email = signupEmail.value.trim();
+  const password = signupPassword.value.trim();
+  const first_name = signupFirstName.value.trim();
+  const last_name = signupLastName.value.trim();
   const dob = signupDOB.value;
   const country = signupCountry.value;
 
-  const { error } = await supabase.auth.signUp({ email, password });
-  if(error){ msg.innerText = error.message; return; }
+  if(!email || !password || !first_name || !last_name || !dob || !country){
+    msg.innerText = "Please fill all fields.";
+    return;
+  }
 
-  await supabase.from('users').insert([{
+  // 1️⃣ Sign Up
+  const { error: signUpError } = await supabase.auth.signUp({ email, password });
+  if(signUpError){ msg.innerText = signUpError.message; return; }
+
+  // 2️⃣ Insert into users table with error check
+  const { error: insertError } = await supabase.from('users').insert([{
     email, first_name, last_name, dob, country,
     usdt_balance:0, btc_balance:0, user_id:""
   }]);
+  if(insertError){ msg.innerText = insertError.message; return; }
 
-  // 🔑 FIX SESSION
-  await supabase.auth.signInWithPassword({ email, password });
+  // 3️⃣ Sign in to create session
+  const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+  if(loginError){ msg.innerText = loginError.message; return; }
 
+  // 4️⃣ Redirect to dashboard
   window.location.href="dashboard.html";
 };
 </script>
