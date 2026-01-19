@@ -15,31 +15,70 @@ window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <style>
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f8f9fa;display:flex;justify-content:center;align-items:center;height:100vh;}
-.container{background:#fff;padding:40px 30px;border-radius:15px;width:500px;max-width:95%;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f8f9fa;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.container{
+  background:#fff;
+  padding:40px 30px;
+  border-radius:15px;
+  width:500px;
+  max-width:95%;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
 h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
-.home-btn{display:block;width:100%;margin-bottom:20px;padding:12px 0;font-size:16px;font-weight:bold;border:none;border-radius:8px;background:#4b49ac;color:#fff;cursor:pointer;}
+.home-btn{
+  display:block;
+  width:100%;
+  margin-bottom:20px;
+  padding:12px 0;
+  font-size:16px;
+  font-weight:bold;
+  border:none;
+  border-radius:8px;
+  background:#4b49ac;
+  color:#fff;
+  cursor:pointer;
+}
 .toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
-.toggle-btns button{flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;background:#f0f0f0;color:#333;cursor:pointer;}
+.toggle-btns button{
+  flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;
+  background:#f0f0f0;color:#333;cursor:pointer;
+}
 .toggle-btns button.active{background:#4b49ac;color:#fff;}
 form{display:none;flex-direction:column;}
 label{margin-top:10px;font-weight:500;color:#1a1a2e;}
-input,select{width:100%;padding:12px 15px;margin:5px 0;border-radius:8px;border:1px solid #ccc;font-size:16px;}
-button.submit-btn{width:100%;padding:12px;margin:15px 0;border-radius:8px;border:none;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;}
+input,select{
+  width:100%;padding:12px 15px;margin:5px 0;
+  border-radius:8px;border:1px solid #ccc;font-size:16px;
+}
+button.submit-btn{
+  width:100%;padding:12px;margin:15px 0;border-radius:8px;
+  border:none;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;
+}
 #msg{text-align:center;font-weight:600;color:red;}
 </style>
 </head>
 
 <body>
+
 <div class="container">
   <button class="home-btn" id="btnHome">Home</button>
+
   <h2>Welcome</h2>
+
   <div class="toggle-btns">
     <button id="btnLogin" class="active">Login</button>
     <button id="btnSignUp">Sign Up</button>
   </div>
 
-  <!-- Login Form -->
+  <!-- LOGIN -->
   <form id="loginForm" style="display:flex;">
     <label>Email</label>
     <input type="email" id="loginEmail">
@@ -48,22 +87,28 @@ button.submit-btn{width:100%;padding:12px;margin:15px 0;border-radius:8px;border
     <button type="button" class="submit-btn" id="loginSubmit">Login</button>
   </form>
 
-  <!-- Sign Up Form -->
+  <!-- SIGN UP -->
   <form id="signupForm">
     <label>First Name</label>
     <input type="text" id="signupFirstName">
+
     <label>Last Name</label>
     <input type="text" id="signupLastName">
+
     <label>Date of Birth</label>
     <input type="date" id="signupDOB">
+
     <label>Country</label>
     <select id="signupCountry">
       <option value="">Select Country</option>
     </select>
+
     <label>Email</label>
     <input type="email" id="signupEmail">
+
     <label>Password</label>
     <input type="password" id="signupPassword">
+
     <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
   </form>
 
@@ -71,24 +116,58 @@ button.submit-btn{width:100%;padding:12px;margin:15px 0;border-radius:8px;border
 </div>
 
 <script type="module">
-// Countries
-const countries = ["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahrain","Bangladesh","Belgium","Brazil","Canada","China","Denmark","Egypt","France","Germany","India","Iran","Iraq","Italy","Japan","Netherlands","Norway","Pakistan","Russia","Saudi Arabia","Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"];
+// ===== Countries =====
+const countries = [
+  "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia",
+  "Australia","Austria","Azerbaijan","Bahrain","Bangladesh","Belgium","Brazil",
+  "Canada","China","Denmark","Egypt","France","Germany","India","Iran","Iraq",
+  "Italy","Japan","Netherlands","Norway","Pakistan","Russia","Saudi Arabia",
+  "Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
+];
+
 const countrySelect = document.getElementById('signupCountry');
-countries.forEach(c=>{const opt=document.createElement('option');opt.value=c;opt.textContent=c;countrySelect.appendChild(opt);});
+countries.forEach(c=>{
+  const opt=document.createElement('option');
+  opt.value=c; opt.textContent=c;
+  countrySelect.appendChild(opt);
+});
 
-// Toggle
-btnLogin.onclick = ()=>{btnLogin.classList.add('active');btnSignUp.classList.remove('active');loginForm.style.display='flex';signupForm.style.display='none';msg.innerText='';};
-btnSignUp.onclick = ()=>{btnSignUp.classList.add('active');btnLogin.classList.remove('active');signupForm.style.display='flex';loginForm.style.display='none';msg.innerText='';};
+// ===== Toggle =====
+const btnLogin = document.getElementById('btnLogin');
+const btnSignUp = document.getElementById('btnSignUp');
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
+const msg = document.getElementById('msg');
 
-// Login
-loginSubmit.onclick = async ()=>{
-  const { error } = await supabase.auth.signInWithPassword({email:loginEmail.value,password:loginPassword.value});
-  if(error){ msg.innerText = error.message; return; }
-  window.location.href="dashboard.html";
+btnLogin.onclick = ()=>{
+  btnLogin.classList.add('active');
+  btnSignUp.classList.remove('active');
+  loginForm.style.display='flex';
+  signupForm.style.display='none';
+  msg.innerText='';
 };
 
-// Sign Up
-signupSubmit.onclick = async ()=>{
+btnSignUp.onclick = ()=>{
+  btnSignUp.classList.add('active');
+  btnLogin.classList.remove('active');
+  signupForm.style.display='flex';
+  loginForm.style.display='none';
+  msg.innerText='';
+};
+
+// ===== Login =====
+document.getElementById('loginSubmit').onclick = async ()=>{
+  const email = loginEmail.value.trim();
+  const password = loginPassword.value.trim();
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if(error){ msg.innerText = error.message; return; }
+
+  window.location.href = "dashboard.html";
+};
+
+// ===== Sign Up =====
+document.getElementById('signupSubmit').onclick = async ()=>{
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
   const first_name = signupFirstName.value.trim();
@@ -96,25 +175,30 @@ signupSubmit.onclick = async ()=>{
   const dob = signupDOB.value;
   const country = signupCountry.value;
 
-  if(!email||!password||!first_name||!last_name||!dob||!country){msg.innerText="Please fill all fields.";return;}
+  if(!email || !password || !first_name || !last_name || !dob || !country){
+    msg.innerText = "Please fill all fields.";
+    return;
+  }
 
-  // 1️⃣ ثبت نام در auth
-  const { error: signUpError } = await supabase.auth.signUp({email,password});
-  if(signUpError){msg.innerText = signUpError.message;return;}
+  // 1️⃣ ثبت‌نام در auth
+  const { error: signUpError } = await supabase.auth.signUp({ email, password });
+  if(signUpError){ msg.innerText = signUpError.message; return; }
 
   // 2️⃣ اضافه کردن ردیف در users
-  const { data: userData, error: insertError } = await supabase.from('users').insert([{
-    email,first_name,last_name,dob,country,user_id:""
-  }]).select().single();
-  if(insertError){msg.innerText=insertError.message;return;}
+  const { error: insertError } = await supabase.from('users').insert([{
+    email, first_name, last_name, dob, country, user_id:""
+  }]);
+  if(insertError){ msg.innerText = insertError.message; return; }
 
   // 3️⃣ ورود خودکار برای ایجاد session
-  const { error: loginError } = await supabase.auth.signInWithPassword({email,password});
-  if(loginError){msg.innerText = loginError.message;return;}
+  const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+  if(loginError){ msg.innerText = loginError.message; return; }
 
-  // 4️⃣ هدایت به داشبورد
+  msg.style.color="green";
+  msg.innerText="Registration successful! Redirecting...";
   window.location.href="dashboard.html";
 };
 </script>
+
 </body>
 </html>
