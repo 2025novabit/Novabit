@@ -171,7 +171,7 @@ document.getElementById('loginSubmit').onclick = async ()=>{
   window.location.href = "dashboard.html";
 };
 
-// ===== Sign Up (IMPORTANT) =====
+// ===== Sign Up (بدون RLS) =====
 document.getElementById('signupSubmit').onclick = async ()=>{
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
@@ -185,6 +185,7 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     return;
   }
 
+  // ثبت نام در auth
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -203,14 +204,14 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     return;
   }
 
-  // ===== اضافه کردن ذخیره اطلاعات در جدول users =====
+  // درج اطلاعات در جدول users
   const { error: insertError } = await supabase.from('users').insert([
     { 
       email, 
       first_name, 
       last_name, 
       dob, 
-      country 
+      country
     }
   ]);
 
