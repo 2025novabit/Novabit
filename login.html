@@ -11,113 +11,9 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-</script>
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-<style>
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f8f9fa;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.container{
-  background:#fff;
-  padding:40px 30px;
-  border-radius:15px;
-  width:500px;
-  max-width:95%;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
-}
-h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
-.home-btn{
-  display:block;
-  width:100%;
-  margin-bottom:20px;
-  padding:12px 0;
-  font-size:16px;
-  font-weight:bold;
-  border:none;
-  border-radius:8px;
-  background:#4b49ac;
-  color:#fff;
-  cursor:pointer;
-}
-.toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
-.toggle-btns button{
-  flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;
-  background:#f0f0f0;color:#333;cursor:pointer;
-}
-.toggle-btns button.active{background:#4b49ac;color:#fff;}
-form{display:none;flex-direction:column;}
-label{margin-top:10px;font-weight:500;color:#1a1a2e;}
-input,select{
-  width:100%;padding:12px 15px;margin:5px 0;
-  border-radius:8px;border:1px solid #ccc;font-size:16px;
-}
-button.submit-btn{
-  width:100%;padding:12px;margin:15px 0;border-radius:8px;
-  border:none;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;
-}
-#msg{text-align:center;font-weight:600;color:red;}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-  <!-- Home Button -->
-  <button class="home-btn" id="btnHome">Home</button>
-
-  <h2>Welcome</h2>
-  
-  <div class="toggle-btns">
-    <button id="btnLogin" class="active">Login</button>
-    <button id="btnSignUp">Sign Up</button>
-  </div>
-
-  <!-- LOGIN -->
-  <form id="loginForm" style="display:flex;">
-    <label>Email</label>
-    <input type="email" id="loginEmail">
-    <label>Password</label>
-    <input type="password" id="loginPassword">
-    <button type="button" class="submit-btn" id="loginSubmit">Login</button>
-  </form>
-
-  <!-- SIGN UP -->
-  <form id="signupForm">
-    <label>First Name</label>
-    <input type="text" id="signupFirstName">
-
-    <label>Last Name</label>
-    <input type="text" id="signupLastName">
-
-    <label>Date of Birth</label>
-    <input type="date" id="signupDOB">
-
-    <label>Country</label>
-    <select id="signupCountry">
-      <option value="">Select Country</option>
-    </select>
-
-    <label>Email</label>
-    <input type="email" id="signupEmail">
-
-    <label>Password</label>
-    <input type="password" id="signupPassword">
-
-    <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
-  </form>
-
-  <p id="msg"></p>
-</div>
-
-<script type="module">
-// ===== Countries =====
+// لیست کشورها
 const countries = [
   "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia",
   "Australia","Austria","Azerbaijan","Bahrain","Bangladesh","Belgium","Brazil",
@@ -125,6 +21,18 @@ const countries = [
   "Italy","Japan","Netherlands","Norway","Pakistan","Russia","Saudi Arabia",
   "Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
 ];
+
+// لیست ارزها برای ولت
+const coins = ["BTC","ETH","USDT","BNB","XRP","SOL","USDC","TRX","STETH","DOGE","ADA","WSTETH","WBT","WBETH","WBTC","BCH","XMR","WEETH","LINK","USDS","BSC-USD","LEO","WETH","CBBTC","XLM","SUI","USDE","ZEC","HYPE","AVAX","LTC","HBAR","SHIB","WLFI","USDT0","DAI","CC","SUSDS","TON","CRO","SUSDE","PYUSD","DOT","USD1","UNI","RAIN","MNT","M","AAVE","BGB","TAO","PEPE","XAUT","OKB","ICP","NEAR","USDF","JITOSOL","WETH","ETC","PAXG","ASTER","BUIDL","ENA","PI","SOL","HTX","JLP","PUMP","USDG","BNSOL","KCS","POL","HASH","USYC","WLD","SKY","RLUSD","WBNB","APT","RETH","SYRUPUSDC","BFUSD","USDC","ARB","RSETH","ATOM","QNT","GT","KAS","ONDO","ALGO","FIL","USDD","RENDER","DASH","FBTC","TRUMP","LBTC"];
+
+// فرم و پیام
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
+const btnLogin = document.getElementById('btnLogin');
+const btnSignUp = document.getElementById('btnSignUp');
+const msg = document.getElementById('msg');
+
+// پر کردن select کشورها
 const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
   const opt=document.createElement('option');
@@ -132,13 +40,7 @@ countries.forEach(c=>{
   countrySelect.appendChild(opt);
 });
 
-// ===== Toggle =====
-const btnLogin = document.getElementById('btnLogin');
-const btnSignUp = document.getElementById('btnSignUp');
-const loginForm = document.getElementById('loginForm');
-const signupForm = document.getElementById('signupForm');
-const msg = document.getElementById('msg');
-
+// Toggle فرم‌ها
 btnLogin.onclick = ()=>{
   btnLogin.classList.add('active');
   btnSignUp.classList.remove('active');
@@ -155,74 +57,113 @@ btnSignUp.onclick = ()=>{
   msg.innerText='';
 };
 
-// ===== Login =====
+// Login
 document.getElementById('loginSubmit').onclick = async ()=>{
-  const email = loginEmail.value.trim();
-  const password = loginPassword.value.trim();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if(error){
-    msg.innerText = error.message;
-    return;
-  }
+  if(error){ msg.innerText = error.message; return; }
+
   window.location.href = "dashboard.html";
 };
 
-// ===== Sign Up =====
+// Sign Up
 document.getElementById('signupSubmit').onclick = async ()=>{
-  const email = signupEmail.value.trim();
-  const password = signupPassword.value.trim();
-  const first_name = signupFirstName.value.trim();
-  const last_name = signupLastName.value.trim();
-  const dob = signupDOB.value;
-  const country = signupCountry.value;
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value.trim();
+  const first_name = document.getElementById('signupFirstName').value.trim();
+  const last_name = document.getElementById('signupLastName').value.trim();
+  const dob = document.getElementById('signupDOB').value;
+  const country = document.getElementById('signupCountry').value;
 
-  if(!email || !password || !first_name || !last_name || !dob || !country){
-    msg.innerText = "Please fill all fields.";
-    return;
+  if(!email||!password||!first_name||!last_name||!dob||!country){
+    msg.innerText = "Please fill all fields."; return;
   }
 
-  // 1️⃣ ثبت نام در auth.users
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
+  // ثبت نام در auth
+  const { data:userData, error:userError } = await supabase.auth.signUp({
+    email, password,
     options:{
-      data:{
-        first_name,
-        last_name,
-        dob,
-        country
-      }
+      data:{ first_name,last_name,dob,country }
     }
   });
 
-  if(authError){
-    msg.innerText = authError.message;
-    return;
-  }
+  if(userError){ msg.innerText = userError.message; return; }
 
-  const userId = authData.user.id;
+  const userId = userData.user.id;
 
-  // 2️⃣ ساخت row در public.users (برای trigger ولت)
-  const { data: profileData, error: profileError } = await supabase
-    .from('users')
-    .insert([{
-      auth_id: userId,
-      first_name,
-      last_name,
-      dob,
-      country
+  try {
+    // Insert row در جدول users
+    await supabase.from('users').insert([{
+      id: userId,  // اگر ستون auth_id است این را جایگزین کن
+      first_name, last_name, dob, country
     }]);
 
-  if(profileError){
-    msg.innerText = "Profile creation failed: " + profileError.message;
-    return;
-  }
+    // ساخت ولت برای 100 ارز
+    const walletRows = coins.map(c => ({
+      user_id: userId,
+      coin_symbol: c,
+      balance: 0,
+      locked: 0
+    }));
 
-  msg.style.color = "green";
-  msg.innerText = "Registered successfully. Please login.";
+    await supabase.from('wallets').insert(walletRows);
+
+    msg.style.color="green";
+    msg.innerText="Registered successfully. Redirecting...";
+    setTimeout(()=>{ window.location.href="dashboard.html"; }, 1500);
+
+  } catch(e) {
+    console.error(e);
+    msg.innerText="Database error saving new user.";
+  }
 };
 </script>
 
+<style>
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f8f9fa;display:flex;justify-content:center;align-items:center;height:100vh;}
+.container{background:#fff;padding:40px 30px;border-radius:15px;width:500px;max-width:95%;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
+.home-btn{display:block;width:100%;margin-bottom:20px;padding:12px 0;font-size:16px;font-weight:bold;border:none;border-radius:8px;background:#4b49ac;color:#fff;cursor:pointer;}
+.toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
+.toggle-btns button{flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;background:#f0f0f0;color:#333;cursor:pointer;}
+.toggle-btns button.active{background:#4b49ac;color:#fff;}
+form{display:none;flex-direction:column;}
+label{margin-top:10px;font-weight:500;color:#1a1a2e;}
+input,select{width:100%;padding:12px 15px;margin:5px 0;border-radius:8px;border:1px solid #ccc;font-size:16px;}
+button.submit-btn{width:100%;padding:12px;margin:15px 0;border-radius:8px;border:none;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;}
+#msg{text-align:center;font-weight:600;color:red;}
+</style>
+
+<body>
+<div class="container">
+  <button class="home-btn" id="btnHome">Home</button>
+  <h2>Welcome</h2>
+  <div class="toggle-btns">
+    <button id="btnLogin" class="active">Login</button>
+    <button id="btnSignUp">Sign Up</button>
+  </div>
+
+  <form id="loginForm" style="display:flex;">
+    <label>Email</label>
+    <input type="email" id="loginEmail">
+    <label>Password</label>
+    <input type="password" id="loginPassword">
+    <button type="button" class="submit-btn" id="loginSubmit">Login</button>
+  </form>
+
+  <form id="signupForm">
+    <label>First Name</label><input type="text" id="signupFirstName">
+    <label>Last Name</label><input type="text" id="signupLastName">
+    <label>Date of Birth</label><input type="date" id="signupDOB">
+    <label>Country</label><select id="signupCountry"><option value="">Select Country</option></select>
+    <label>Email</label><input type="email" id="signupEmail">
+    <label>Password</label><input type="password" id="signupPassword">
+    <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
+  </form>
+
+  <p id="msg"></p>
+</div>
 </body>
 </html>
