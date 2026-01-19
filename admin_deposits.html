@@ -7,17 +7,41 @@
 
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;}
-header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
-header button{background:#e74c3c;border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;}
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#e74c3c;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:6px;
+  cursor:pointer;
+}
 .container{padding:30px;}
 table{width:100%;border-collapse:collapse;}
 th,td{padding:10px;border:1px solid #ccc;text-align:center;}
 th{background:#1a1a2e;color:#fff;}
-input[type="number"]{width:100px;padding:4px;}
-button.action-btn{padding:5px 10px;margin:2px;border:none;border-radius:5px;cursor:pointer;}
+input.amount-input{
+  width:100px;
+  padding:5px;
+  text-align:center;
+}
+button.action-btn{
+  padding:6px 12px;
+  margin:2px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
 button.approve{background:#27ae60;color:#fff;}
 button.reject{background:#c0392b;color:#fff;}
-button.action-btn:hover{opacity:0.8;}
+button.action-btn:hover{opacity:0.85;}
 </style>
 </head>
 
@@ -37,6 +61,7 @@ button.action-btn:hover{opacity:0.8;}
         <th>Network</th>
         <th>Amount</th>
         <th>Status</th>
+        <th>Date</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -47,22 +72,24 @@ button.action-btn:hover{opacity:0.8;}
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+/* 🔑 Supabase */
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcWJ3dnV4ZmNzZ3hneHJvbHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MjEyNzQsImV4cCI6MjA4MzE5NzI3NH0.vZvxVRYnQHi8V2mm9RYdj-eApog62jSBrl1ahvkjyRQ";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* 🔐 Admin check (مثل KYC) */
+/* 🔐 check admin login */
 if (!localStorage.getItem('admin_logged_in')) {
-  alert("Please login as admin!");
+  alert("Please login as admin");
   window.location.href = "admin.html";
 }
 
+/* 🔙 back */
 function goBack(){
   window.location.href = "admin_dashboard.html";
 }
 
-/* Load deposit requests */
+/* 📥 load deposit requests */
 async function loadDeposits(){
   const { data, error } = await supabase
     .from('deposit_requests')
@@ -84,58 +111,85 @@ async function loadDeposits(){
       <td>${row.asset}</td>
       <td>${row.network}</td>
       <td>
-        <input type="number" id="amt_${row.id}" value="${row.amount}" step="0.00000001">
+        <input class="amount-input" type="number" step="0.00000001"
+          value="${row.amount || 0}"
+          id="amount-${row.id}">
       </td>
       <td>${row.status || 'pending'}</td>
+      <td>${new Date(row.created_at).toLocaleString()}</td>
       <td>
-        <button class="action-btn approve" onclick="approve('${row.id}')">Approve</button>
-        <button class="action-btn reject" onclick="reject('${row.id}')">Reject</button>
+        <button class="action-btn approve" onclick="approve('${row.id}','${row.user_id}','${row.asset}')">Approve</button>
+        <button class="action-btn reject" onclick="rejectReq('${row.id}')">Reject</button>
       </td>
     `;
     body.appendChild(tr);
   });
 }
 
-/* Approve deposit */
-window.approve = async (id)=>{
-  const amount = parseFloat(document.getElementById('amt_'+id).value);
+/* ✅ approve */
+window.approve = async (requestId, userId, asset) => {
+  const amount = Number(document.getElementById(`amount-${requestId}`).value);
+  if(amount <= 0){
+    alert("Invalid amount");
+    return;
+  }
 
-  const { data: req, error } = await supabase
-    .from('deposit_requests')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if(error) return alert(error.message);
-
-  /* Update wallet balance */
-  const { error: walletErr } = await supabase.rpc('increment_wallet_balance', {
-    p_user_id: req.user_id,
-    p_coin: req.asset,
-    p_amount: amount
-  });
-
-  if(walletErr) return alert(walletErr.message);
-
-  /* Update request status */
-  await supabase
+  /* update request */
+  const { error:upErr } = await supabase
     .from('deposit_requests')
     .update({ status:'approved', amount })
-    .eq('id', id);
+    .eq('id', requestId);
+
+  if(upErr){
+    alert(upErr.message);
+    return;
+  }
+
+  /* get wallet */
+  const { data:wallets, error:wErr } = await supabase
+    .from('wallets')
+    .select('balance')
+    .eq('user_id', userId)
+    .eq('coin_symbol', asset)
+    .single();
+
+  if(wErr){
+    alert("Wallet not found");
+    return;
+  }
+
+  const newBalance = Number(wallets.balance) + amount;
+
+  /* update wallet */
+  const { error:bErr } = await supabase
+    .from('wallets')
+    .update({ balance:newBalance })
+    .eq('user_id', userId)
+    .eq('coin_symbol', asset);
+
+  if(bErr){
+    alert(bErr.message);
+    return;
+  }
 
   loadDeposits();
-}
+};
 
-/* Reject deposit */
-window.reject = async (id)=>{
-  await supabase
+/* ❌ reject */
+window.rejectReq = async (id) => {
+  const { error } = await supabase
     .from('deposit_requests')
     .update({ status:'rejected' })
     .eq('id', id);
 
+  if(error){
+    alert(error.message);
+    return;
+  }
   loadDeposits();
-}
+};
 
+/* init */
 window.onload = loadDeposits;
 </script>
 
