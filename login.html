@@ -72,14 +72,12 @@ button.submit-btn{width:100%;padding:12px;margin:15px 0;border-radius:8px;border
 </div>
 
 <script type="module">
-// ===== Countries =====
-const countries = [
-  "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia",
-  "Australia","Austria","Azerbaijan","Bahrain","Bangladesh","Belgium","Brazil",
-  "Canada","China","Denmark","Egypt","France","Germany","India","Iran","Iraq",
-  "Italy","Japan","Netherlands","Norway","Pakistan","Russia","Saudi Arabia",
-  "Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
-];
+// Countries
+const countries = ["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia",
+"Australia","Austria","Azerbaijan","Bahrain","Bangladesh","Belgium","Brazil",
+"Canada","China","Denmark","Egypt","France","Germany","India","Iran","Iraq",
+"Italy","Japan","Netherlands","Norway","Pakistan","Russia","Saudi Arabia",
+"Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"];
 
 const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
@@ -88,7 +86,7 @@ countries.forEach(c=>{
   countrySelect.appendChild(opt);
 });
 
-// ===== Toggle =====
+// Toggle
 const btnLogin = document.getElementById('btnLogin');
 const btnSignUp = document.getElementById('btnSignUp');
 const loginForm = document.getElementById('loginForm');
@@ -96,22 +94,16 @@ const signupForm = document.getElementById('signupForm');
 const msg = document.getElementById('msg');
 
 btnLogin.onclick = ()=>{
-  btnLogin.classList.add('active');
-  btnSignUp.classList.remove('active');
-  loginForm.style.display='flex';
-  signupForm.style.display='none';
-  msg.innerText='';
+  btnLogin.classList.add('active'); btnSignUp.classList.remove('active');
+  loginForm.style.display='flex'; signupForm.style.display='none'; msg.innerText='';
 };
 
 btnSignUp.onclick = ()=>{
-  btnSignUp.classList.add('active');
-  btnLogin.classList.remove('active');
-  signupForm.style.display='flex';
-  loginForm.style.display='none';
-  msg.innerText='';
+  btnSignUp.classList.add('active'); btnLogin.classList.remove('active');
+  signupForm.style.display='flex'; loginForm.style.display='none'; msg.innerText='';
 };
 
-// ===== Login =====
+// Login
 document.getElementById('loginSubmit').onclick = async ()=>{
   const email = loginEmail.value.trim();
   const password = loginPassword.value.trim();
@@ -120,7 +112,7 @@ document.getElementById('loginSubmit').onclick = async ()=>{
   window.location.href = "dashboard.html";
 };
 
-// ===== Sign Up =====
+// Sign Up
 document.getElementById('signupSubmit').onclick = async ()=>{
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
@@ -130,15 +122,14 @@ document.getElementById('signupSubmit').onclick = async ()=>{
   const country = signupCountry.value;
 
   if(!email || !password || !first_name || !last_name || !dob || !country){
-    msg.innerText = "Please fill all fields.";
-    return;
+    msg.innerText = "Please fill all fields."; return;
   }
 
   // ثبت‌نام در auth
   const { error: signUpError } = await supabase.auth.signUp({ email, password });
   if(signUpError){ msg.innerText = signUpError.message; return; }
 
-  // اضافه کردن ردیف در users
+  // اضافه کردن ردیف در users (Trigger خودش wallets را می‌سازد)
   const { error: insertError } = await supabase.from('users').insert([{
     email, first_name, last_name, dob, country, user_id:""
   }]);
