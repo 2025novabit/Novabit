@@ -212,7 +212,7 @@ async function loadUserName(){
     .from('users')
     .select('first_name,last_name')
     .eq('id', session.user.id)
-    .single();
+    .maybeSingle();
 
   const fullName = `${data?.first_name||''} ${data?.last_name||''}`.trim() || 'User';
   document.getElementById('userName').textContent = fullName;
@@ -227,7 +227,7 @@ async function loadKYCStatus(){
     .from('kyc_requests')
     .select('status')
     .eq('user_id', session.user.id)
-    .single();
+    .maybeSingle();
 
   const container = document.getElementById('kycStatusContainer');
   container.style.display = 'none';
