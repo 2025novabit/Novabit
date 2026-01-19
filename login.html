@@ -15,62 +15,24 @@ window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <style>
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f8f9fa;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.container{
-  background:#fff;
-  padding:40px 30px;
-  border-radius:15px;
-  width:500px;
-  max-width:95%;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
-}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f8f9fa;display:flex;justify-content:center;align-items:center;height:100vh;}
+.container{background:#fff;padding:40px 30px;border-radius:15px;width:500px;max-width:95%;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
 h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
-.home-btn{
-  display:block;
-  width:100%;
-  margin-bottom:20px;
-  padding:12px 0;
-  font-size:16px;
-  font-weight:bold;
-  border:none;
-  border-radius:8px;
-  background:#4b49ac;
-  color:#fff;
-  cursor:pointer;
-}
+.home-btn{display:block;width:100%;margin-bottom:20px;padding:12px 0;font-size:16px;font-weight:bold;border:none;border-radius:8px;background:#4b49ac;color:#fff;cursor:pointer;}
 .toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
-.toggle-btns button{
-  flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;
-  background:#f0f0f0;color:#333;cursor:pointer;
-}
+.toggle-btns button{flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;background:#f0f0f0;color:#333;cursor:pointer;}
 .toggle-btns button.active{background:#4b49ac;color:#fff;}
 form{display:none;flex-direction:column;}
 label{margin-top:10px;font-weight:500;color:#1a1a2e;}
-input,select{
-  width:100%;padding:12px 15px;margin:5px 0;
-  border-radius:8px;border:1px solid #ccc;font-size:16px;
-}
-button.submit-btn{
-  width:100%;padding:12px;margin:15px 0;border-radius:8px;
-  border:none;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;
-}
+input,select{width:100%;padding:12px 15px;margin:5px 0;border-radius:8px;border:1px solid #ccc;font-size:16px;}
+button.submit-btn{width:100%;padding:12px;margin:15px 0;border-radius:8px;border:none;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;}
 #msg{text-align:center;font-weight:600;color:red;}
 </style>
 </head>
 
 <body>
-
 <div class="container">
   <button class="home-btn" id="btnHome">Home</button>
-
   <h2>Welcome</h2>
 
   <div class="toggle-btns">
@@ -91,24 +53,18 @@ button.submit-btn{
   <form id="signupForm">
     <label>First Name</label>
     <input type="text" id="signupFirstName">
-
     <label>Last Name</label>
     <input type="text" id="signupLastName">
-
     <label>Date of Birth</label>
     <input type="date" id="signupDOB">
-
     <label>Country</label>
     <select id="signupCountry">
       <option value="">Select Country</option>
     </select>
-
     <label>Email</label>
     <input type="email" id="signupEmail">
-
     <label>Password</label>
     <input type="password" id="signupPassword">
-
     <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
   </form>
 
@@ -199,6 +155,5 @@ document.getElementById('signupSubmit').onclick = async ()=>{
   window.location.href="dashboard.html";
 };
 </script>
-
 </body>
 </html>
