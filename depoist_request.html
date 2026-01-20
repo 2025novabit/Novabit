@@ -54,10 +54,10 @@ button.submit-btn{
 
   <form id="depositForm">
     <label>Asset</label>
-    <input type="text" id="asset" placeholder="BTC, ETH, USDT...">
+    <select id="assetSelect"></select>
 
     <label>Network</label>
-    <input type="text" id="network" placeholder="BTC, ERC20, TRC20...">
+    <select id="networkSelect"></select>
 
     <label>Amount</label>
     <input type="number" id="amount" step="0.0001" placeholder="0.0">
@@ -74,14 +74,56 @@ button.submit-btn{
 <script type="module">
 const depositForm = document.getElementById('depositForm');
 const msg = document.getElementById('msg');
+const assetSelect = document.getElementById('assetSelect');
+const networkSelect = document.getElementById('networkSelect');
+
+async function loadWallets() {
+  const user = supabase.auth.user();
+  if(!user) {
+    msg.innerText = "Please login first.";
+    return;
+  }
+
+  // گرفتن ولت های کاربر
+  const { data, error } = await supabase
+    .from('wallets')
+    .select('coin_symbol, network')
+    .eq('user_id', user.id);
+
+  if(error){
+    console.error("Wallets fetch error:", error);
+    msg.innerText = "Failed to load wallets.";
+    return;
+  }
+
+  // پاک کردن گزینه های قبلی
+  assetSelect.innerHTML = '';
+  networkSelect.innerHTML = '';
+
+  // اضافه کردن گزینه ها
+  data.forEach(w => {
+    const assetOpt = document.createElement('option');
+    assetOpt.value = w.coin_symbol;
+    assetOpt.textContent = w.coin_symbol;
+    assetSelect.appendChild(assetOpt);
+
+    const networkOpt = document.createElement('option');
+    networkOpt.value = w.network;
+    networkOpt.textContent = w.network;
+    networkSelect.appendChild(networkOpt);
+  });
+}
+
+// اجرا هنگام بارگذاری صفحه
+loadWallets();
 
 document.getElementById('submitDeposit').onclick = async () => {
-  const asset = document.getElementById('asset').value.trim();
-  const network = document.getElementById('network').value.trim();
+  const asset = assetSelect.value;
+  const network = networkSelect.value;
   const amount = parseFloat(document.getElementById('amount').value);
   const txid = document.getElementById('txid').value.trim();
 
-  const user = supabase.auth.user(); // کاربر جاری
+  const user = supabase.auth.user();
   if(!user){
     msg.innerText = "Please login first.";
     return;
@@ -112,6 +154,7 @@ document.getElementById('submitDeposit').onclick = async () => {
   msg.style.color = "green";
   msg.innerText = "Deposit request submitted successfully!";
   depositForm.reset();
+  loadWallets(); // برای بارگذاری دوباره در صورت نیاز
 };
 </script>
 
