@@ -103,7 +103,7 @@ button.copyBtn:hover{background:#3a3690;}
 </style>
 </head>
 
-<body onload="loadReferral();">
+<body>
 
 <header>
   <h2>Referral Program</h2>
@@ -148,17 +148,21 @@ button.copyBtn:hover{background:#3a3690;}
   </div>
 </div>
 
-<script>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // Toggle side panel
 function togglePanel(){
   document.getElementById('sidePanel').classList.toggle('active');
 }
+window.togglePanel = togglePanel;
 
-// Demo referral link
-const userId = "demoUser123"; // در حالت واقعی از Firebase
-const demoReferralLink = window.location.origin + "/signup.html?ref=" + userId;
-
-// Copy link
+// Copy referral link
 function copyLink(){
   const input = document.getElementById('refLink');
   input.select();
@@ -166,47 +170,52 @@ function copyLink(){
   document.execCommand('copy');
   alert("Referral link copied!");
 }
+window.copyLink = copyLink;
 
-// Load referral data
-function loadReferral(){
-  document.getElementById('refLink').value = demoReferralLink;
+// Load referral data from Supabase
+async function loadReferral(){
+  const user = supabase.auth.user();
+  if(!user){
+    alert("Please login first");
+    return;
+  }
 
-  // demo data - localStorage
-  let referrals = JSON.parse(localStorage.getItem('referrals') || '[]');
+  const userId = user.id;
+  document.getElementById('refLink').value = window.location.origin + "/signup.html?ref=" + userId;
+
+  // Get invited users
+  const { data, error } = await supabase
+    .from('users')
+    .select('first_name,last_name,kyc_completed')
+    .eq('referrer_id', userId);
+
+  if(error){
+    console.error("Referral fetch error:", error);
+    return;
+  }
 
   const table = document.getElementById('refTable');
   table.innerHTML = '';
 
   let kycCount = 0;
-  referrals.forEach(u=>{
+  data.forEach(u=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${u.firstname}</td>
-      <td>${u.lastname}</td>
-      <td>${u.kycCompleted ? "Completed" : "Pending"}</td>
+      <td>${u.first_name || "-"}</td>
+      <td>${u.last_name || "-"}</td>
+      <td>${u.kyc_completed ? "Completed" : "Pending"}</td>
     `;
     table.appendChild(tr);
-    if(u.kycCompleted) kycCount++;
+    if(u.kyc_completed) kycCount++;
   });
 
   document.getElementById('refStats').innerText =
-    `Total Invited: ${referrals.length} | KYC Completed: ${kycCount}`;
+    `Total Invited: ${data.length} | KYC Completed: ${kycCount}`;
 }
+window.loadReferral = loadReferral;
 
-// Demo function to add invited user (برای تست دمو)
-function addDemoReferral(firstname, lastname, kycCompleted){
-  let referrals = JSON.parse(localStorage.getItem('referrals') || '[]');
-  referrals.push({firstname, lastname, kycCompleted});
-  localStorage.setItem('referrals', JSON.stringify(referrals));
-}
-
-// مثال دمو
-if(!localStorage.getItem('referrals')){
-  addDemoReferral("Alice","Smith",true);
-  addDemoReferral("Bob","Johnson",false);
-  addDemoReferral("Charlie","Brown",true);
-  loadReferral();
-}
+// Load on page load
+window.onload = loadReferral;
 </script>
 
 </body>
