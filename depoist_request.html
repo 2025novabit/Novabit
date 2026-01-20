@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign Up</title>
+<title>Deposit Request</title>
 
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -50,80 +50,68 @@ button.submit-btn{
 <body>
 
 <div class="container">
-  <h2>Welcome</h2>
+  <h2>Deposit Request</h2>
 
-  <form id="signupForm">
-    <label>First Name</label>
-    <input type="text" id="signupFirstName">
+  <form id="depositForm">
+    <label>Asset</label>
+    <input type="text" id="asset" placeholder="BTC, ETH, USDT...">
 
-    <label>Last Name</label>
-    <input type="text" id="signupLastName">
+    <label>Network</label>
+    <input type="text" id="network" placeholder="BTC, ERC20, TRC20...">
 
-    <label>Date of Birth</label>
-    <input type="date" id="signupDOB">
+    <label>Amount</label>
+    <input type="number" id="amount" step="0.0001" placeholder="0.0">
 
-    <label>Country</label>
-    <select id="signupCountry">
-      <option value="">Select Country</option>
-    </select>
+    <label>Transaction ID (optional)</label>
+    <input type="text" id="txid" placeholder="txid">
 
-    <label>Email</label>
-    <input type="email" id="signupEmail">
-
-    <label>Password</label>
-    <input type="password" id="signupPassword">
-
-    <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
+    <button type="button" class="submit-btn" id="submitDeposit">Submit Deposit</button>
   </form>
 
   <p id="msg"></p>
 </div>
 
 <script type="module">
-// Countries
-const countries = [
-  "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia",
-  "Australia","Austria","Azerbaijan","Bahrain","Bangladesh","Belgium","Brazil",
-  "Canada","China","Denmark","Egypt","France","Germany","India","Iran","Iraq",
-  "Italy","Japan","Netherlands","Norway","Pakistan","Russia","Saudi Arabia",
-  "Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
-];
+const depositForm = document.getElementById('depositForm');
+const msg = document.getElementById('msg');
 
-const countrySelect = document.getElementById('signupCountry');
-countries.forEach(c=>{
-  const opt=document.createElement('option');
-  opt.value=c; opt.textContent=c;
-  countrySelect.appendChild(opt);
-});
+document.getElementById('submitDeposit').onclick = async () => {
+  const asset = document.getElementById('asset').value.trim();
+  const network = document.getElementById('network').value.trim();
+  const amount = parseFloat(document.getElementById('amount').value);
+  const txid = document.getElementById('txid').value.trim();
 
-// Sign Up logic
-document.getElementById('signupSubmit').onclick = async ()=>{
-  const email = signupEmail.value.trim();
-  const password = signupPassword.value.trim();
-  const first_name = signupFirstName.value.trim();
-  const last_name = signupLastName.value.trim();
-  const dob = signupDOB.value;
-  const country = signupCountry.value;
-  const msg = document.getElementById('msg');
-
-  if(!email || !password || !first_name || !last_name || !dob || !country){
-    msg.style.color='red';
-    msg.innerText="Please fill all fields.";
+  const user = supabase.auth.user(); // کاربر جاری
+  if(!user){
+    msg.innerText = "Please login first.";
     return;
   }
 
-  // ثبت‌نام در Supabase Auth
-  const { error: signUpError } = await supabase.auth.signUp({ email, password });
-  if(signUpError){ msg.style.color='red'; msg.innerText=signUpError.message; return; }
+  if(!asset || !network || isNaN(amount) || amount <= 0){
+    msg.innerText = "Please fill all required fields correctly.";
+    return;
+  }
 
-  // اضافه کردن رکورد در جدول users
-  const { error: insertError } = await supabase.from('users').insert([{
-    email, first_name, last_name, dob, country, user_id:""
-  }]);
-  if(insertError){ msg.style.color='red'; msg.innerText=insertError.message; return; }
+  const { error } = await supabase
+    .from('deposit_requests')
+    .insert([{
+      user_id: user.id,
+      asset,
+      network,
+      amount,
+      txid: txid || null,
+      status: 'pending'
+    }]);
 
-  msg.style.color='green';
-  msg.innerText="Registration successful! Wallets will be created automatically.";
+  if(error){
+    console.error("Deposit insert error:", error);
+    msg.innerText = "Failed to submit deposit.";
+    return;
+  }
+
+  msg.style.color = "green";
+  msg.innerText = "Deposit request submitted successfully!";
+  depositForm.reset();
 };
 </script>
 
