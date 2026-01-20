@@ -201,18 +201,19 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     return;
   }
 
-  // ثبت اطلاعات کاربر در جدول users
+// ثبت اطلاعات کاربر در جدول users
   if(signUpData.user && signUpData.user.id){
     const { error: userError } = await supabase
       .from('users')
-      .insert({
-        id: signUpData.user.id,  // همان user_id
-        first_name,
-        last_name,
-        dob,
-        country,
-        email
-      });
+      .insert([{
+        id: signUpData.user.id,    // UUID از auth
+        user_id: signUpData.user.id, // برای ستون text اختیاری
+        email: email,
+        first_name: first_name,
+        last_name: last_name,
+        dob: dob,
+        country: country
+      }]);
 
     if(userError){
       console.error("Error saving user record:", userError);
@@ -220,6 +221,7 @@ document.getElementById('signupSubmit').onclick = async ()=>{
       return;
     }
   }
+
 
   msg.style.color = "green";
   msg.innerText = "Registered successfully. Please login.";
