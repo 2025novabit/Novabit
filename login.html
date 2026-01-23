@@ -6,12 +6,12 @@
 <title>Login / Sign Up</title>
 
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+  const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <style>
@@ -124,6 +124,7 @@ const countries = [
   "Italy","Japan","Netherlands","Norway","Pakistan","Russia","Saudi Arabia",
   "Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
 ];
+
 const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
   const opt=document.createElement('option');
@@ -158,6 +159,7 @@ btnSignUp.onclick = ()=>{
 document.getElementById('loginSubmit').onclick = async ()=>{
   const email = loginEmail.value.trim();
   const password = loginPassword.value.trim();
+
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if(error){
     msg.innerText = error.message;
@@ -166,11 +168,8 @@ document.getElementById('loginSubmit').onclick = async ()=>{
   window.location.href = "dashboard.html";
 };
 
-// ===== Sign Up =====
+// ===== Sign Up with referral bonus =====
 document.getElementById('signupSubmit').onclick = async ()=>{
-  msg.style.color="red";
-  msg.innerText = "";
-
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
   const first_name = signupFirstName.value.trim();
@@ -183,55 +182,69 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     return;
   }
 
-  // ===== بررسی ریفرال از URL =====
+  // لینک ریفرال از URL
   const urlParams = new URLSearchParams(window.location.search);
-  const ref = urlParams.get('ref');
-  const referrer_id = ref ? ref : null;
+  const refCode = urlParams.get('ref');
 
-  try {
-    // ثبت در Auth
+  try{
+    // ثبت کاربر در auth
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { first_name, last_name, dob, country } }
+      options:{
+        data:{first_name,last_name,dob,country}
+      }
     });
-
-    if(signUpError){
-      msg.innerText = signUpError.message;
-      return;
-    }
+    if(signUpError){msg.innerText = signUpError.message; return;}
 
     const userId = signUpData.user.id;
 
-    // ثبت در جدول users
-    const insertData = {
+    // ثبت اطلاعات در جدول users
+    const { error: userError } = await supabase.from('users').insert([{
       id: userId,
       user_id: userId,
       email,
       first_name,
       last_name,
       dob,
-      country,
-      referral_code: userId.substring(0,8),
-      referral_count: 0
-    };
-    if(referrer_id){
-      insertData.referrer_id = referrer_id;
+      country
+    }]);
+    if(userError){msg.innerText="Registered but user data not saved. Check console."; console.error(userError); return;}
+
+    // اگر لینک ریفرال وجود داشت
+    if(refCode){
+      const { data: referrer } = await supabase.from('users')
+        .select('id, referral_count')
+        .eq('referral_code', refCode)
+        .single();
+
+      if(referrer){
+        // ثبت ریفرال
+        await supabase.from('users').update({
+          referral_count: referrer.referral_count + 1
+        }).eq('id', referrer.id);
+
+        await supabase.from('referrals').insert([{
+          user_id: userId,
+          referrer_id: referrer.id,
+          referral_code: refCode
+        }]);
+
+        // واریز 2 تتر به کیف پول دعوت کننده
+        await supabase.from('wallets').upsert([{
+          user_id: referrer.id,
+          currency:'USDT',
+          network:'TRC20',
+          balance:2
+        }], { onConflict:['user_id','currency','network'] });
+      }
     }
 
-    const { error: userError } = await supabase.from('users').insert([insertData]);
-    if(userError){
-      console.error("Insert user error:", userError);
-      msg.innerText = "Registered but user data not saved. Check console.";
-      return;
-    }
-
-    msg.style.color = "green";
-    msg.innerText = "Registered successfully. Please login.";
-
-  } catch (err) {
+    msg.style.color="green";
+    msg.innerText="Registered successfully. Please login.";
+  }catch(err){
     console.error(err);
-    msg.innerText = "Registration failed. Check console.";
+    msg.innerText="Registration failed. Check console.";
   }
 };
 </script>
