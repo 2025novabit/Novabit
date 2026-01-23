@@ -69,10 +69,10 @@ button.submit-btn{
 <body>
 
 <div class="container">
-  <button class="home-btn" id="btnHome">Home</button>
+  <button class="home-btn">Home</button>
 
   <h2>Welcome</h2>
-  
+
   <div class="toggle-btns">
     <button id="btnLogin" class="active">Login</button>
     <button id="btnSignUp">Sign Up</button>
@@ -91,18 +91,27 @@ button.submit-btn{
   <form id="signupForm">
     <label>First Name</label>
     <input type="text" id="signupFirstName">
+
     <label>Last Name</label>
     <input type="text" id="signupLastName">
+
     <label>Date of Birth</label>
     <input type="date" id="signupDOB">
+
     <label>Country</label>
     <select id="signupCountry">
       <option value="">Select Country</option>
+      <option>Iran</option>
+      <option>Turkey</option>
+      <option>Germany</option>
     </select>
+
     <label>Email</label>
     <input type="email" id="signupEmail">
+
     <label>Password</label>
     <input type="password" id="signupPassword">
+
     <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
   </form>
 
@@ -110,23 +119,6 @@ button.submit-btn{
 </div>
 
 <script type="module">
-// ===== Countries =====
-const countries = [
-  "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia",
-  "Australia","Austria","Azerbaijan","Bahrain","Bangladesh","Belgium","Brazil",
-  "Canada","China","Denmark","Egypt","France","Germany","India","Iran","Iraq",
-  "Italy","Japan","Netherlands","Norway","Pakistan","Russia","Saudi Arabia",
-  "Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
-];
-
-const countrySelect = document.getElementById('signupCountry');
-countries.forEach(c=>{
-  const opt=document.createElement('option');
-  opt.value=c; opt.textContent=c;
-  countrySelect.appendChild(opt);
-});
-
-// ===== Toggle =====
 const btnLogin = document.getElementById('btnLogin');
 const btnSignUp = document.getElementById('btnSignUp');
 const loginForm = document.getElementById('loginForm');
@@ -138,7 +130,6 @@ btnLogin.onclick = ()=>{
   btnSignUp.classList.remove('active');
   loginForm.style.display='flex';
   signupForm.style.display='none';
-  msg.innerText='';
 };
 
 btnSignUp.onclick = ()=>{
@@ -146,89 +137,77 @@ btnSignUp.onclick = ()=>{
   btnLogin.classList.remove('active');
   signupForm.style.display='flex';
   loginForm.style.display='none';
-  msg.innerText='';
 };
 
-// ===== Login =====
-document.getElementById('loginSubmit').onclick = async ()=>{
-  const email = loginEmail.value.trim();
-  const password = loginPassword.value.trim();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if(error){ msg.innerText = error.message; return; }
-  window.location.href = "dashboard.html";
+// LOGIN
+loginSubmit.onclick = async ()=>{
+  const { error } = await supabase.auth.signInWithPassword({
+    email: loginEmail.value,
+    password: loginPassword.value
+  });
+  if(error) msg.innerText = error.message;
+  else location.href="dashboard.html";
 };
 
-// ===== Sign Up =====
-document.getElementById('signupSubmit').onclick = async ()=>{
-  const email = signupEmail.value.trim();
-  const password = signupPassword.value.trim();
-  const first_name = signupFirstName.value.trim();
-  const last_name = signupLastName.value.trim();
-  const dob = signupDOB.value;
-  const country = signupCountry.value;
+// SIGN UP (FIXED)
+signupSubmit.onclick = async ()=>{
+  msg.innerText = "";
 
-  if(!email || !password || !first_name || !last_name || !dob || !country){
-    msg.innerText = "Please fill all fields."; return;
+  const params = new URLSearchParams(location.search);
+  const refCode = params.get("ref");
+
+  const { data, error } = await supabase.auth.signUp({
+    email: signupEmail.value,
+    password: signupPassword.value
+  });
+
+  if(error){
+    msg.innerText = error.message;
+    return;
   }
 
-  // لینک ریفرال از URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const refCode = urlParams.get('ref');
+  const userId = data.user.id;
+  const referral_code = userId.slice(0,8);
 
-  try{
-    // ثبت کاربر در auth
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options:{data:{first_name,last_name,dob,country}}
-    });
-    if(signUpError){ msg.innerText = signUpError.message; return; }
+  // users table
+  await supabase.from("users").insert({
+    id: userId,
+    email: signupEmail.value,
+    first_name: signupFirstName.value,
+    last_name: signupLastName.value,
+    dob: signupDOB.value,
+    country: signupCountry.value
+  });
 
-    const userId = signUpData.user.id;
+  // create own referral row
+  await supabase.from("referrals").insert({
+    referrer_id: userId,
+    referral_code,
+    referral_count: 0
+  });
 
-    // ثبت اطلاعات در جدول users
-    const { error: userError } = await supabase.from('users').insert([{
-      id: userId,
-      user_id: userId,
-      email,
-      first_name,
-      last_name,
-      dob,
-      country
-    }]);
-    if(userError){ msg.innerText="Registered but user data not saved. Check console."; console.error(userError); return; }
+  // invited by referral
+  if(refCode){
+    const { data: ref } = await supabase
+      .from("referrals")
+      .select("*")
+      .eq("referral_code", refCode)
+      .single();
 
-    // اگر لینک ریفرال وجود داشت
-    if(refCode){
-      // پیدا کردن معرف
-      const { data: referrer, error: refErr } = await supabase.from('users')
-        .select('id, referral_code, referral_count')
-        .eq('referral_code', refCode)
-        .single();
+    if(ref){
+      await supabase.from("referrals")
+        .update({ referral_count: ref.referral_count + 1 })
+        .eq("id", ref.id);
 
-      if(refErr){ console.error(refErr); }
-
-      if(referrer){
-        // ایجاد ردیف در جدول referrals
-        await supabase.from('referrals').insert([{
-          referrer_id: referrer.id,
-          invited_id: userId,
-          referral_count: referrer.referral_count + 1
-        }]);
-
-        // بروزرسانی تعداد دعوت در جدول users
-        await supabase.from('users').update({
-          referral_count: referrer.referral_count + 1
-        }).eq('id', referrer.id);
-      }
+      await supabase.from("referrals").insert({
+        referrer_id: ref.referrer_id,
+        invited_id: userId
+      });
     }
-
-    msg.style.color="green";
-    msg.innerText="Registered successfully. Please login.";
-  }catch(err){
-    console.error(err);
-    msg.innerText="Registration failed. Check console.";
   }
+
+  msg.style.color="green";
+  msg.innerText="Registered successfully. Please login.";
 };
 </script>
 
