@@ -168,7 +168,7 @@ document.getElementById('loginSubmit').onclick = async ()=>{
   window.location.href = "dashboard.html";
 };
 
-// ===== Sign Up with referral bonus =====
+// ===== Sign Up (با ریفرال ثبت شود، جایزه بعد از KYC) =====
 document.getElementById('signupSubmit').onclick = async ()=>{
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
@@ -182,24 +182,21 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     return;
   }
 
-  // لینک ریفرال از URL
   const urlParams = new URLSearchParams(window.location.search);
-  const refCode = urlParams.get('ref');
+  const refCode = urlParams.get('ref'); // لینک ریفرال
 
   try{
-    // ثبت کاربر در auth
+    // ثبت در auth
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options:{
-        data:{first_name,last_name,dob,country}
-      }
+      options:{data:{first_name,last_name,dob,country}}
     });
     if(signUpError){msg.innerText = signUpError.message; return;}
 
     const userId = signUpData.user.id;
 
-    // ثبت اطلاعات در جدول users
+    // ثبت اطلاعات کاربر در جدول users
     const { error: userError } = await supabase.from('users').insert([{
       id: userId,
       user_id: userId,
@@ -207,37 +204,22 @@ document.getElementById('signupSubmit').onclick = async ()=>{
       first_name,
       last_name,
       dob,
-      country
+      country,
+      referrer_id: null,
+      referral_count: 0,
+      referral_code: userId.slice(0,8)
     }]);
     if(userError){msg.innerText="Registered but user data not saved. Check console."; console.error(userError); return;}
 
-    // اگر لینک ریفرال وجود داشت
+    // اگر ریفرال بود
     if(refCode){
-      const { data: referrer } = await supabase.from('users')
-        .select('id, referral_count')
-        .eq('referral_code', refCode)
-        .single();
+      await supabase.from('users').update({referrer_id: refCode}).eq('id', userId);
 
-      if(referrer){
-        // ثبت ریفرال
-        await supabase.from('users').update({
-          referral_count: referrer.referral_count + 1
-        }).eq('id', referrer.id);
-
-        await supabase.from('referrals').insert([{
-          user_id: userId,
-          referrer_id: referrer.id,
-          referral_code: refCode
-        }]);
-
-        // واریز 2 تتر به کیف پول دعوت کننده
-        await supabase.from('wallets').upsert([{
-          user_id: referrer.id,
-          currency:'USDT',
-          network:'TRC20',
-          balance:2
-        }], { onConflict:['user_id','currency','network'] });
-      }
+      await supabase.from('referrals').insert([{
+        user_id: userId,
+        referrer_id: refCode,
+        referral_code: refCode
+      }]);
     }
 
     msg.style.color="green";
