@@ -182,21 +182,24 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     return;
   }
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const refCode = urlParams.get('ref');
+  try {
+    // لینک ریفرال از URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
 
-  try{
-    // ثبت در auth
+    // ثبت کاربر در auth
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data:{ first_name, last_name, dob, country } }
+      options:{
+        data:{first_name,last_name,dob,country}
+      }
     });
     if(signUpError){ msg.innerText = signUpError.message; return; }
 
     const userId = signUpData.user.id;
 
-    // ثبت در جدول users
+    // ثبت اطلاعات در جدول users
     const { error: userError } = await supabase.from('users').insert([{
       id: userId,
       user_id: userId,
@@ -208,27 +211,32 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     }]);
     if(userError){ msg.innerText="Registered but user data not saved. Check console."; console.error(userError); return; }
 
-    // ثبت ریفرال در جدول جدید
+    // ثبت ریفرال در جدول referrals
     if(refCode){
-      const { data: referrer } = await supabase.from('users')
-        .select('id')
+      const { data: referrer, error: refError } = await supabase.from('users')
+        .select('id, referral_count')
         .eq('referral_code', refCode)
         .single();
+      if(refError){ console.error(refError); }
 
       if(referrer){
-        const { error: referralError } = await supabase.from('referrals')
-          .insert([{
-            referrer_id: referrer.id,
-            invited_id: userId
-          }]);
-        if(referralError){ console.error("Referral insert error:", referralError); }
-        else { console.log("Referral recorded successfully!"); }
+        // ثبت در جدول referrals
+        const { error: insertRef } = await supabase.from('referrals').insert([{
+          referrer_id: referrer.id,
+          invited_id: userId
+        }]);
+        if(insertRef){ console.error(insertRef); }
+
+        // افزایش referral_count
+        await supabase.from('users').update({
+          referral_count: referrer.referral_count + 1
+        }).eq('id', referrer.id);
       }
     }
 
     msg.style.color="green";
     msg.innerText="Registered successfully. Please login.";
-  }catch(err){
+  } catch(err){
     console.error(err);
     msg.innerText="Registration failed. Check console.";
   }
