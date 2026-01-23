@@ -101,9 +101,6 @@ button.submit-btn{
     <label>Country</label>
     <select id="signupCountry">
       <option value="">Select Country</option>
-      <option>Iran</option>
-      <option>Turkey</option>
-      <option>Germany</option>
     </select>
 
     <label>Email</label>
@@ -119,91 +116,78 @@ button.submit-btn{
 </div>
 
 <script type="module">
-const btnLogin = document.getElementById('btnLogin');
-const btnSignUp = document.getElementById('btnSignUp');
-const loginForm = document.getElementById('loginForm');
-const signupForm = document.getElementById('signupForm');
-const msg = document.getElementById('msg');
+// Countries
+const countries=["Afghanistan","Iran","Turkey","Germany","United States"];
+countries.forEach(c=>{
+  signupCountry.insertAdjacentHTML("beforeend",`<option value="${c}">${c}</option>`);
+});
 
-btnLogin.onclick = ()=>{
-  btnLogin.classList.add('active');
-  btnSignUp.classList.remove('active');
-  loginForm.style.display='flex';
-  signupForm.style.display='none';
+// Toggle
+btnLogin.onclick=()=>{
+  btnLogin.classList.add("active");
+  btnSignUp.classList.remove("active");
+  loginForm.style.display="flex";
+  signupForm.style.display="none";
+  msg.innerText="";
 };
 
-btnSignUp.onclick = ()=>{
-  btnSignUp.classList.add('active');
-  btnLogin.classList.remove('active');
-  signupForm.style.display='flex';
-  loginForm.style.display='none';
+btnSignUp.onclick=()=>{
+  btnSignUp.classList.add("active");
+  btnLogin.classList.remove("active");
+  signupForm.style.display="flex";
+  loginForm.style.display="none";
+  msg.innerText="";
 };
 
-// LOGIN
-loginSubmit.onclick = async ()=>{
-  const { error } = await supabase.auth.signInWithPassword({
-    email: loginEmail.value,
-    password: loginPassword.value
+// Login
+loginSubmit.onclick=async()=>{
+  const {error}=await supabase.auth.signInWithPassword({
+    email:loginEmail.value,
+    password:loginPassword.value
   });
-  if(error) msg.innerText = error.message;
-  else location.href="dashboard.html";
+  if(error){msg.innerText=error.message;return;}
+  location.href="dashboard.html";
 };
 
-// SIGN UP (FIXED)
-signupSubmit.onclick = async ()=>{
-  msg.innerText = "";
+// Sign Up
+signupSubmit.onclick=async()=>{
+  msg.innerText="";
 
-  const params = new URLSearchParams(location.search);
-  const refCode = params.get("ref");
+  const email=signupEmail.value.trim();
+  const password=signupPassword.value.trim();
 
-  const { data, error } = await supabase.auth.signUp({
-    email: signupEmail.value,
-    password: signupPassword.value
-  });
+  const params=new URLSearchParams(location.search);
+  const refCode=params.get("ref");
 
-  if(error){
-    msg.innerText = error.message;
-    return;
-  }
+  const {data,error}=await supabase.auth.signUp({email,password});
+  if(error){msg.innerText=error.message;return;}
 
-  const userId = data.user.id;
-  const referral_code = userId.slice(0,8);
+  const userId=data.user.id;
+  const myRefCode=userId.substring(0,8);
 
-  // users table
+  // users
   await supabase.from("users").insert({
-    id: userId,
-    email: signupEmail.value,
-    first_name: signupFirstName.value,
-    last_name: signupLastName.value,
-    dob: signupDOB.value,
-    country: signupCountry.value
+    id:userId,
+    email,
+    first_name:signupFirstName.value,
+    last_name:signupLastName.value,
+    dob:signupDOB.value,
+    country:signupCountry.value
   });
 
-  // create own referral row
+  // own referral row
   await supabase.from("referrals").insert({
-    referrer_id: userId,
-    referral_code,
-    referral_count: 0
+    referrer_id:userId,
+    referral_code:myRefCode,
+    referral_count:0
   });
 
-  // invited by referral
+  // invited by someone
   if(refCode){
-    const { data: ref } = await supabase
-      .from("referrals")
-      .select("*")
-      .eq("referral_code", refCode)
-      .single();
-
-    if(ref){
-      await supabase.from("referrals")
-        .update({ referral_count: ref.referral_count + 1 })
-        .eq("id", ref.id);
-
-      await supabase.from("referrals").insert({
-        referrer_id: ref.referrer_id,
-        invited_id: userId
-      });
-    }
+    await supabase.from("referrals").insert({
+      invited_id:userId,
+      referral_code:refCode
+    });
   }
 
   msg.style.color="green";
