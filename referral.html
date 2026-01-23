@@ -2,200 +2,104 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Referral | Novabit</title>
+<title>Referral</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const supabase = createClient(
+    "https://iecnioogmafgxwarmkxz.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
+  );
+
+  window.supabase = supabase;
+</script>
+
 <style>
-body{
-  margin:0;
-  font-family:Roboto,Arial,sans-serif;
-  background:#f4f6fa;
-}
-header{
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-header button{
-  background:#4b49ac;
-  border:none;
-  color:#fff;
-  padding:8px 14px;
-  border-radius:5px;
-  cursor:pointer;
-}
-#sidePanel{
-  position:fixed;
-  top:0;
-  right:-400px;
-  width:33%;
-  max-width:360px;
-  height:100%;
-  background:#fff;
-  box-shadow:-3px 0 10px rgba(0,0,0,.2);
-  padding:20px;
-  overflow-y:auto;
-  transition:right 0.3s;
-  z-index:100;
-}
-#sidePanel.active{right:0;}
-#sidePanel a{
-  display:block;
-  margin:12px 0;
-  color:#1a1a2e;
-  text-decoration:none;
-  font-weight:500;
-}
-.container{padding:25px;}
-.card{
-  background:#fff;
-  padding:25px;
-  border-radius:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,.1);
-}
-input{
-  width:100%;
-  padding:10px;
-  border:1px solid #ccc;
-  border-radius:5px;
-  margin-bottom:15px;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:15px;
-}
-th,td{
-  border:1px solid #ddd;
-  padding:8px;
-}
-th{
-  background:#1a1a2e;
-  color:#fff;
-}
-button.copyBtn{
-  padding:8px 15px;
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
-}
+body{font-family:Segoe UI;background:#f8f9fa;margin:0;padding:30px}
+.box{background:#fff;padding:25px;border-radius:12px;max-width:800px;margin:auto}
+h2{margin-top:0}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}
+.status-approved{color:green;font-weight:bold}
+.status-pending{color:orange;font-weight:bold}
+.status-rejected{color:red;font-weight:bold}
 </style>
 </head>
 
 <body>
 
-<header>
+<div class="box">
   <h2>Referral Program</h2>
-  <button onclick="togglePanel()">Menu</button>
-</header>
 
-<!-- SIDE PANEL -->
-<div id="sidePanel">
-  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;margin-bottom:15px;">Close</button>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="profile.html">Profile</a>
-  <a href="kyc.html">KYC</a>
-  <a href="referral.html"><strong>Referral</strong></a>
-</div>
+  <p><strong>Your referral link:</strong></p>
+  <input id="refLink" style="width:100%;padding:10px" readonly>
 
-<div class="container">
-  <div class="card">
-    <h2>Your Referral Link</h2>
-    <input type="text" id="refLink" readonly>
-    <button class="copyBtn" onclick="copyLink()">Copy Link</button>
+  <p style="margin-top:15px">
+    <strong>Total invited:</strong>
+    <span id="refCount">0</span>
+  </p>
 
-    <div id="refStats" style="margin-top:10px;font-weight:500;">
-      Total Invited: 0 | KYC Completed: 0
-    </div>
-
-    <h2>Invited Users</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>KYC Status</th>
-        </tr>
-      </thead>
-      <tbody id="refTable"></tbody>
-    </table>
-  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Invited User</th>
+        <th>KYC Status</th>
+        <th>Joined</th>
+      </tr>
+    </thead>
+    <tbody id="refTable"></tbody>
+  </table>
 </div>
 
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-const supabase = createClient(
-  "https://iecnioogmafgxwarmkxz.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
-);
-
-// Toggle menu
-window.togglePanel = () => {
-  document.getElementById('sidePanel').classList.toggle('active');
-};
-
-// Copy link
-window.copyLink = () => {
-  const input = document.getElementById('refLink');
-  input.select();
-  document.execCommand("copy");
-  alert("Referral link copied");
-};
-
-// Load referral data
-async function loadReferral(){
-  const { data: { session } } = await supabase.auth.getSession();
-  if(!session){
-    window.location.href = "login.html";
+(async ()=>{
+  const { data: { user } } = await supabase.auth.getUser();
+  if(!user){
+    location.href="login.html";
     return;
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
 
-  // Referral link → login.html
-  document.getElementById('refLink').value =
-    window.location.origin + "/login.html?ref=" + userId.substring(0,8);
+  // 1️⃣ دریافت کد ریفرال خود کاربر
+  const { data: myRef } = await supabase
+    .from("referrals")
+    .select("referral_code, referral_count")
+    .eq("referrer_id", userId)
+    .single();
 
-  // Get invited users
-  const { data: users } = await supabase
-    .from("users")
-    .select("id, first_name, last_name")
-    .eq("referrer_id", userId);
-
-  let kycCompleted = 0;
-  const table = document.getElementById("refTable");
-  table.innerHTML = "";
-
-  for(const u of users){
-    const { data: kyc } = await supabase
-      .from("kyc_requests")
-      .select("status")
-      .eq("user_id", u.id)
-      .single();
-
-    const completed = kyc?.status === "approved";
-    if(completed) kycCompleted++;
-
-    table.innerHTML += `
-      <tr>
-        <td>${u.first_name || "-"}</td>
-        <td>${u.last_name || "-"}</td>
-        <td>${completed ? "Completed" : "Pending"}</td>
-      </tr>
-    `;
+  if(myRef){
+    refLink.value = `${location.origin}/login.html?ref=${myRef.referral_code}`;
+    refCount.innerText = myRef.referral_count ?? 0;
   }
 
-  document.getElementById("refStats").innerText =
-    `Total Invited: ${users.length} | KYC Completed: ${kycCompleted}`;
-}
+  // 2️⃣ لیست کاربران دعوت‌شده + وضعیت KYC
+  const { data: invited } = await supabase
+    .from("referrals")
+    .select(`
+      invited_id,
+      created_at,
+      kyc_requests ( status )
+    `)
+    .eq("referral_code", myRef.referral_code)
+    .not("invited_id","is",null);
 
-loadReferral();
+  refTable.innerHTML="";
+
+  invited?.forEach(r=>{
+    const status = r.kyc_requests?.status || "pending";
+
+    refTable.insertAdjacentHTML("beforeend",`
+      <tr>
+        <td>${r.invited_id.slice(0,8)}...</td>
+        <td class="status-${status}">${status}</td>
+        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+      </tr>
+    `);
+  });
+})();
 </script>
 
 </body>
