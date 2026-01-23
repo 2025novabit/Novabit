@@ -11,8 +11,6 @@ body{
   font-family:Roboto,Arial,sans-serif;
   background:#f4f6fa;
 }
-
-/* HEADER */
 header{
   background:#1a1a2e;
   color:#fff;
@@ -29,8 +27,6 @@ header button{
   border-radius:5px;
   cursor:pointer;
 }
-
-/* SIDE PANEL */
 #sidePanel{
   position:fixed;
   top:0;
@@ -53,19 +49,13 @@ header button{
   text-decoration:none;
   font-weight:500;
 }
-
-/* CONTAINER */
-.container{
-  padding:25px;
-}
+.container{padding:25px;}
 .card{
   background:#fff;
   padding:25px;
   border-radius:10px;
   box-shadow:0 4px 8px rgba(0,0,0,.1);
-  margin-bottom:20px;
 }
-.card h2{margin-top:0;}
 input{
   width:100%;
   padding:10px;
@@ -81,7 +71,6 @@ table{
 th,td{
   border:1px solid #ddd;
   padding:8px;
-  text-align:left;
 }
 th{
   background:#1a1a2e;
@@ -99,7 +88,6 @@ button.copyBtn{
   border-radius:5px;
   cursor:pointer;
 }
-button.copyBtn:hover{background:#3a3690;}
 </style>
 </head>
 
@@ -110,16 +98,11 @@ button.copyBtn:hover{background:#3a3690;}
   <button onclick="togglePanel()">Menu</button>
 </header>
 
-<!-- SIDE PANEL -->
 <div id="sidePanel">
-  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;margin-bottom:15px;cursor:pointer;">Close</button>
-  <h3>Menu</h3>
-  <a href="dashboard.html">dashboard</a>
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;margin-bottom:15px;">Close</button>
+  <a href="dashboard.html">Dashboard</a>
   <a href="profile.html">Profile</a>
   <a href="kyc.html">KYC</a>
-  <a href="changepassword.html">Change Password</a>
-  <a href="2fa.html">2FA Settings</a>
-  <a href="fee.html">Fees</a>
   <a href="referral.html"><strong>Referral</strong></a>
 </div>
 
@@ -150,58 +133,48 @@ button.copyBtn:hover{background:#3a3690;}
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+const supabase = createClient(
+  "https://iecnioogmafgxwarmkxz.supabase.co",
+  "YOUR_ANON_KEY"
+);
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Toggle menu
 window.togglePanel = () => {
   document.getElementById('sidePanel').classList.toggle('active');
 };
 
-// Copy link
 window.copyLink = () => {
   const input = document.getElementById('refLink');
   input.select();
-  document.execCommand('copy');
+  document.execCommand("copy");
   alert("Referral link copied!");
 };
 
-// Load referral data
 async function loadReferral(){
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if(error || !user){
-    alert("Please login first");
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if(!session){
+    window.location.href = "login.html";
     return;
   }
 
-  // گرفتن referral_code کاربر
-  const { data: me, error: meErr } = await supabase
+  const user = session.user;
+
+  // اطلاعات کاربر
+  const { data: me } = await supabase
     .from('users')
     .select('id, referral_code')
     .eq('id', user.id)
     .single();
 
-  if(meErr){
-    console.error(meErr);
-    return;
-  }
-
-  // ساخت لینک صحیح
   document.getElementById('refLink').value =
     window.location.origin + "/signup.html?ref=" + me.referral_code;
 
-  // کاربران دعوت‌شده
-  const { data: invited, error: invErr } = await supabase
+  // دعوت‌شده‌ها
+  const { data: invited } = await supabase
     .from('users')
     .select('first_name,last_name,kyc_completed')
     .eq('referrer_id', me.id);
-
-  if(invErr){
-    console.error(invErr);
-    return;
-  }
 
   const table = document.getElementById('refTable');
   table.innerHTML = "";
@@ -223,7 +196,7 @@ async function loadReferral(){
     `Total Invited: ${invited.length} | KYC Completed: ${kycCount}`;
 }
 
-window.onload = loadReferral;
+window.addEventListener("load", loadReferral);
 </script>
 
 </body>
