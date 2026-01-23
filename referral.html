@@ -142,8 +142,7 @@ button.copyBtn:hover{background:#3a3690;}
           <th>KYC Status</th>
         </tr>
       </thead>
-      <tbody id="refTable">
-      </tbody>
+      <tbody id="refTable"></tbody>
     </table>
   </div>
 </div>
@@ -152,53 +151,64 @@ button.copyBtn:hover{background:#3a3690;}
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Toggle side panel
-function togglePanel(){
+// Toggle menu
+window.togglePanel = () => {
   document.getElementById('sidePanel').classList.toggle('active');
-}
-window.togglePanel = togglePanel;
+};
 
-// Copy referral link
-function copyLink(){
+// Copy link
+window.copyLink = () => {
   const input = document.getElementById('refLink');
   input.select();
-  input.setSelectionRange(0,99999);
   document.execCommand('copy');
   alert("Referral link copied!");
-}
-window.copyLink = copyLink;
+};
 
-// Load referral data from Supabase
+// Load referral data
 async function loadReferral(){
-  const user = supabase.auth.user();
-  if(!user){
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if(error || !user){
     alert("Please login first");
     return;
   }
 
-  const userId = user.id;
-  document.getElementById('refLink').value = window.location.origin + "/signup.html?ref=" + userId;
+  // گرفتن referral_code کاربر
+  const { data: me, error: meErr } = await supabase
+    .from('users')
+    .select('id, referral_code')
+    .eq('id', user.id)
+    .single();
 
-  // Get invited users
-  const { data, error } = await supabase
+  if(meErr){
+    console.error(meErr);
+    return;
+  }
+
+  // ساخت لینک صحیح
+  document.getElementById('refLink').value =
+    window.location.origin + "/signup.html?ref=" + me.referral_code;
+
+  // کاربران دعوت‌شده
+  const { data: invited, error: invErr } = await supabase
     .from('users')
     .select('first_name,last_name,kyc_completed')
-    .eq('referrer_id', userId);
+    .eq('referrer_id', me.id);
 
-  if(error){
-    console.error("Referral fetch error:", error);
+  if(invErr){
+    console.error(invErr);
     return;
   }
 
   const table = document.getElementById('refTable');
-  table.innerHTML = '';
+  table.innerHTML = "";
 
   let kycCount = 0;
-  data.forEach(u=>{
+
+  invited.forEach(u=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${u.first_name || "-"}</td>
@@ -210,11 +220,9 @@ async function loadReferral(){
   });
 
   document.getElementById('refStats').innerText =
-    `Total Invited: ${data.length} | KYC Completed: ${kycCount}`;
+    `Total Invited: ${invited.length} | KYC Completed: ${kycCount}`;
 }
-window.loadReferral = loadReferral;
 
-// Load on page load
 window.onload = loadReferral;
 </script>
 
