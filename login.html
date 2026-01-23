@@ -124,6 +124,7 @@ const countries = [
   "Italy","Japan","Netherlands","Norway","Pakistan","Russia","Saudi Arabia",
   "Spain","Sweden","Switzerland","Turkey","United Kingdom","United States"
 ];
+
 const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
   const opt=document.createElement('option');
@@ -131,7 +132,7 @@ countries.forEach(c=>{
   countrySelect.appendChild(opt);
 });
 
-// ===== Toggle Login / SignUp =====
+// ===== Toggle =====
 const btnLogin = document.getElementById('btnLogin');
 const btnSignUp = document.getElementById('btnSignUp');
 const loginForm = document.getElementById('loginForm');
@@ -164,23 +165,12 @@ document.getElementById('loginSubmit').onclick = async ()=>{
     msg.innerText = error.message;
     return;
   }
-
-  // دریافت اطلاعات کاربر از جدول users برای داشبورد
-  const { data: userRecord } = await supabase
-    .from('users')
-    .select('*')
-    .eq('email', email)
-    .single();
-
-  if(userRecord){
-    localStorage.setItem('currentUser', JSON.stringify(userRecord));
-  }
-
   window.location.href = "dashboard.html";
 };
 
 // ===== Sign Up =====
 document.getElementById('signupSubmit').onclick = async ()=>{
+  msg.style.color = "red";
   const email = signupEmail.value.trim();
   const password = signupPassword.value.trim();
   const first_name = signupFirstName.value.trim();
@@ -193,27 +183,26 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     return;
   }
 
-  // استخراج ref از URL
+  // بررسی کد ریفرال در URL
   const urlParams = new URLSearchParams(window.location.search);
-  const refCode = urlParams.get('ref'); 
+  const refCode = urlParams.get('ref');
   let referrer_id = null;
 
   if(refCode){
-    const { data: refUser } = await supabase
+    const { data: refUser, error: refError } = await supabase
       .from('users')
       .select('id')
-      .ilike('referral_code', refCode)
-      .limit(1)
+      .eq('referral_code', refCode)
       .single();
-
+    if(refError) console.error("Referrer lookup error:", refError);
     if(refUser) referrer_id = refUser.id;
   }
 
-  // ثبت کاربر در Auth
+  // ثبت در Auth
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
-    options:{ data:{ first_name, last_name, dob, country } }
+    options: { data: { first_name, last_name, dob, country } }
   });
 
   if(signUpError){
@@ -221,26 +210,25 @@ document.getElementById('signupSubmit').onclick = async ()=>{
     return;
   }
 
-  // ثبت اطلاعات کاربر در جدول users
+  // ثبت اطلاعات در جدول users
   if(signUpData.user && signUpData.user.id){
-    const userId = signUpData.user.id;
-    const { error: userError } = await supabase
-      .from('users')
-      .insert([{
-        id: userId,
-        user_id: userId,
-        email: email,
-        first_name: first_name,
-        last_name: last_name,
-        dob: dob ? new Date(dob) : null,
-        country: country,
-        referral_code: userId.substring(0,8),
-        referral_count: 0,
-        referrer_id: referrer_id
-      }]);
+    const insertData = {
+      id: signUpData.user.id,
+      user_id: signUpData.user.id,
+      email: email,
+      first_name: first_name,
+      last_name: last_name,
+      country: country,
+      referral_code: signUpData.user.id.substring(0,8),
+      referral_count: 0
+    };
+    if(dob) insertData.dob = dob;
+    if(referrer_id) insertData.referrer_id = referrer_id;
 
+    const { error: userError } = await supabase.from('users').insert([insertData]);
     if(userError){
-      msg.innerText = "Registered but user data not saved.";
+      console.error("Insert user error:", userError);
+      msg.innerText = "Registered but user data not saved. Check console.";
       return;
     }
 
@@ -250,32 +238,26 @@ document.getElementById('signupSubmit').onclick = async ()=>{
         .from('users')
         .update({ referral_count: supabase.raw('referral_count + 1') })
         .eq('id', referrer_id);
-
       if(incError) console.error("Referral increment error:", incError);
     }
-  }
 
-  // ورود خودکار
-  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-  if(signInError){
-    msg.style.color="green";
-    msg.innerText = "Registered successfully. Please login.";
-    return;
-  }
+    // ورود خودکار
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if(signInError){
+      msg.style.color = "green";
+      msg.innerText = "Registered successfully. Please login.";
+      return;
+    }
 
-  // دریافت کامل اطلاعات کاربر از جدول users
-  const { data: userRecord } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', signUpData.user.id)
-    .single();
-
-  if(userRecord){
-    localStorage.setItem('currentUser', JSON.stringify(userRecord));
-    window.location.href = "dashboard.html";
-  } else {
-    msg.style.color="green";
-    msg.innerText = "Registered successfully. Please login.";
+    // ذخیره کاربر در localStorage برای داشبورد
+    const { data: userRecord } = await supabase.from('users').select('*').eq('id', signUpData.user.id).single();
+    if(userRecord){
+      localStorage.setItem('currentUser', JSON.stringify(userRecord));
+      window.location.href = "dashboard.html";
+    } else {
+      msg.style.color = "green";
+      msg.innerText = "Registered successfully. Please login.";
+    }
   }
 };
 </script>
