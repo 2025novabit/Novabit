@@ -183,12 +183,31 @@ signupSubmit.onclick=async()=>{
   });
 
   // invited by someone
-  if(refCode){
-    await supabase.from("referrals").insert({
-      invited_id:userId,
-      referral_code:refCode
-    });
+if (refCode) {
+
+  // پیدا کردن دعوت‌کننده
+  const { data: refRow, error } = await supabase
+    .from("referrals")
+    .select("id, referral_count")
+    .eq("referral_code", refCode)
+    .single();
+
+  if (refRow) {
+    // افزایش تعداد ریفرال دعوت‌کننده
+    await supabase
+      .from("referrals")
+      .update({
+        referral_count: (refRow.referral_count || 0) + 1
+      })
+      .eq("id", refRow.id);
   }
+
+  // ثبت کاربر به عنوان دعوت‌شده
+  await supabase.from("referrals").insert({
+    invited_id: userId,
+    referral_code: refCode
+  });
+}
 
   msg.style.color="green";
   msg.innerText="Registered successfully. Please login.";
