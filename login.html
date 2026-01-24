@@ -69,7 +69,7 @@ button.submit-btn{
 <body>
 
 <div class="container">
-  <button class="home-btn">Home</button>
+  <button class="home-btn" id="btnHome">Home</button>
 
   <h2>Welcome</h2>
 
@@ -78,7 +78,6 @@ button.submit-btn{
     <button id="btnSignUp">Sign Up</button>
   </div>
 
-  <!-- LOGIN -->
   <form id="loginForm" style="display:flex;">
     <label>Email</label>
     <input type="email" id="loginEmail">
@@ -87,7 +86,6 @@ button.submit-btn{
     <button type="button" class="submit-btn" id="loginSubmit">Login</button>
   </form>
 
-  <!-- SIGN UP -->
   <form id="signupForm">
     <label>First Name</label>
     <input type="text" id="signupFirstName">
@@ -116,78 +114,75 @@ button.submit-btn{
 </div>
 
 <script type="module">
-// Countries
-const countries=["Afghanistan","Iran","Turkey","Germany","United States"];
+const countries = ["Afghanistan","Albania","Algeria","Germany","Iran","Turkey","United States"];
+const countrySelect = document.getElementById('signupCountry');
 countries.forEach(c=>{
-  signupCountry.insertAdjacentHTML("beforeend",`<option value="${c}">${c}</option>`);
+  const o=document.createElement('option');o.value=c;o.textContent=c;
+  countrySelect.appendChild(o);
 });
 
-// Toggle
-btnLogin.onclick=()=>{
-  btnLogin.classList.add("active");
-  btnSignUp.classList.remove("active");
-  loginForm.style.display="flex";
-  signupForm.style.display="none";
-  msg.innerText="";
-};
+btnLogin.onclick=()=>{loginForm.style.display='flex';signupForm.style.display='none';};
+btnSignUp.onclick=()=>{signupForm.style.display='flex';loginForm.style.display='none';};
 
-btnSignUp.onclick=()=>{
-  btnSignUp.classList.add("active");
-  btnLogin.classList.remove("active");
-  signupForm.style.display="flex";
-  loginForm.style.display="none";
-  msg.innerText="";
-};
-
-// Login
-loginSubmit.onclick=async()=>{
-  const {error}=await supabase.auth.signInWithPassword({
-    email:loginEmail.value,
-    password:loginPassword.value
+loginSubmit.onclick = async ()=>{
+  const { error } = await supabase.auth.signInWithPassword({
+    email: loginEmail.value,
+    password: loginPassword.value
   });
   if(error){msg.innerText=error.message;return;}
   location.href="dashboard.html";
 };
 
-// Sign Up
-signupSubmit.onclick=async()=>{
+signupSubmit.onclick = async ()=>{
   msg.innerText="";
-
   const email=signupEmail.value.trim();
   const password=signupPassword.value.trim();
+  const first_name=signupFirstName.value.trim();
+  const last_name=signupLastName.value.trim();
+  const dob=signupDOB.value;
+  const country=signupCountry.value;
 
-  const params=new URLSearchParams(location.search);
-  const refCode=params.get("ref");
+  const refCode = new URLSearchParams(location.search).get('ref');
+  const myCode = crypto.randomUUID().slice(0,8);
 
-  const {data,error}=await supabase.auth.signUp({email,password});
+  const { data, error } = await supabase.auth.signUp({ email, password });
   if(error){msg.innerText=error.message;return;}
 
-  const userId=data.user.id;
-  const myRefCode=userId.substring(0,8);
+  const userId = data.user.id;
 
-  // users
-  await supabase.from("users").insert({
+  await supabase.from('users').insert([{
     id:userId,
     email,
-    first_name:signupFirstName.value,
-    last_name:signupLastName.value,
-    dob:signupDOB.value,
-    country:signupCountry.value
-  });
+    first_name,
+    last_name,
+    dob,
+    country,
+    referral_code: myCode,
+    referral_count: 0
+  }]);
 
-  // own referral row
-  await supabase.from("referrals").insert({
-    referrer_id:userId,
-    referral_code:myRefCode,
-    referral_count:0
-  });
+  await supabase.from('referrals').insert([{
+    invited_id: userId,
+    referrer_id: null
+  }]);
 
-  // invited by someone
   if(refCode){
-    await supabase.from("referrals").insert({
-      invited_id:userId,
-      referral_code:refCode
-    });
+    const { data: refUser } = await supabase
+      .from('users')
+      .select('id, referral_count')
+      .eq('referral_code', refCode)
+      .single();
+
+    if(refUser){
+      await supabase.from('referrals').insert([{
+        referrer_id: refUser.id,
+        invited_id: userId
+      }]);
+
+      await supabase.from('users')
+        .update({ referral_count: refUser.referral_count + 1 })
+        .eq('id', refUser.id);
+    }
   }
 
   msg.style.color="green";
