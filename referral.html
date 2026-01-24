@@ -2,228 +2,128 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Referral | Novabit</title>
+<title>Referral</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
+  window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
 
 <style>
 body{
+  font-family:Segoe UI, sans-serif;
+  background:#f6f7fb;
   margin:0;
-  font-family:Roboto,Arial,sans-serif;
-  background:#f4f6fa;
 }
-
-/* HEADER */
-header{
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-header button{
-  background:#4b49ac;
-  border:none;
-  color:#fff;
-  padding:8px 14px;
-  border-radius:5px;
-  cursor:pointer;
-}
-
-/* SIDE PANEL */
-#sidePanel{
-  position:fixed;
-  top:0;
-  right:-400px;
-  width:33%;
-  max-width:360px;
-  height:100%;
-  background:#fff;
-  box-shadow:-3px 0 10px rgba(0,0,0,.2);
-  padding:20px;
-  overflow-y:auto;
-  transition:right 0.3s;
-  z-index:100;
-}
-#sidePanel.active{right:0;}
-#sidePanel a{
-  display:block;
-  margin:12px 0;
-  color:#1a1a2e;
-  text-decoration:none;
-  font-weight:500;
-}
-
-/* CONTAINER */
 .container{
-  padding:25px;
-}
-.card{
+  max-width:900px;
+  margin:40px auto;
   background:#fff;
-  padding:25px;
-  border-radius:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,.1);
+  padding:30px;
+  border-radius:12px;
+  box-shadow:0 8px 25px rgba(0,0,0,.1);
+}
+h2{margin-top:0;color:#222}
+.ref-box{
+  background:#f1f2ff;
+  padding:15px;
+  border-radius:8px;
   margin-bottom:20px;
 }
-.card h2{margin-top:0;}
-input{
+.ref-box input{
   width:100%;
   padding:10px;
-  border:1px solid #ccc;
-  border-radius:5px;
-  margin-bottom:15px;
+  font-size:15px;
 }
 table{
   width:100%;
   border-collapse:collapse;
-  margin-top:15px;
 }
 th,td{
-  border:1px solid #ddd;
-  padding:8px;
+  padding:12px;
+  border-bottom:1px solid #eee;
   text-align:left;
 }
-th{
-  background:#1a1a2e;
-  color:#fff;
-}
-.status{
-  margin-top:10px;
-  font-weight:500;
-}
-button.copyBtn{
-  padding:8px 15px;
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
-}
-button.copyBtn:hover{background:#3a3690;}
+th{background:#fafafa}
+.status-approved{color:green;font-weight:bold}
+.status-pending{color:orange;font-weight:bold}
+.status-rejected{color:red;font-weight:bold}
 </style>
 </head>
 
 <body>
 
-<header>
-  <h2>Referral Program</h2>
-  <button onclick="togglePanel()">Menu</button>
-</header>
-
-<!-- SIDE PANEL -->
-<div id="sidePanel">
-  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;margin-bottom:15px;cursor:pointer;">Close</button>
-  <h3>Menu</h3>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="profile.html">Profile</a>
-  <a href="kyc.html">KYC</a>
-  <a href="referral.html"><strong>Referral</strong></a>
-</div>
-
 <div class="container">
-  <div class="card">
-    <h2>Your Referral Link</h2>
-    <input type="text" id="refLink" readonly>
-    <button class="copyBtn" onclick="copyLink()">Copy Link</button>
+  <h2>Your Referral Program</h2>
 
-    <div class="status" id="refStats">
-      Total Invited: 0
-    </div>
-
-    <h2>Invited Users</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>User ID</th>
-          <th>KYC Status</th>
-          <th>Invited At</th>
-        </tr>
-      </thead>
-      <tbody id="refTable">
-      </tbody>
-    </table>
+  <div class="ref-box">
+    <strong>Your referral link:</strong>
+    <input id="refLink" readonly>
+    <p>Total referrals: <b id="refCount">0</b></p>
   </div>
+
+  <h3>Invited Users</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>KYC Status</th>
+        <th>Invited At</th>
+      </tr>
+    </thead>
+    <tbody id="refTable"></tbody>
+  </table>
 </div>
 
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Toggle side panel
-function togglePanel(){
-  document.getElementById('sidePanel').classList.toggle('active');
-}
-window.togglePanel = togglePanel;
-
-// Copy referral link
-function copyLink(){
-  const input = document.getElementById('refLink');
-  input.select();
-  input.setSelectionRange(0,99999);
-  document.execCommand('copy');
-  alert("Referral link copied!");
-}
-window.copyLink = copyLink;
-
-// Load referral data
-async function loadReferral(){
-  const { data: { user } } = await supabase.auth.getUser();
-  if(!user){
-    alert("Please login first");
-    return;
-  }
-  const userId = user.id;
-
-  // 🔹 1. لینک ریفرال و تعداد دعوت‌ها
-  const { data: myReferral } = await supabase
-    .from('referrals')
-    .select('referral_code, referral_count')
-    .eq('referrer_id', userId)
-    .single();
-
-  document.getElementById('refLink').value =
-    `${window.location.origin}/login.html?ref=${myReferral?.referral_code || userId}`;
-
-  document.getElementById('refStats').innerText =
-    `Total Invited: ${myReferral?.referral_count || 0}`;
-
-  // 🔹 2. کاربران دعوت‌شده + KYC
-  const { data: invitedUsers } = await supabase
-    .from('referrals')
-    .select(`
-      invited_id,
-      created_at,
-      invited_user:invited_id (
-        id
-      ),
-      kyc_requests:invited_id (
-        status
-      )
-    `)
-    .eq('referrer_id', userId);
-
-  const table = document.getElementById('refTable');
-  table.innerHTML = "";
-
-  invitedUsers.forEach(r => {
-    const kycStatus = r.kyc_requests?.status || "pending";
-
-    table.insertAdjacentHTML('beforeend',`
-      <tr>
-        <td>${r.invited_id.slice(0,8)}...</td>
-        <td>${kycStatus}</td>
-        <td>${new Date(r.created_at).toLocaleDateString()}</td>
-      </tr>
-    `);
-  });
+const { data: { user } } = await supabase.auth.getUser();
+if(!user){
+  location.href="login.html";
 }
 
-window.loadReferral = loadReferral;
-window.onload = loadReferral;
+const userId = user.id;
+
+// گرفتن اطلاعات کاربر
+const { data: me } = await supabase
+  .from('users')
+  .select('referral_code, referral_count')
+  .eq('id', userId)
+  .single();
+
+document.getElementById('refLink').value =
+  `${location.origin}/login.html?ref=${me.referral_code}`;
+document.getElementById('refCount').innerText = me.referral_count;
+
+// گرفتن لیست دعوت شده‌ها
+const { data: refs } = await supabase
+  .from('referrals')
+  .select(`
+    invited_id,
+    created_at,
+    users:invited_id ( email ),
+    kyc_requests ( status )
+  `)
+  .eq('referrer_id', userId);
+
+const tbody = document.getElementById('refTable');
+tbody.innerHTML = "";
+
+refs.forEach(r=>{
+  const kyc = r.kyc_requests?.[0]?.status || "pending";
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${r.users?.email || '-'}</td>
+    <td class="status-${kyc}">${kyc}</td>
+    <td>${new Date(r.created_at).toLocaleDateString()}</td>
+  `;
+  tbody.appendChild(tr);
+});
 </script>
 
 </body>
