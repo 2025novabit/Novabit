@@ -165,46 +165,46 @@ signupSubmit.onclick=async()=>{
   const userId=data.user.id;
   const myRefCode=userId.substring(0,8);
 
-  // users
+  // users table
   await supabase.from("users").insert({
     id:userId,
     email,
     first_name:signupFirstName.value,
     last_name:signupLastName.value,
     dob:signupDOB.value,
-    country:signupCountry.value
+    country:signupCountry.value,
+    referral_code: myRefCode  // ✅ اضافه شد
   });
 
-  // own referral row
-  await supabase.from("referrals").insert({
-  user_id: userId,
-  referral_code: myRefCode,
-  referrer_id: null,
-  referral_count: 0
-});
+  // پیدا کردن دعوت‌کننده اگر لینک وجود داشت
+  let referrerId = null;
+  if (refCode) {
+    const { data: refOwner } = await supabase
+      .from("users")
+      .select("id")
+      .eq("referral_code", refCode)
+      .limit(1);
 
-// پیدا کردن دعوت‌کننده (اگر وجود داشت)
-let referrerId = null;
+    if(refOwner && refOwner.length>0){
+      referrerId = refOwner[0].id;
 
-if (refCode) {
-  const { data: refOwner } = await supabase
-    .from("referrals")
-    .select("user_id, referral_count")
-    .eq("referral_code", refCode)
-    .limit(1);
-
-  if (refOwner && refOwner.length > 0) {
-    referrerId = refOwner[0].user_id;
-
-    // افزایش تعداد ریفرال‌های صاحب لینک
-    await supabase
-      .from("referrals")
-      .update({
-        referral_count: (refOwner[0].referral_count || 0) + 1
-      })
-      .eq("user_id", referrerId);
+      // افزایش تعداد ریفرال صاحب لینک
+      await supabase
+        .from("referrals")
+        .update({
+          referral_count: supabase.raw("referral_count + 1") // اطمینان از افزایش
+        })
+        .eq("user_id", referrerId);
+    }
   }
-}
+
+  // ثبت ردیف ریفرال کاربر جدید
+  await supabase.from("referrals").insert({
+    user_id: userId,
+    referral_code: myRefCode,
+    referrer_id: referrerId,
+    referral_count: 0
+  });
 
   msg.style.color="green";
   msg.innerText="Registered successfully. Please login.";
