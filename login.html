@@ -177,37 +177,39 @@ signupSubmit.onclick=async()=>{
 
   // own referral row
   await supabase.from("referrals").insert({
-    referrer_id:userId,
-    referral_code:myRefCode,
-    referral_count:0
-  });
+  user_id: userId,
+  referral_code: myRefCode,
+  referrer_id: null,
+  referral_count: 0
+});
 
   // invited by someone
 if (refCode) {
 
-  const { data: refOwner, error } = await supabase
+  // پیدا کردن صاحب لینک
+  const { data: refOwner } = await supabase
     .from("referrals")
-    .select("id, referral_count")
+    .select("user_id, referral_count")
     .eq("referral_code", refCode)
     .single();
 
   if (refOwner) {
 
-    // افزایش تعداد ریفرال
+    // اتصال کاربر جدید به دعوت‌کننده
     await supabase
       .from("referrals")
       .update({
-        referral_count: (refOwner.referral_count || 0) + 1
+        referrer_id: refOwner.user_id
       })
-      .eq("id", refOwner.id);
+      .eq("user_id", userId);
 
-    // ثبت invited_id در همان ردیف
+    // افزایش تعداد ریفرال‌های صاحب لینک
     await supabase
       .from("referrals")
       .update({
-        invited_id: userId
+        referral_count: refOwner.referral_count + 1
       })
-      .eq("id", refOwner.id);
+      .eq("user_id", refOwner.user_id);
   }
 }
 
