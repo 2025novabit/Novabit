@@ -185,8 +185,6 @@ signupSubmit.onclick=async()=>{
   // invited by someone
 if (refCode) {
 
- if (refCode) {
-
   // پیدا کردن صاحب کد ریفرال
   const { data: refOwner, error: refErr } = await supabase
     .from("referrals")
