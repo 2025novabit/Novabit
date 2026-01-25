@@ -2,46 +2,42 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Referral | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Referral | Novabit</title>
 
+<!-- Supabase -->
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+  const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <style>
-body {margin:0; font-family:Roboto,sans-serif; background:#f4f6fa;}
-header{background:#1a1a2e; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center;}
+body { margin:0; font-family:Roboto,sans-serif; background:#f4f6fa; }
+header{ background:#1a1a2e; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center;}
 header button{background:#4b49ac; border:none; color:#fff; padding:8px 14px; border-radius:5px; cursor:pointer;}
-#sidePanel{
-  position:fixed; top:0; right:-400px; width:280px; height:100%;
-  background:#fff; box-shadow:-3px 0 10px rgba(0,0,0,.2);
-  padding:20px; overflow-y:auto; transition:right 0.3s; z-index:100;
-}
+#sidePanel{position:fixed; top:0; right:-400px; width:300px; height:100%; background:#fff; box-shadow:-3px 0 10px rgba(0,0,0,.2); padding:20px; overflow-y:auto; transition:right 0.3s; z-index:100;}
 #sidePanel.active{right:0;}
 #sidePanel h2{margin-top:0;}
 #sidePanel a{display:block; margin:10px 0; color:#1a1a2e; text-decoration:none; font-weight:500;}
-.container{padding:20px;}
-.card{background:#fff; padding:25px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); max-width:650px; margin:auto;}
-h2{margin-top:0; color:#1a1a2e;}
-.ref-link{display:flex; gap:10px; margin:15px 0;}
-.ref-link input{flex:1; padding:12px; border-radius:8px; border:1px solid #ccc;}
-.ref-link button{padding:12px 18px; border:none; border-radius:8px; background:#4b49ac; color:#fff; cursor:pointer;}
-.stats{margin-top:25px; display:flex; gap:20px; flex-wrap:wrap;}
-.stat{flex:1; min-width:120px; background:#f1f2ff; padding:20px; border-radius:12px; text-align:center;}
-.stat h3{margin:0; font-size:28px; color:#4b49ac;}
-.stat p{margin:8px 0 0; color:#333; font-weight:500;}
+.container{padding:20px; max-width:600px; margin:40px auto; background:#fff; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+.container h2{text-align:center; margin-bottom:20px;}
+.form-group{margin-bottom:15px;}
+.form-group label{display:block; margin-bottom:5px; font-weight:500;}
+.form-group input{width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;}
+#refLink{width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;}
+.stats{display:flex; justify-content:space-between; margin-top:20px;}
+.stats div{background:#f0f0f0; padding:15px; border-radius:8px; flex:1; margin:0 5px; text-align:center;}
+button.copyBtn{background:#4b49ac; color:#fff; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; margin-top:5px;}
 </style>
 </head>
-
 <body>
+
 <header>
-  <h2>Referral Program</h2>
+  <h2>Referral Dashboard</h2>
   <button onclick="togglePanel()">Menu</button>
 </header>
 
@@ -58,72 +54,77 @@ h2{margin-top:0; color:#1a1a2e;}
 </div>
 
 <div class="container">
-  <div class="card">
-    <h2>Your Referral Link</h2>
-    <div class="ref-link">
-      <input type="text" id="refLink" readonly>
-      <button id="copyBtn">Copy</button>
-    </div>
+  <h2>Your Referral</h2>
+  <div class="form-group">
+    <label>Referral Link</label>
+    <input type="text" id="refLink" readonly>
+    <button class="copyBtn" onclick="copyLink()">Copy Link</button>
+  </div>
 
-    <div class="stats">
-      <div class="stat">
-        <h3 id="totalRef">0</h3>
-        <p>Total Invited</p>
-      </div>
-      <div class="stat">
-        <h3 id="kycDone">0</h3>
-        <p>Verified Users</p>
-      </div>
+  <div class="stats">
+    <div>
+      <h3>Total Invited</h3>
+      <p id="totalRef">0</p>
+    </div>
+    <div>
+      <h3>KYC Verified</h3>
+      <p id="kycDone">0</p>
     </div>
   </div>
 </div>
 
 <script type="module">
-// Sidebar toggle
+// Toggle side panel
 function togglePanel(){document.getElementById('sidePanel').classList.toggle('active');}
 
-// Load referral data
+// Copy referral link
+function copyLink(){
+  const link = document.getElementById('refLink').value;
+  navigator.clipboard.writeText(link).then(()=>alert("Link copied!"));
+}
+
+// Load referral stats
 const loadReferral = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if(!user) return;
 
   // گرفتن ردیف خود کاربر
-  const { data } = await supabase
+  const { data: myReferral } = await supabase
     .from("referrals")
     .select("*")
     .eq("user_id", user.id)
     .single();
-  if(!data) return;
 
-  // لینک ریفرال با login.html
-  document.getElementById("refLink").value = `${location.origin}/login.html?ref=${data.referral_code}`;
-  document.getElementById("totalRef").innerText = data.referral_count;
+  if(!myReferral) return;
 
-  // تعداد کاربران KYC شده (verified)
-  const { data: verified } = await supabase
+  document.getElementById("refLink").value = `${location.origin}/login.html?ref=${myReferral.referral_code}`;
+
+  // تعداد کل کاربران دعوت شده
+  const { data: invitedUsers } = await supabase
     .from("referrals")
     .select("invited_id")
     .eq("referrer_id", user.id)
-    .not("invited_id", "is", null)
-    .in("invited_id", async (ids) => {
-      const { data: kyc } = await supabase
-        .from("kyc")
-        .select("user_id")
-        .eq("status", "approved");
-      return kyc.map(k=>k.user_id);
-    });
-  document.getElementById("kycDone").innerText = verified.length || 0;
+    .not("invited_id", "is", null);
+  document.getElementById("totalRef").innerText = invitedUsers.length;
+
+  // تعداد کاربران KYC شده
+  const invitedIds = invitedUsers.map(u => u.invited_id);
+  if(invitedIds.length === 0){
+    document.getElementById("kycDone").innerText = 0;
+    return;
+  }
+
+  const { data: verified } = await supabase
+    .from("kyc")
+    .select("user_id")
+    .eq("status", "approved")
+    .in("user_id", invitedIds);
+
+  document.getElementById("kycDone").innerText = verified.length;
 };
 
 loadReferral();
-
-// Copy link
-copyBtn.onclick = ()=>{
-  refLink.select();
-  document.execCommand("copy");
-  copyBtn.innerText="Copied!";
-  setTimeout(()=>copyBtn.innerText="Copy",1500);
-};
 </script>
+
 </body>
 </html>
