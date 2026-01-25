@@ -2,137 +2,68 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Referral</title>
+<title>Referral | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-  window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <style>
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f4f6fb;
-  display:flex;
-}
+body {margin:0; font-family:Roboto,sans-serif; background:#f4f6fa; padding-bottom:0;}
+header{background:#1a1a2e; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center;}
+header button{background:#4b49ac; border:none; color:#fff; padding:8px 14px; border-radius:5px; cursor:pointer;}
 
-/* Sidebar */
-.sidebar{
-  width:240px;
-  background:#1a1a2e;
-  color:#fff;
-  padding:20px;
-  transition:transform .3s ease;
+#sidePanel{
+  position:fixed; top:0; right:-400px; width:280px; height:100%;
+  background:#fff; box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px; overflow-y:auto; transition:right 0.3s; z-index:100;
 }
-.sidebar.closed{
-  transform:translateX(100%);
-}
-.sidebar h3{
-  margin-top:0;
-}
-.sidebar a{
-  display:block;
-  color:#fff;
-  text-decoration:none;
-  margin:15px 0;
-  font-weight:500;
-}
+#sidePanel.active{right:0;}
+#sidePanel h2{margin-top:0;}
+#sidePanel a{display:block; margin:10px 0; color:#1a1a2e; text-decoration:none; font-weight:500;}
 
-/* Main */
-.main{
-  flex:1;
-  padding:40px;
-}
+.container{padding:20px;}
+.card{background:#fff; padding:25px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); max-width:650px; margin:auto;}
+h2{margin-top:0; color:#1a1a2e;}
 
-.toggle-btn{
-  position:fixed;
-  top:20px;
-  right:20px;
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  padding:10px 14px;
-  border-radius:8px;
-  cursor:pointer;
-}
+.ref-link{display:flex; gap:10px; margin:15px 0;}
+.ref-link input{flex:1; padding:12px; border-radius:8px; border:1px solid #ccc;}
+.ref-link button{padding:12px 18px; border:none; border-radius:8px; background:#4b49ac; color:#fff; cursor:pointer;}
 
-.card{
-  background:#fff;
-  max-width:600px;
-  padding:30px;
-  border-radius:14px;
-  box-shadow:0 10px 25px rgba(0,0,0,.15);
-}
-
-h2{
-  margin-top:0;
-  color:#1a1a2e;
-}
-
-.ref-link{
-  display:flex;
-  gap:10px;
-  margin:15px 0;
-}
-
-.ref-link input{
-  flex:1;
-  padding:12px;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-
-.ref-link button{
-  padding:12px 18px;
-  border:none;
-  border-radius:8px;
-  background:#4b49ac;
-  color:#fff;
-  cursor:pointer;
-}
-
-.stats{
-  margin-top:25px;
-  display:flex;
-  gap:20px;
-}
-
-.stat{
-  flex:1;
-  background:#f1f2ff;
-  padding:20px;
-  border-radius:12px;
-  text-align:center;
-}
-
-.stat h3{
-  margin:0;
-  font-size:28px;
-  color:#4b49ac;
-}
-
-.stat p{
-  margin:8px 0 0;
-  color:#333;
-  font-weight:500;
-}
+.stats{margin-top:25px; display:flex; gap:20px; flex-wrap:wrap;}
+.stat{flex:1; min-width:120px; background:#f1f2ff; padding:20px; border-radius:12px; text-align:center;}
+.stat h3{margin:0; font-size:28px; color:#4b49ac;}
+.stat p{margin:8px 0 0; color:#333; font-weight:500;}
 </style>
 </head>
 
 <body>
+<header>
+  <h2>Referral Program</h2>
+  <button onclick="togglePanel()">Menu</button>
+</header>
 
-<button class="toggle-btn" id="toggleBtn">☰</button>
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
+  <h2>Menu</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="profile.html">Profile</a>
+  <a href="kyc.html">KYC</a>
+  <a href="changepassword.html">Change Password</a>
+  <a href="2fa.html">2FA Settings</a>
+  <a href="fee.html">Fees</a>
+  <a href="referral.html" class="active">Referral</a>
+</div>
 
-<div class="main">
+<div class="container">
   <div class="card">
     <h2>Your Referral Link</h2>
-
     <div class="ref-link">
       <input type="text" id="refLink" readonly>
       <button id="copyBtn">Copy</button>
@@ -140,54 +71,53 @@ h2{
 
     <div class="stats">
       <div class="stat">
-        <h3 id="refCount">0</h3>
-        <p>Total Referrals</p>
+        <h3 id="totalRef">0</h3>
+        <p>Total Invited</p>
+      </div>
+      <div class="stat">
+        <h3 id="kycDone">0</h3>
+        <p>Verified Users</p>
       </div>
     </div>
   </div>
 </div>
 
-<div class="sidebar closed" id="sidebar">
-  <h3>Menu</h3>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="referral.html">Referral</a>
-  <a href="logout.html">Logout</a>
-</div>
-
 <script type="module">
-const sidebar = document.getElementById("sidebar");
-const toggleBtn = document.getElementById("toggleBtn");
-
-toggleBtn.onclick = () => {
-  sidebar.classList.toggle("closed");
-};
+// Sidebar toggle
+function togglePanel(){document.getElementById('sidePanel').classList.toggle('active');}
 
 // Load referral data
 const loadReferral = async () => {
-
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  if(!user) return;
 
+  // لینک ریفرال خود کاربر
   const { data } = await supabase
     .from("referrals")
     .select("referral_code, referral_count")
     .eq("user_id", user.id)
     .single();
+  if(!data) return;
 
-  if (!data) return;
+  document.getElementById("refLink").value = `${location.origin}/signup.html?ref=${data.referral_code}`;
+  document.getElementById("totalRef").innerText = data.referral_count;
 
-  const link = `${location.origin}/signup.html?ref=${data.referral_code}`;
-  document.getElementById("refLink").value = link;
-  document.getElementById("refCount").innerText = data.referral_count;
+  // تعداد کاربران KYC شده دعوت شده توسط این کاربر
+  const { data: verified } = await supabase
+    .from("referrals")
+    .select("invited_id")
+    .not("invited_id", "is", null)
+    .in("referrer_id", [user.id]);
+  document.getElementById("kycDone").innerText = verified.length || 0;
 };
 
 loadReferral();
 
 // Copy
-copyBtn.onclick = () => {
+copyBtn.onclick = ()=>{
   refLink.select();
   document.execCommand("copy");
-  copyBtn.innerText = "Copied!";
+  copyBtn.innerText="Copied!";
   setTimeout(()=>copyBtn.innerText="Copy",1500);
 };
 </script>
