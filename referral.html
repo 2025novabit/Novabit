@@ -15,10 +15,9 @@ window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <style>
-body {margin:0; font-family:Roboto,sans-serif; background:#f4f6fa; padding-bottom:0;}
+body {margin:0; font-family:Roboto,sans-serif; background:#f4f6fa;}
 header{background:#1a1a2e; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center;}
 header button{background:#4b49ac; border:none; color:#fff; padding:8px 14px; border-radius:5px; cursor:pointer;}
-
 #sidePanel{
   position:fixed; top:0; right:-400px; width:280px; height:100%;
   background:#fff; box-shadow:-3px 0 10px rgba(0,0,0,.2);
@@ -27,15 +26,12 @@ header button{background:#4b49ac; border:none; color:#fff; padding:8px 14px; bor
 #sidePanel.active{right:0;}
 #sidePanel h2{margin-top:0;}
 #sidePanel a{display:block; margin:10px 0; color:#1a1a2e; text-decoration:none; font-weight:500;}
-
 .container{padding:20px;}
 .card{background:#fff; padding:25px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); max-width:650px; margin:auto;}
 h2{margin-top:0; color:#1a1a2e;}
-
 .ref-link{display:flex; gap:10px; margin:15px 0;}
 .ref-link input{flex:1; padding:12px; border-radius:8px; border:1px solid #ccc;}
 .ref-link button{padding:12px 18px; border:none; border-radius:8px; background:#4b49ac; color:#fff; cursor:pointer;}
-
 .stats{margin-top:25px; display:flex; gap:20px; flex-wrap:wrap;}
 .stat{flex:1; min-width:120px; background:#f1f2ff; padding:20px; border-radius:12px; text-align:center;}
 .stat h3{margin:0; font-size:28px; color:#4b49ac;}
@@ -91,29 +87,37 @@ const loadReferral = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if(!user) return;
 
-  // لینک ریفرال خود کاربر
+  // گرفتن ردیف خود کاربر
   const { data } = await supabase
     .from("referrals")
-    .select("referral_code, referral_count")
+    .select("*")
     .eq("user_id", user.id)
     .single();
   if(!data) return;
 
-  document.getElementById("refLink").value = `${location.origin}/signup.html?ref=${data.referral_code}`;
+  // لینک ریفرال با login.html
+  document.getElementById("refLink").value = `${location.origin}/login.html?ref=${data.referral_code}`;
   document.getElementById("totalRef").innerText = data.referral_count;
 
-  // تعداد کاربران KYC شده دعوت شده توسط این کاربر
+  // تعداد کاربران KYC شده (verified)
   const { data: verified } = await supabase
     .from("referrals")
     .select("invited_id")
+    .eq("referrer_id", user.id)
     .not("invited_id", "is", null)
-    .in("referrer_id", [user.id]);
+    .in("invited_id", async (ids) => {
+      const { data: kyc } = await supabase
+        .from("kyc")
+        .select("user_id")
+        .eq("status", "approved");
+      return kyc.map(k=>k.user_id);
+    });
   document.getElementById("kycDone").innerText = verified.length || 0;
 };
 
 loadReferral();
 
-// Copy
+// Copy link
 copyBtn.onclick = ()=>{
   refLink.select();
   document.execCommand("copy");
@@ -121,6 +125,5 @@ copyBtn.onclick = ()=>{
   setTimeout(()=>copyBtn.innerText="Copy",1500);
 };
 </script>
-
 </body>
 </html>
