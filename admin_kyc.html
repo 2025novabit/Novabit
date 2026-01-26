@@ -110,6 +110,72 @@ window.approve = async (id) => {
   }
   loadKYC();
 }
+// ✅ APPROVE + REFERRAL REWARD (همه‌چیز همین‌جا)
+window.approve = async (kycId) => {
+
+  // 1️⃣ تایید KYC و گرفتن user_id
+  const { data: kyc, error } = await supabase
+    .from('kyc_requests')
+    .update({ status: 'approved' })
+    .eq('id', kycId)
+    .select('user_id')
+    .single();
+
+  if (error || !kyc) {
+    alert("KYC approve failed");
+    return;
+  }
+
+  const verifiedUserId = kyc.user_id;
+
+  // 2️⃣ گرفتن referral_id کاربر تایید شده
+  const { data: verifiedUser } = await supabase
+    .from('users')
+    .select('referral_id')
+    .eq('id', verifiedUserId)
+    .single();
+
+  if (!verifiedUser || !verifiedUser.referral_id) {
+    loadKYC();
+    return; // کاربر دعوت‌کننده ندارد
+  }
+
+  // 3️⃣ پیدا کردن دعوت‌کننده
+  const { data: referrer } = await supabase
+    .from('users')
+    .select('id')
+    .eq('referral_code', verifiedUser.referral_id)
+    .single();
+
+  if (!referrer) {
+    loadKYC();
+    return;
+  }
+
+  // 4️⃣ گرفتن wallet USDT دعوت‌کننده
+  const { data: wallet } = await supabase
+    .from('wallet')
+    .select('balance')
+    .eq('user_id', referrer.id)
+    .eq('coin_symbol', 'USDT')
+    .single();
+
+  if (!wallet) {
+    loadKYC();
+    return;
+  }
+
+  // 5️⃣ اضافه کردن 2 USDT
+  await supabase
+    .from('wallet')
+    .update({
+      balance: Number(wallet.balance) + 2
+    })
+    .eq('user_id', referrer.id)
+    .eq('coin_symbol', 'USDT');
+
+  loadKYC();
+};
 
 // Reject KYC
 window.reject = async (id) => {
