@@ -124,18 +124,18 @@ window.approve = async (kycId) => {
   if (refError || !referrer) { loadKYC(); return; }
 
   // 4️⃣ گرفتن ردیف USDT دعوت‌کننده
-  const { data: wallet, error: walletError } = await supabase
-    .from('wallet')
+  const { data: wallets, error: walletError } = await supabase
+    .from('wallets')
     .select('balance')
     .eq('user_id', referrer.id)
     .eq('coin_symbol', 'USDT')
     .single();
 
-  if (walletError || !wallet) { loadKYC(); return; }
+  if (walletError || !wallets) { loadKYC(); return; }
 
   // 5️⃣ اضافه کردن 2 USDT
   const { error: updateError } = await supabase
-    .from('wallet')
+    .from('wallets')
     .update({ balance: Number(wallet.balance) + 2 })
     .eq('user_id', referrer.id)
     .eq('coin_symbol', 'USDT');
