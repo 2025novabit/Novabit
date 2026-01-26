@@ -11,14 +11,23 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function loadReferralData() {
-  const user = supabase.auth.getUser(); // auth user
+  // ابتدا کاربر جاری را بگیریم
+  const { data: { user }, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !user) {
+    document.getElementById('refLink').innerText = "You must be logged in to see referral data.";
+    document.getElementById('totalInvited').innerText = "0";
+    document.getElementById('invitedList').innerHTML = "<li>Not logged in</li>";
+    return;
+  }
+
+  // گرفتن اطلاعات کاربر از جدول users
   const { data: meData, error: meErr } = await supabase
     .from('users')
     .select('user_id, referral_code')
-    .eq('user_id', (await user).data.user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (meErr || !meData) {
@@ -31,7 +40,7 @@ async function loadReferralData() {
   document.getElementById('refLink').innerText = referralLink;
   document.getElementById('refLink').href = referralLink;
 
-  // دریافت کاربران دعوت‌شده
+  // دریافت کاربران دعوت شده
   const { data: invitedUsers, error: invitedErr } = await supabase
     .from('users')
     .select('first_name,last_name')
@@ -57,9 +66,7 @@ async function loadReferralData() {
   }
 }
 
-window.addEventListener('DOMContentLoaded', async () => {
-  await loadReferralData();
-});
+window.addEventListener('DOMContentLoaded', loadReferralData);
 </script>
 
 <style>
