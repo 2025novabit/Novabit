@@ -62,32 +62,34 @@ async function copyReferral() {
 async function loadReferralData() {
   const { data: sessionData } = await supabase.auth.getSession();
 
+  // اگر کاربر لاگین نیست → برگرد به صفحه login/signup
   if (!sessionData?.session?.user) {
-    document.getElementById('referralLink').innerText = 'Please login to see your referral link';
-    document.getElementById('totalInvited').innerText = '0';
-    document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">Login required</td></tr>';
+    window.location.href = "login.html";
     return;
   }
 
   const userId = sessionData.session.user.id;
 
-  // دریافت کد ریفرال خود کاربر
-  const { data: userData, error } = await supabase
+  // دریافت ردیف خودش از جدول users
+  const { data: userRow, error: userError } = await supabase
     .from('users')
     .select('referral_code')
     .eq('id', userId)
     .single();
 
-  if (error || !userData) {
+  if (userError || !userRow) {
     document.getElementById('referralLink').innerText = 'Error loading your referral code.';
     return;
   }
 
-  const referralCode = userData.referral_code;
-  document.getElementById('referralLink').innerText = `${location.origin}/signup.html?ref=${referralCode}`;
+  const referralCode = userRow.referral_code;
+
+  // لینک ریفرال خود کاربر
+  const referralLink = `${location.origin}/signup.html?ref=${referralCode}`;
+  document.getElementById('referralLink').innerText = referralLink;
 
   // کاربران دعوت شده
-  const { data: invited } = await supabase
+  const { data: invited, error: invitedError } = await supabase
     .from('users')
     .select('first_name,last_name')
     .eq('referral_id', referralCode);
@@ -95,7 +97,7 @@ async function loadReferralData() {
   const total = invited?.length || 0;
   document.getElementById('totalInvited').innerText = total;
 
-  if (total === 0) {
+  if (!invited || invited.length === 0) {
     document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">No invited users</td></tr>';
   } else {
     document.getElementById('invitedUsers').innerHTML = invited.map(u =>
