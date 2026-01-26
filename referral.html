@@ -86,7 +86,6 @@ async function copyReferral() {
 }
 
 async function loadReferralData() {
-  // گرفتن کاربر فعلی
   const { data: { user }, error: sessionError } = await supabase.auth.getUser();
   if (sessionError || !user) {
     document.getElementById('referralLink').innerText = 'Please login.';
@@ -95,36 +94,26 @@ async function loadReferralData() {
     return;
   }
 
-  // گرفتن کد ریفرال خود کاربر
+  // همیشه کد ریفرال خودش را بخوان
   const { data: userData, error } = await supabase
     .from('users')
     .select('referral_code')
     .eq('id', user.id)
     .single();
 
-  if (error || !userData) {
-    document.getElementById('referralLink').innerText = 'Error loading referral code.';
-    return;
-  }
-
-  const referralCode = userData.referral_code;
+  const referralCode = userData?.referral_code || 'N/A';
   document.getElementById('referralLink').innerText = `${location.origin}/signup.html?ref=${referralCode}`;
 
-  // گرفتن کاربران دعوت شده
-  const { data: invited, error: invitedError } = await supabase
+  // کاربران دعوت شده (اگر داشت)
+  const { data: invited } = await supabase
     .from('users')
     .select('first_name,last_name')
     .eq('referral_id', referralCode);
 
-  if (invitedError || !invited) {
-    document.getElementById('totalInvited').innerText = 0;
-    document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">No invited users</td></tr>';
-    return;
-  }
+  const total = invited?.length || 0;
+  document.getElementById('totalInvited').innerText = total;
 
-  document.getElementById('totalInvited').innerText = invited.length;
-
-  if (invited.length === 0) {
+  if (total === 0) {
     document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">No invited users</td></tr>';
   } else {
     document.getElementById('invitedUsers').innerHTML = invited.map(u =>
