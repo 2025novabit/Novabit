@@ -13,6 +13,9 @@
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  window.togglePanel = () => document.getElementById('sidePanel').classList.toggle('active');
+  window.logout = async () => { await supabase.auth.signOut(); window.location.href="login.html"; }
+
   async function loadReferral() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -34,7 +37,7 @@
       return;
     }
 
-    const referralLink = `${window.location.origin}/login.html?ref=${user.referral_code}`;
+    const referralLink = `${window.location.origin}/signup.html?ref=${user.referral_code}`;
     document.getElementById('referralLink').innerHTML = `
       <input type="text" value="${referralLink}" id="refLinkInput" readonly style="width:80%;padding:5px;">
       <button onclick="copyReferralLink()">Copy Link</button>
@@ -47,15 +50,9 @@
       .eq('referral_id', user.referral_code)
       .order('created_at', { ascending: true });
 
-    if (inviteError) {
-      document.getElementById('totalInvited').innerText = 'Error';
-      document.getElementById('invitedList').innerHTML = 'Error loading invited users.';
-      return;
-    }
+    document.getElementById('totalInvited').innerText = inviteError ? 0 : invitedUsers.length;
 
-    document.getElementById('totalInvited').innerText = invitedUsers.length;
-
-    if (invitedUsers.length === 0) {
+    if (inviteError || invitedUsers.length === 0) {
       document.getElementById('invitedList').innerHTML = '<tr><td colspan="2">No invited users yet.</td></tr>';
     } else {
       document.getElementById('invitedList').innerHTML = invitedUsers
@@ -76,20 +73,113 @@
 </script>
 
 <style>
-body{font-family:Roboto,sans-serif;margin:0;padding:20px;background:#f4f6fa;}
-h2{color:#1a1a2e;}
-.ref-card{background:#fff;padding:20px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);max-width:600px;margin:auto;margin-bottom:20px;}
-.ref-card button{margin-left:10px;padding:5px 10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;}
-table{width:100%;border-collapse:collapse;}
-th,td{padding:10px;border-bottom:1px solid #ccc;text-align:left;}
+body {
+  margin:0;
+  font-family:Roboto,sans-serif;
+  background:#f4f6fa;
+}
+/* HEADER */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:5px;
+  cursor:pointer;
+}
+/* SIDE PANEL */
+#sidePanel{
+  position:fixed;
+  top:0;
+  right:-400px;
+  width:33%;
+  max-width:360px;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  overflow-y:auto;
+  transition:right 0.3s;
+  z-index:100;
+}
+#sidePanel.active{right:0;}
+#sidePanel a{
+  display:block;
+  margin:12px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
+}
+.logoutBtn{
+  width:100%;
+  margin-top:30px;
+  padding:10px;
+  background:#e74c3c;
+  border:none;
+  color:#fff;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* REFERRAL CARD */
+.ref-card{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,.1);
+  max-width:600px;
+  margin:auto;
+  margin-bottom:20px;
+}
+.ref-card button{
+  margin-left:10px;
+  padding:5px 10px;
+  background:#4b49ac;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid #ccc;
+  text-align:left;
+}
 th{background:#f0f0f0;}
 </style>
 </head>
 
 <body>
+<header>
+  <h2>Referral Dashboard</h2>
+  <button onclick="togglePanel()">Menu</button>
+</header>
+
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="profile.html">Profile</a>
+  <a href="kyc.html">KYC</a>
+  <a href="changepassword.html">Change Password</a>
+  <a href="2fa.html">2FA Settings</a>
+  <a href="fee.html">Fees</a>
+  <a href="referral.html" class="active">Referral</a>
+  <button class="logoutBtn" onclick="logout()">Logout</button>
+</div>
 
 <div class="ref-card">
-  <h2>Your Referral Dashboard</h2>
   <p><strong>Your referral link:</strong></p>
   <div id="referralLink">Loading...</div>
 </div>
@@ -108,6 +198,5 @@ th{background:#f0f0f0;}
     </tbody>
   </table>
 </div>
-
 </body>
 </html>
