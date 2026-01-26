@@ -176,38 +176,22 @@ signupSubmit.onclick=async()=>{
     country:signupCountry.value
   });
 
-// own referral row
-await supabase.from("referrals").insert({
-  user_id: userId,
-  referral_code: myRefCode,
-  referrer_id: null,
-  referral_count: 0
-});
+  // 🔹 ساخت کد ریفرال اختصاصی
+  const myReferralCode = userId.slice(0, 8);
 
-// invited by someone
-if (refCode) {
-  // پیدا کردن صاحب لینک ریفرال
-  const { data: refOwner } = await supabase
-    .from("referrals")
-    .select("user_id, referral_count")
-    .eq("referral_code", refCode)
-    .limit(1);
+  // 🔹 ذخیره در جدول users
+  await supabase.from("users").insert({
+    id: userId,
+    email,
+    first_name: signupFirstName.value,
+    last_name: signupLastName.value,
+    dob: signupDOB.value,
+    country: signupCountry.value,
 
-  if (refOwner && refOwner.length > 0) {
-    const referrerId = refOwner[0].user_id;
-
-    // اتصال کاربر جدید به دعوت‌کننده
-    await supabase.from("referrals")
-      .update({ referrer_id: referrerId })
-      .eq("user_id", userId);
-
-    // افزایش تعداد ریفرال صاحب لینک
-    await supabase.from("referrals")
-      .update({ referral_count: refOwner[0].referral_count + 1 })
-      .eq("user_id", referrerId);
-  }
-}
-
+    referral_code: myReferralCode,        // کد خود کاربر
+    referral_id: invitedByCode || null    // کد دعوت‌کننده (اگر داشت)
+  });
+  
   msg.style.color="green";
   msg.innerText="Registered successfully. Please login.";
 };
