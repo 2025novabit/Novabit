@@ -91,59 +91,58 @@ async function loadKYC() {
   });
 }
 
-// Approve KYC + Referral Reward
-window.approve = async (kycId) => {
+// approve KYC + referral reward
+async function approveKYC(kycId) {
+  try {
+    // 1️⃣ تایید KYC و گرفتن user_id
+    const { data: kyc, error: kycErr } = await supabase
+      .from('kyc_requests')
+      .update({ status:'approved' })
+      .eq('id', kycId)
+      .select('user_id')
+      .single();
 
-  // 1️⃣ تایید KYC و گرفتن user_id
-  const { data: kyc, error } = await supabase
-    .from('kyc_requests')
-    .update({ status: 'approved' })
-    .eq('id', kycId)
-    .select('user_id')
-    .single();
+    if(kycErr || !kyc){ alert('KYC approve failed'); return; }
+    const verifiedUserId = kyc.user_id;
 
-  if (error || !kyc) { alert("KYC approve failed"); return; }
-  const verifiedUserId = kyc.user_id;
+    // 2️⃣ گرفتن referral_id
+    const { data: verifiedUser } = await supabase
+      .from('users')
+      .select('referral_id')
+      .eq('id', verifiedUserId)
+      .single();
 
-  // 2️⃣ گرفتن referral_id کاربر تایید شده
-  const { data: verifiedUser, error: userError } = await supabase
-    .from('users')
-    .select('referral_id')
-    .eq('id', verifiedUserId)
-    .single();
+    if(!verifiedUser || !verifiedUser.referral_id){ loadKYC(); return; }
 
-  if (userError || !verifiedUser || !verifiedUser.referral_id) { loadKYC(); return; }
+    // 3️⃣ پیدا کردن دعوت‌کننده
+    const { data: referrer } = await supabase
+      .from('users')
+      .select('id')
+      .eq('referral_code', verifiedUser.referral_id)
+      .single();
 
-  // 3️⃣ پیدا کردن دعوت‌کننده
-  const { data: referrer, error: refError } = await supabase
-    .from('users')
-    .select('id')
-    .eq('referral_code', verifiedUser.referral_id)
-    .single();
+    if(!referrer){ loadKYC(); return; }
 
-  if (refError || !referrer) { loadKYC(); return; }
+    // 4️⃣ پیدا کردن کیف پول USDT
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('balance')
+      .eq('user_id', referrer.id)
+      .eq('coin_symbol', 'USDT')
+      .single();
 
-  // 4️⃣ گرفتن ردیف USDT دعوت‌کننده
-  const { data: wallet, error: walletError } = await supabase
-    .from('wallet')
-    .select('balance')
-    .eq('user_id', referrer.id)
-    .eq('coin_symbol', 'USDT')
-    .single();
+    if(!wallet){ loadKYC(); return; }
 
-  if (walletError || !wallet) { loadKYC(); return; }
+    // 5️⃣ اضافه کردن 2 USDT
+    await supabase
+      .from('wallets')
+      .update({ balance: Number(wallet.balance)+2 })
+      .eq('user_id', referrer.id)
+      .eq('coin_symbol', 'USDT');
 
-  // 5️⃣ اضافه کردن 2 USDT
-  const { error: updateError } = await supabase
-    .from('wallet')
-    .update({ balance: Number(wallet.balance) + 2 })
-    .eq('user_id', referrer.id)
-    .eq('coin_symbol', 'USDT');
-
-  if (updateError) { console.error(updateError); }
-
-  loadKYC();
-};
+    loadKYC();
+  } catch(e){ console.error(e); }
+}
 
 // Reject KYC
 window.reject = async (id) => {
