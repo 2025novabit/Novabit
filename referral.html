@@ -3,98 +3,122 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Referral</title>
+<title>Referral Dashboard</title>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzcyMDQ4fQ.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
 window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// صفحه را بارگذاری می‌کنیم
-async function loadReferral() {
-  const user = supabase.auth.user();
+async function loadReferralData() {
+  const user = supabase.auth.getUser(); // auth user
+  const { data: meData, error: meErr } = await supabase
+    .from('users')
+    .select('user_id, referral_code')
+    .eq('user_id', (await user).data.user.id)
+    .single();
 
-  if (!user) {
-    alert("You must be logged in");
-    window.location.href = "login.html";
+  if (meErr || !meData) {
+    document.getElementById('refLink').innerText = "Error loading your referral code.";
     return;
   }
 
-  // 1️⃣ دریافت کد ریفرال خود کاربر
-  const { data: me, error: meErr } = await supabase
-    .from('users')
-    .select('id, referral_code')
-    .eq('id', user.id)
-    .single();
+  const myReferralCode = meData.referral_code;
+  const referralLink = `${location.origin}/signup.html?ref=${myReferralCode}`;
+  document.getElementById('refLink').innerText = referralLink;
+  document.getElementById('refLink').href = referralLink;
 
-  if (meErr) { console.error(meErr); return; }
-
-  const referralCode = me.referral_code;
-  const referralLink = `${window.location.origin}/signup.html?ref=${referralCode}`;
-
-  document.getElementById('referralCode').innerText = referralCode;
-  document.getElementById('referralLink').value = referralLink;
-
-  // 2️⃣ دریافت کاربران دعوت‌شده
-  const { data: invited, error: invitedErr } = await supabase
+  // دریافت کاربران دعوت‌شده
+  const { data: invitedUsers, error: invitedErr } = await supabase
     .from('users')
     .select('first_name,last_name')
-    .eq('referral_id', user.referral_code);
+    .eq('referral_id', myReferralCode);
 
-  if (invitedErr) { console.error(invitedErr); return; }
+  if (invitedErr) {
+    document.getElementById('invitedList').innerText = "Error loading invited users.";
+    return;
+  }
 
-  document.getElementById('referralCount').innerText = invited.length;
+  document.getElementById('totalInvited').innerText = invitedUsers.length;
 
-  const list = document.getElementById('invitedList');
-  list.innerHTML = ''; // پاک کردن لیست قبلی
-
-  invited.forEach(u => {
-    const li = document.createElement('li');
-    li.innerText = `${u.first_name} ${u.last_name}`;
-    list.appendChild(li);
-  });
+  const listEl = document.getElementById('invitedList');
+  listEl.innerHTML = '';
+  if (invitedUsers.length === 0) {
+    listEl.innerHTML = '<li>No users invited yet.</li>';
+  } else {
+    invitedUsers.forEach(u => {
+      const li = document.createElement('li');
+      li.innerText = `${u.first_name || ''} ${u.last_name || ''}`;
+      listEl.appendChild(li);
+    });
+  }
 }
 
-// کپی لینک ریفرال
-function copyLink() {
-  const link = document.getElementById('referralLink');
-  link.select();
-  link.setSelectionRange(0, 99999);
-  document.execCommand('copy');
-  alert("Referral link copied!");
-}
-
-window.onload = loadReferral;
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadReferralData();
+});
 </script>
 
 <style>
-body {font-family:Arial,sans-serif;margin:0;padding:20px;background:#f8f9fa;}
-.container{max-width:600px;margin:auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+body{
+  font-family:'Segoe UI',sans-serif;
+  background:#f8f9fa;
+  margin:0;
+  padding:20px;
+}
+.container{
+  max-width:600px;
+  margin:auto;
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 5px 20px rgba(0,0,0,0.1);
+}
 h2{text-align:center;color:#1a1a2e;}
-label{font-weight:bold;}
-input{width:100%;padding:10px;margin:10px 0;border:1px solid #ccc;border-radius:5px;}
-button{padding:10px 15px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;}
-ul{padding-left:20px;}
+#refLink{
+  display:block;
+  text-align:center;
+  margin:15px 0;
+  padding:10px;
+  background:#4b49ac;
+  color:#fff;
+  text-decoration:none;
+  border-radius:5px;
+}
+ul{list-style:none;padding:0;}
+ul li{
+  background:#f0f0f0;
+  margin:5px 0;
+  padding:10px;
+  border-radius:5px;
+}
+.info-box{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:15px;
+  font-weight:bold;
+}
 </style>
+</head>
 
 <body>
 <div class="container">
   <h2>Referral Dashboard</h2>
+  <div class="info-box">
+    <span>Your referral link:</span>
+    <a href="#" id="refLink" target="_blank"></a>
+  </div>
+  <div class="info-box">
+    <span>Total invited users:</span>
+    <span id="totalInvited">0</span>
+  </div>
 
-  <p><strong>Your Referral Code:</strong> <span id="referralCode"></span></p>
-
-  <p><strong>Your Referral Link:</strong></p>
-  <input type="text" id="referralLink" readonly>
-  <button onclick="copyLink()">Copy Link</button>
-
-  <p><strong>Invited Users Count:</strong> <span id="referralCount">0</span></p>
-
-  <h3>Invited Users:</h3>
+  <h3>Invited Users</h3>
   <ul id="invitedList">
-    <!-- لیست دعوت‌شده‌ها اینجا پر می‌شود -->
+    <li>Loading...</li>
   </ul>
 </div>
 </body>
