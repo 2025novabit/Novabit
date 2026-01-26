@@ -15,70 +15,18 @@
 </script>
 
 <style>
-body {
-  margin:0;
-  font-family: Roboto,sans-serif;
-  background:#f4f6fa;
-}
-header{
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-header button{
-  background:#4b49ac;
-  border:none;
-  color:#fff;
-  padding:8px 14px;
-  border-radius:5px;
-  cursor:pointer;
-}
-#sidePanel{
-  position:fixed;
-  top:0;
-  right:-400px;
-  width:33%;
-  max-width:33%;
-  height:100%;
-  background:#fff;
-  box-shadow:-3px 0 10px rgba(0,0,0,.2);
-  padding:20px;
-  overflow-y:auto;
-  transition:right 0.3s;
-  z-index:100;
-}
+body{margin:0;font-family:Roboto,sans-serif;background:#f4f6fa;}
+header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
+header button{background:#4b49ac;border:none;color:#fff;padding:8px 14px;border-radius:5px;cursor:pointer;}
+#sidePanel{position:fixed;top:0;right:-400px;width:33%;max-width:33%;height:100%;background:#fff;box-shadow:-3px 0 10px rgba(0,0,0,.2);padding:20px;overflow-y:auto;transition:right 0.3s;z-index:100;}
 #sidePanel.active{right:0;}
 #sidePanel h2{margin-top:0;}
-#sidePanel a{
-  display:block;
-  margin:10px 0;
-  color:#1a1a2e;
-  text-decoration:none;
-  font-weight:500;
-}
-.container{
-  padding:20px;
-}
-.card{
-  background:#fff;
-  padding:25px;
-  border-radius:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,0.1);
-  margin-bottom:20px;
-}
+#sidePanel a{display:block;margin:10px 0;color:#1a1a2e;text-decoration:none;font-weight:500;}
+.container{padding:20px;}
+.card{background:#fff;padding:25px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,0.1);margin-bottom:20px;}
 h2,h3{margin-top:0;}
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-th,td{
-  text-align:left;
-  padding:8px;
-  border-bottom:1px solid #ddd;
-}
+table{width:100%;border-collapse:collapse;}
+th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd;}
 </style>
 </head>
 
@@ -130,31 +78,46 @@ function togglePanel() {
 }
 
 async function loadReferralData() {
-  const { data: user, error } = await supabase
-    .from('users')
-    .select('referral_code')
-    .eq('id', supabase.auth.user()?.id)
-    .single();
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData?.session?.user;
 
-  if (error || !user) {
-    document.getElementById('referralLink').innerText = 'Error loading your referral code.';
+  if (!user) {
+    document.getElementById('referralLink').innerText = 'Please login to view referral info.';
     document.getElementById('totalInvited').innerText = 0;
-    document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">Error loading data</td></tr>';
+    document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">Please login</td></tr>';
     return;
   }
 
-  const referralCode = user.referral_code;
+  // گرفتن کد ریفرال کاربر
+  const { data: userData, error } = await supabase
+    .from('users')
+    .select('referral_code')
+    .eq('id', user.id)
+    .single();
+
+  if (error || !userData) {
+    document.getElementById('referralLink').innerText = 'Error loading referral code.';
+    return;
+  }
+
+  const referralCode = userData.referral_code;
   document.getElementById('referralLink').innerText = `${location.origin}/signup.html?ref=${referralCode}`;
 
-  // دریافت کاربران دعوت شده
+  // گرفتن افراد دعوت شده
   const { data: invited, error: invitedError } = await supabase
     .from('users')
     .select('first_name,last_name')
     .eq('referral_id', referralCode);
 
-  document.getElementById('totalInvited').innerText = invitedError ? 0 : invited.length;
+  if (invitedError || !invited) {
+    document.getElementById('totalInvited').innerText = 0;
+    document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">No invited users</td></tr>';
+    return;
+  }
 
-  if (invitedError || !invited || invited.length === 0) {
+  document.getElementById('totalInvited').innerText = invited.length;
+
+  if (invited.length === 0) {
     document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">No invited users</td></tr>';
   } else {
     document.getElementById('invitedUsers').innerHTML = invited.map(u =>
@@ -163,21 +126,8 @@ async function loadReferralData() {
   }
 }
 
-// صبر می‌کنیم کاربر لاگین باشد
-supabase.auth.onAuthStateChange((event, session) => {
-  if (session && session.user) {
-    loadReferralData();
-  } else {
-    document.getElementById('referralLink').innerText = 'Please login to view referral info.';
-    document.getElementById('totalInvited').innerText = 0;
-    document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">Please login</td></tr>';
-  }
-});
-
-// اگر قبلاً لاگین کرده
-if (supabase.auth.user()) {
-  loadReferralData();
-}
+// بارگذاری داده‌ها
+loadReferralData();
 </script>
 
 </body>
