@@ -97,9 +97,12 @@ async function loadKYC() {
   });
 }
 
-// Approve KYC
-window.approve = async (id) => {
-  const { error } = await supabase
+
+  
+// ✅ APPROVE + REFERRAL REWARD (همه‌چیز همین‌جا)
+window.approve = async (kycId) => {
+
+const { error } = await supabase
     .from('kyc_requests')
     .update({ status: 'approved' })
     .eq('id', id);
@@ -110,9 +113,7 @@ window.approve = async (id) => {
   }
   loadKYC();
 }
-// ✅ APPROVE + REFERRAL REWARD (همه‌چیز همین‌جا)
-window.approve = async (kycId) => {
-
+  
   // 1️⃣ تایید KYC و گرفتن user_id
   const { data: kyc, error } = await supabase
     .from('kyc_requests')
