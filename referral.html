@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Referral | Novabit</title>
+<title>Referral</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-  window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <style>
@@ -27,10 +27,9 @@ header button{
 }
 #sidePanel{
   position:fixed;top:0;right:-400px;
-  width:33%;max-width:33%;height:100%;
+  width:33%;height:100%;
   background:#fff;box-shadow:-3px 0 10px rgba(0,0,0,.2);
-  padding:20px;overflow-y:auto;
-  transition:right .3s;z-index:100;
+  padding:20px;transition:right .3s;z-index:100;
 }
 #sidePanel.active{right:0;}
 #sidePanel a{
@@ -43,9 +42,6 @@ header button{
   box-shadow:0 4px 8px rgba(0,0,0,.1);
   margin-bottom:20px;
 }
-.stat{
-  font-size:22px;font-weight:bold;color:#4b49ac;
-}
 input{
   width:100%;padding:10px;
   border:1px solid #ccc;border-radius:5px;
@@ -55,14 +51,13 @@ input{
   background:#4b49ac;color:#fff;
   border:none;border-radius:5px;cursor:pointer;
 }
-table{
-  width:100%;border-collapse:collapse;
-}
+table{width:100%;border-collapse:collapse;}
 th,td{
   padding:10px;border-bottom:1px solid #eee;
-  text-align:left;font-size:14px;
+  font-size:14px;text-align:left;
 }
 th{background:#f0f0f0;}
+.stat{font-size:22px;font-weight:bold;color:#4b49ac;}
 </style>
 </head>
 
@@ -75,7 +70,6 @@ th{background:#f0f0f0;}
 
 <div id="sidePanel">
   <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;margin-bottom:15px;">Close</button>
-  <h3>Menu</h3>
   <a href="dashboard.html">Dashboard</a>
   <a href="profile.html">Profile</a>
   <a href="referral.html"><b>Referral</b></a>
@@ -85,8 +79,8 @@ th{background:#f0f0f0;}
 
   <div class="card">
     <h3>Your Referral Link</h3>
-    <input type="text" id="refLink" readonly>
-    <button class="copyBtn" onclick="copyLink()">Copy Link</button>
+    <input id="refLink" readonly>
+    <button class="copyBtn" onclick="copyLink()">Copy</button>
   </div>
 
   <div class="card">
@@ -95,7 +89,7 @@ th{background:#f0f0f0;}
   </div>
 
   <div class="card">
-    <h3>Invited Users List</h3>
+    <h3>Invited Users</h3>
     <table>
       <thead>
         <tr>
@@ -115,32 +109,29 @@ function togglePanel(){
 }
 
 function copyLink(){
-  const input = document.getElementById("refLink");
-  input.select();
-  document.execCommand("copy");
-  alert("Referral link copied");
+  const i=document.getElementById("refLink");
+  i.select(); document.execCommand("copy");
+  alert("Copied");
 }
 
 async function loadReferral(){
   const { data: auth } = await supabase.auth.getUser();
-  if(!auth || !auth.user) return;
+  if(!auth?.user) return;
 
   const userId = auth.user.id;
 
-  // 🔹 ردیف ریفرال خود کاربر
-  const { data: myRef } = await supabase
+  // 🔹 ردیف خود کاربر
+  const { data: myRow } = await supabase
     .from("referrals")
     .select("referral_code")
     .eq("user_id", userId)
     .single();
 
-  if(myRef){
-    refLink.value = `${location.origin}/login.html?ref=${myRef.referral_code}`;
-  } else {
-    refLink.value = "Referral code not found";
+  if(myRow){
+    refLink.value = `${location.origin}/login.html?ref=${myRow.referral_code}`;
   }
 
-  // 🔹 لیست دعوت‌شده‌ها
+  // 🔹 دعوت‌شده‌ها
   const { data: invited } = await supabase
     .from("referrals")
     .select("user_id, created_at")
@@ -150,16 +141,14 @@ async function loadReferral(){
   totalInvited.innerText = invited ? invited.length : 0;
 
   invitedList.innerHTML="";
-  if(invited){
-    invited.forEach(r=>{
-      invitedList.insertAdjacentHTML("beforeend",`
-        <tr>
-          <td>${r.user_id}</td>
-          <td>${new Date(r.created_at).toLocaleString()}</td>
-        </tr>
-      `);
-    });
-  }
+  invited?.forEach(r=>{
+    invitedList.insertAdjacentHTML("beforeend",`
+      <tr>
+        <td>${r.user_id}</td>
+        <td>${new Date(r.created_at).toLocaleString()}</td>
+      </tr>
+    `);
+  });
 }
 
 loadReferral();
