@@ -25,8 +25,9 @@ header button{background:#4b49ac;border:none;color:#fff;padding:8px 14px;border-
 .container{padding:20px;}
 .card{background:#fff;padding:25px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,0.1);margin-bottom:20px;}
 h2,h3{margin-top:0;}
-table{width:100%;border-collapse:collapse;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
 th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd;}
+.copy-btn{margin-left:10px;padding:5px 10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;}
 </style>
 </head>
 
@@ -49,6 +50,7 @@ th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd;}
   <div class="card">
     <h3>Your referral link:</h3>
     <p id="referralLink">Loading...</p>
+    <button class="copy-btn" onclick="copyReferral()">Copy Link</button>
   </div>
 
   <div class="card">
@@ -77,18 +79,23 @@ function togglePanel() {
   document.getElementById('sidePanel').classList.toggle('active');
 }
 
-async function loadReferralData() {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const user = sessionData?.session?.user;
+async function copyReferral() {
+  const link = document.getElementById('referralLink').innerText;
+  await navigator.clipboard.writeText(link);
+  alert('Referral link copied!');
+}
 
-  if (!user) {
-    document.getElementById('referralLink').innerText = 'Please login to view referral info.';
+async function loadReferralData() {
+  // گرفتن کاربر فعلی
+  const { data: { user }, error: sessionError } = await supabase.auth.getUser();
+  if (sessionError || !user) {
+    document.getElementById('referralLink').innerText = 'Please login.';
     document.getElementById('totalInvited').innerText = 0;
     document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">Please login</td></tr>';
     return;
   }
 
-  // گرفتن کد ریفرال کاربر
+  // گرفتن کد ریفرال خود کاربر
   const { data: userData, error } = await supabase
     .from('users')
     .select('referral_code')
@@ -103,7 +110,7 @@ async function loadReferralData() {
   const referralCode = userData.referral_code;
   document.getElementById('referralLink').innerText = `${location.origin}/signup.html?ref=${referralCode}`;
 
-  // گرفتن افراد دعوت شده
+  // گرفتن کاربران دعوت شده
   const { data: invited, error: invitedError } = await supabase
     .from('users')
     .select('first_name,last_name')
@@ -126,7 +133,7 @@ async function loadReferralData() {
   }
 }
 
-// بارگذاری داده‌ها
+// بارگذاری اولیه
 loadReferralData();
 </script>
 
