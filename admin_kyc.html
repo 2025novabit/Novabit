@@ -97,19 +97,16 @@ async function loadKYC() {
   });
 }
 
-
-  // ✅ APPROVE + REFERRAL REWARD (همه‌چیز همین‌جا)
 window.approve = async (kycId) => {
-  
   // 1️⃣ تایید KYC و گرفتن user_id
-  const { data: kyc, error } = await supabase
+  const { data: kyc, error: kycError } = await supabase
     .from('kyc_requests')
     .update({ status: 'approved' })
     .eq('id', kycId)
     .select('user_id')
     .single();
 
-  if (error || !kyc) {
+  if (kycError || !kyc) {
     alert("KYC approve failed");
     return;
   }
@@ -140,27 +137,29 @@ window.approve = async (kycId) => {
     return;
   }
 
-  // 4️⃣ گرفتن wallet USDT دعوت‌کننده
+  const referrerId = referrer.id;
+
+  // 4️⃣ بررسی اینکه ردیف کیف پول USDT وجود دارد
   const { data: wallet } = await supabase
     .from('wallet')
     .select('balance')
-    .eq('user_id', referrer.id)
+    .eq('user_id', referrerId)
     .eq('coin_symbol', 'USDT')
     .single();
 
-  if (!wallet) {
-    loadKYC();
-    return;
+  if (wallet) {
+    // 5️⃣ آپدیت موجودی موجود
+    await supabase
+      .from('wallet')
+      .update({ balance: Number(wallet.balance) + 2 })
+      .eq('user_id', referrerId)
+      .eq('coin_symbol', 'USDT');
+  } else {
+    // 5️⃣ اگر ردیف USDT وجود نداشت، ایجاد کن و 2 USDT اضافه کن
+    await supabase
+      .from('wallet')
+      .insert([{ user_id: referrerId, coin_symbol: 'USDT', balance: 2, locked: 0 }]);
   }
-
-  // 5️⃣ اضافه کردن 2 USDT
-  await supabase
-    .from('wallet')
-    .update({
-      balance: Number(wallet.balance) + 2
-    })
-    .eq('user_id', referrer.id)
-    .eq('coin_symbol', 'USDT');
 
   loadKYC();
 };
