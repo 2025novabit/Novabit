@@ -2,125 +2,100 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Referral</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Referral</title>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzcyMDQ4fQ.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-window.supabase = supabase;
-</script>
+// صفحه را بارگذاری می‌کنیم
+async function loadReferral() {
+  const user = supabase.auth.user();
 
-<style>
-body{margin:0;font-family:Roboto,sans-serif;background:#f4f6fa;}
-.container{padding:30px;max-width:900px;margin:auto;}
-.card{
-  background:#fff;padding:25px;border-radius:10px;
-  box-shadow:0 4px 8px rgba(0,0,0,.1);
-  margin-bottom:20px;
-}
-input{width:100%;padding:10px;border:1px solid #ccc;border-radius:5px;}
-.stat{font-size:26px;font-weight:bold;color:#4b49ac;}
-table{width:100%;border-collapse:collapse;}
-th,td{padding:10px;border-bottom:1px solid #eee;text-align:left;}
-th{background:#f0f0f0;}
-button{
-  padding:10px 14px;
-  background:#4b49ac;color:#fff;
-  border:none;border-radius:5px;cursor:pointer;
-}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-  <div class="card">
-    <h3>Your Referral Link</h3>
-    <input id="refLink" readonly>
-    <br><br>
-    <button onclick="copyLink()">Copy Link</button>
-  </div>
-
-  <div class="card">
-    <h3>Total Invited Users</h3>
-    <div class="stat" id="totalCount">0</div>
-  </div>
-
-  <div class="card">
-    <h3>Invited Users</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>User ID</th>
-          <th>Joined At</th>
-        </tr>
-      </thead>
-      <tbody id="invitedList"></tbody>
-    </table>
-  </div>
-
-</div>
-
-<script>
-function copyLink(){
-  const i=document.getElementById("refLink");
-  i.select(); document.execCommand("copy");
-  alert("Copied");
-}
-
-// ⏳ صبر تا لاگین کاربر
-supabase.auth.onAuthStateChange(async (event, session) => {
-  if(!session?.user) return;
-
-  const userId = session.user.id;
-
-  // 🔹 ردیف خود کاربر
-  const { data: myRow, error } = await supabase
-    .from("referrals")
-    .select("referral_code, referral_count")
-    .eq("user_id", userId)
-    .single();
-
-  if(error || !myRow){
-    console.error("No referral row", error);
+  if (!user) {
+    alert("You must be logged in");
+    window.location.href = "login.html";
     return;
   }
 
-  // 🔹 لینک ریفرال
-  document.getElementById("refLink").value =
-    location.origin + "/login.html?ref=" + myRow.referral_code;
+  // 1️⃣ دریافت کد ریفرال خود کاربر
+  const { data: me, error: meErr } = await supabase
+    .from('users')
+    .select('id, referral_code')
+    .eq('id', user.id)
+    .single();
 
-  // 🔹 تعداد
-  document.getElementById("totalCount").innerText =
-    myRow.referral_count ?? 0;
+  if (meErr) { console.error(meErr); return; }
 
-  // 🔹 لیست دعوت‌شده‌ها
-  const { data: invited } = await supabase
-    .from("referrals")
-    .select("user_id, created_at")
-    .eq("referrer_id", userId)
-    .order("created_at", { ascending:false });
+  const referralCode = me.referral_code;
+  const referralLink = `${window.location.origin}/signup.html?ref=${referralCode}`;
 
-  const tbody = document.getElementById("invitedList");
-  tbody.innerHTML="";
+  document.getElementById('referralCode').innerText = referralCode;
+  document.getElementById('referralLink').value = referralLink;
 
-  invited?.forEach(r=>{
-    tbody.insertAdjacentHTML("beforeend",`
-      <tr>
-        <td>${r.user_id}</td>
-        <td>${new Date(r.created_at).toLocaleString()}</td>
-      </tr>
-    `);
+  // 2️⃣ دریافت کاربران دعوت‌شده
+  const { data: invited, error: invitedErr } = await supabase
+    .from('users')
+    .select('first_name,last_name')
+    .eq('referral_id', user.referral_code);
+
+  if (invitedErr) { console.error(invitedErr); return; }
+
+  document.getElementById('referralCount').innerText = invited.length;
+
+  const list = document.getElementById('invitedList');
+  list.innerHTML = ''; // پاک کردن لیست قبلی
+
+  invited.forEach(u => {
+    const li = document.createElement('li');
+    li.innerText = `${u.first_name} ${u.last_name}`;
+    list.appendChild(li);
   });
-});
+}
+
+// کپی لینک ریفرال
+function copyLink() {
+  const link = document.getElementById('referralLink');
+  link.select();
+  link.setSelectionRange(0, 99999);
+  document.execCommand('copy');
+  alert("Referral link copied!");
+}
+
+window.onload = loadReferral;
 </script>
 
+<style>
+body {font-family:Arial,sans-serif;margin:0;padding:20px;background:#f8f9fa;}
+.container{max-width:600px;margin:auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+h2{text-align:center;color:#1a1a2e;}
+label{font-weight:bold;}
+input{width:100%;padding:10px;margin:10px 0;border:1px solid #ccc;border-radius:5px;}
+button{padding:10px 15px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;}
+ul{padding-left:20px;}
+</style>
+
+<body>
+<div class="container">
+  <h2>Referral Dashboard</h2>
+
+  <p><strong>Your Referral Code:</strong> <span id="referralCode"></span></p>
+
+  <p><strong>Your Referral Link:</strong></p>
+  <input type="text" id="referralLink" readonly>
+  <button onclick="copyLink()">Copy Link</button>
+
+  <p><strong>Invited Users Count:</strong> <span id="referralCount">0</span></p>
+
+  <h3>Invited Users:</h3>
+  <ul id="invitedList">
+    <!-- لیست دعوت‌شده‌ها اینجا پر می‌شود -->
+  </ul>
+</div>
 </body>
 </html>
