@@ -44,7 +44,7 @@ header button{
   margin-bottom:20px;
 }
 .stat{
-  font-size:20px;font-weight:bold;color:#4b49ac;
+  font-size:22px;font-weight:bold;color:#4b49ac;
 }
 input{
   width:100%;padding:10px;
@@ -55,6 +55,14 @@ input{
   background:#4b49ac;color:#fff;
   border:none;border-radius:5px;cursor:pointer;
 }
+table{
+  width:100%;border-collapse:collapse;
+}
+th,td{
+  padding:10px;border-bottom:1px solid #eee;
+  text-align:left;font-size:14px;
+}
+th{background:#f0f0f0;}
 </style>
 </head>
 
@@ -70,8 +78,6 @@ input{
   <h3>Menu</h3>
   <a href="dashboard.html">Dashboard</a>
   <a href="profile.html">Profile</a>
-  <a href="kyc.html">KYC</a>
-  <a href="changepassword.html">Change Password</a>
   <a href="referral.html"><b>Referral</b></a>
 </div>
 
@@ -89,8 +95,16 @@ input{
   </div>
 
   <div class="card">
-    <h3>KYC Approved Invited Users</h3>
-    <div class="stat" id="kycApproved">0</div>
+    <h3>Invited Users List</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Joined At</th>
+        </tr>
+      </thead>
+      <tbody id="invitedList"></tbody>
+    </table>
   </div>
 
 </div>
@@ -113,38 +127,38 @@ async function loadReferral(){
 
   const userId = auth.user.id;
 
-  // 🔹 کد ریفرال
+  // 🔹 ردیف ریفرال خود کاربر
   const { data: myRef } = await supabase
     .from("referrals")
     .select("referral_code")
     .eq("user_id", userId)
-    .limit(1);
+    .single();
 
-  if(myRef && myRef.length > 0){
-    refLink.value = `${location.origin}/login.html?ref=${myRef[0].referral_code}`;
+  if(myRef){
+    refLink.value = `${location.origin}/login.html?ref=${myRef.referral_code}`;
   } else {
-    refLink.value = "Not found";
+    refLink.value = "Referral code not found";
   }
 
-  // 🔹 دعوت‌شده‌ها
+  // 🔹 لیست دعوت‌شده‌ها
   const { data: invited } = await supabase
     .from("referrals")
-    .select("user_id")
-    .eq("referrer_id", userId);
+    .select("user_id, created_at")
+    .eq("referrer_id", userId)
+    .order("created_at", { ascending:false });
 
   totalInvited.innerText = invited ? invited.length : 0;
 
-  // 🔹 KYC تأیید شده‌ها
-  if(invited && invited.length > 0){
-    const ids = invited.map(i => i.user_id);
-
-    const { data: kycApprovedUsers } = await supabase
-      .from("kyc")
-      .select("user_id")
-      .in("user_id", ids)
-      .eq("status", "approved");
-
-    kycApproved.innerText = kycApprovedUsers ? kycApprovedUsers.length : 0;
+  invitedList.innerHTML="";
+  if(invited){
+    invited.forEach(r=>{
+      invitedList.insertAdjacentHTML("beforeend",`
+        <tr>
+          <td>${r.user_id}</td>
+          <td>${new Date(r.created_at).toLocaleString()}</td>
+        </tr>
+      `);
+    });
   }
 }
 
