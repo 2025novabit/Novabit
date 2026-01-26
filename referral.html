@@ -37,7 +37,7 @@
       return;
     }
 
-    const referralLink = `${window.location.origin}/signup.html?ref=${user.referral_code}`;
+    const referralLink = `${window.location.origin}/login.html?ref=${user.referral_code}`;
     document.getElementById('referralLink').innerHTML = `
       <input type="text" value="${referralLink}" id="refLinkInput" readonly style="width:80%;padding:5px;">
       <button onclick="copyReferralLink()">Copy Link</button>
