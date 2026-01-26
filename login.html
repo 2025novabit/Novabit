@@ -164,22 +164,11 @@ signupSubmit.onclick=async()=>{
   if(error){msg.innerText=error.message;return;}
 
   const userId=data.user.id;
-  const myRefCode=userId.substring(0,8);
 
-  // users
-  await supabase.from("users").insert({
-    id:userId,
-    email,
-    first_name:signupFirstName.value,
-    last_name:signupLastName.value,
-    dob:signupDOB.value,
-    country:signupCountry.value
-  });
-
-  // 🔹 ساخت کد ریفرال اختصاصی
+ // کد ریفرال اختصاصی کاربر
   const myReferralCode = userId.slice(0, 8);
 
-  // 🔹 ذخیره در جدول users
+  // فقط یک بار insert
   await supabase.from("users").insert({
     id: userId,
     email,
@@ -188,9 +177,11 @@ signupSubmit.onclick=async()=>{
     dob: signupDOB.value,
     country: signupCountry.value,
 
-    referral_code: myReferralCode,        // کد خود کاربر
-    referral_id: invitedByCode || null    // کد دعوت‌کننده (اگر داشت)
+    referral_code: myReferralCode,   // کد خود کاربر
+    referral_id: refCode || null     // کد دعوت‌کننده (اگر وجود داشت)
   });
+
+  msg.
   
   msg.style.color="green";
   msg.innerText="Registered successfully. Please login.";
