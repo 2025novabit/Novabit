@@ -22,7 +22,7 @@ button.action-btn:hover{opacity:0.8;}
 
 <header>
   <h2>KYC Requests</h2>
-  <button onclick="goBack()">Back</button>
+  <button id="backBtn">Back</button>
 </header>
 
 <div class="container">
@@ -44,40 +44,34 @@ button.action-btn:hover{opacity:0.8;}
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-// 🔑 Supabase credentials
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 🔐 check admin login
+// check admin login
 if (!localStorage.getItem('admin_logged_in')) {
   alert("Please login as admin");
   window.location.href = "admin.html";
 }
 
-// 🔙 back
-function goBack(){
+// back button
+document.getElementById('backBtn').addEventListener('click', () => {
   window.location.href = "admin_dashboard.html";
-}
+});
 
-// 📥 load KYC requests
-async function loadKYC(){
+// load KYC
+async function loadKYC() {
   const { data, error } = await supabase
     .from('kyc_requests')
     .select('*')
     .order('created_at', { ascending:false });
 
-  if(error){
-    console.error(error);
-    return;
-  }
+  if(error){ console.error(error); return; }
 
   const tbody = document.getElementById('kycBody');
   tbody.innerHTML = '';
 
-  data.forEach(row=>{
+  data.forEach(row => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.first_name || ''} ${row.last_name || ''}</td>
@@ -87,108 +81,85 @@ async function loadKYC(){
       <td>${row.doc_number || ''}</td>
       <td>${row.status || 'Pending'}</td>
       <td>
-        <button class="action-btn approve" ${row.status !== 'pending' ? 'disabled' : ''} 
-          onclick="approveKYC('${row.id}')">Approve</button>
-        <button class="action-btn reject" ${row.status !== 'pending' ? 'disabled' : ''} 
-          onclick="rejectKYC('${row.id}')">Reject</button>
+        <button class="action-btn approve" data-id="${row.id}" ${row.status!=='pending'?'disabled':''}>Approve</button>
+        <button class="action-btn reject" data-id="${row.id}" ${row.status!=='pending'?'disabled':''}>Reject</button>
       </td>
     `;
     tbody.appendChild(tr);
   });
+
+  // attach event listeners
+  document.querySelectorAll('.action-btn.approve').forEach(btn => {
+    btn.addEventListener('click', () => approveKYC(btn.dataset.id));
+  });
+  document.querySelectorAll('.action-btn.reject').forEach(btn => {
+    btn.addEventListener('click', () => rejectKYC(btn.dataset.id));
+  });
 }
 
-// ✅ Approve KYC + referral reward
-window.approveKYC = async (kycId) => {
-  // 1️⃣ تایید KYC و گرفتن user_id
-  const { data: kyc, error: kycErr } = await supabase
+// approve KYC + referral reward
+async function approveKYC(kycId) {
+  try {
+    // 1️⃣ تایید KYC و گرفتن user_id
+    const { data: kyc, error: kycErr } = await supabase
+      .from('kyc_requests')
+      .update({ status:'approved' })
+      .eq('id', kycId)
+      .select('user_id')
+      .single();
+
+    if(kycErr || !kyc){ alert('KYC approve failed'); return; }
+    const verifiedUserId = kyc.user_id;
+
+    // 2️⃣ گرفتن referral_id
+    const { data: verifiedUser } = await supabase
+      .from('users')
+      .select('referral_id')
+      .eq('id', verifiedUserId)
+      .single();
+
+    if(!verifiedUser || !verifiedUser.referral_id){ loadKYC(); return; }
+
+    // 3️⃣ پیدا کردن دعوت‌کننده
+    const { data: referrer } = await supabase
+      .from('users')
+      .select('id')
+      .eq('referral_code', verifiedUser.referral_id)
+      .single();
+
+    if(!referrer){ loadKYC(); return; }
+
+    // 4️⃣ پیدا کردن کیف پول USDT
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('balance')
+      .eq('user_id', referrer.id)
+      .eq('coin_symbol', 'USDT')
+      .single();
+
+    if(!wallet){ loadKYC(); return; }
+
+    // 5️⃣ اضافه کردن 2 USDT
+    await supabase
+      .from('wallets')
+      .update({ balance: Number(wallet.balance)+2 })
+      .eq('user_id', referrer.id)
+      .eq('coin_symbol', 'USDT');
+
+    loadKYC();
+  } catch(e){ console.error(e); }
+}
+
+// reject KYC
+async function rejectKYC(kycId){
+  await supabase
     .from('kyc_requests')
-    .update({ status: 'approved' })
-    .eq('id', kycId)
-    .select('user_id')
-    .single();
-
-  if(kycErr || !kyc){
-    alert("KYC approve failed");
-    return;
-  }
-
-  const verifiedUserId = kyc.user_id;
-
-  // 2️⃣ گرفتن referral_id کاربر تایید شده
-  const { data: verifiedUser, error: userErr } = await supabase
-    .from('users')
-    .select('referral_id')
-    .eq('id', verifiedUserId)
-    .single();
-
-  if(userErr){
-    console.error(userErr);
-    loadKYC();
-    return;
-  }
-
-  if(!verifiedUser || !verifiedUser.referral_id){
-    loadKYC(); // کاربر دعوت‌کننده ندارد
-    return;
-  }
-
-  // 3️⃣ پیدا کردن دعوت‌کننده
-  const { data: referrer, error: refErr } = await supabase
-    .from('users')
-    .select('id')
-    .eq('referral_code', verifiedUser.referral_id)
-    .single();
-
-  if(refErr || !referrer){
-    console.error(refErr);
-    loadKYC();
-    return;
-  }
-
-  // 4️⃣ گرفتن wallet USDT دعوت‌کننده
-  const { data: wallet, error: walletErr } = await supabase
-    .from('wallets')
-    .select('balance')
-    .eq('user_id', referrer.id)
-    .eq('coin_symbol', 'USDT')
-    .single();
-
-  if(walletErr || !wallet){
-    console.error(walletErr);
-    loadKYC();
-    return;
-  }
-
-  // 5️⃣ اضافه کردن 2 USDT
-  const { error: updErr } = await supabase
-    .from('wallets')
-    .update({ balance: Number(wallet.balance) + 2 })
-    .eq('user_id', referrer.id)
-    .eq('coin_symbol', 'USDT');
-
-  if(updErr){
-    console.error(updErr);
-  }
-
-  loadKYC();
-};
-
-// ❌ Reject KYC
-window.rejectKYC = async (kycId) => {
-  const { data, error } = await supabase
-    .from('kyc_requests')
-    .update({ status:'rejected' })
+    .update({status:'rejected'})
     .eq('id', kycId);
-
-  if(error){
-    alert(error.message);
-  }
   loadKYC();
 }
 
-// Init
 window.onload = loadKYC;
-
 </script>
 </body>
 </html>
