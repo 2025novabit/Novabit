@@ -11,104 +11,103 @@
   const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-  window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function loadReferral() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = "login.html"; // اگر لاگین نبود برگرد به صفحه لاگین
+      return;
+    }
+
+    const userId = session.user.id;
+
+    // 🔹 لینک ریفرال خود کاربر
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('referral_code')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !user) {
+      document.getElementById('referralLink').innerText = 'Error loading your referral code.';
+      return;
+    }
+
+    const referralLink = `${window.location.origin}/signup.html?ref=${user.referral_code}`;
+    document.getElementById('referralLink').innerHTML = `
+      <input type="text" value="${referralLink}" id="refLinkInput" readonly style="width:80%;padding:5px;">
+      <button onclick="copyReferralLink()">Copy Link</button>
+    `;
+
+    // 🔹 کاربران دعوت شده توسط این کاربر
+    const { data: invitedUsers, error: inviteError } = await supabase
+      .from('users')
+      .select('first_name,last_name')
+      .eq('referral_id', user.referral_code)
+      .order('created_at', { ascending: true });
+
+    if (inviteError) {
+      document.getElementById('totalInvited').innerText = 'Error';
+      document.getElementById('invitedList').innerHTML = 'Error loading invited users.';
+      return;
+    }
+
+    document.getElementById('totalInvited').innerText = invitedUsers.length;
+
+    if (invitedUsers.length === 0) {
+      document.getElementById('invitedList').innerHTML = '<tr><td colspan="2">No invited users yet.</td></tr>';
+    } else {
+      document.getElementById('invitedList').innerHTML = invitedUsers
+        .map(u => `<tr><td>${u.first_name}</td><td>${u.last_name}</td></tr>`)
+        .join('');
+    }
+  }
+
+  window.copyReferralLink = () => {
+    const input = document.getElementById('refLinkInput');
+    input.select();
+    input.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    alert('Referral link copied!');
+  }
+
+  window.addEventListener('DOMContentLoaded', loadReferral);
 </script>
 
 <style>
-body{margin:0;font-family:Roboto,sans-serif;background:#f4f6fa;}
-.container{padding:20px;}
-.card{background:#fff;padding:25px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:20px;}
-h2,h3{margin-top:0;}
-table{width:100%;border-collapse:collapse;margin-top:10px;}
-th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd;}
-.copy-btn{margin-left:10px;padding:5px 10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;}
+body{font-family:Roboto,sans-serif;margin:0;padding:20px;background:#f4f6fa;}
+h2{color:#1a1a2e;}
+.ref-card{background:#fff;padding:20px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);max-width:600px;margin:auto;margin-bottom:20px;}
+.ref-card button{margin-left:10px;padding:5px 10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;border-bottom:1px solid #ccc;text-align:left;}
+th{background:#f0f0f0;}
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <div class="card">
-    <h3>Your referral link:</h3>
-    <p id="referralLink">Loading...</p>
-    <button class="copy-btn" onclick="copyReferral()">Copy Link</button>
-  </div>
-
-  <div class="card">
-    <h3>Total invited users:</h3>
-    <p id="totalInvited">Loading...</p>
-  </div>
-
-  <div class="card">
-    <h3>Invited Users</h3>
-    <table>
-      <thead>
-        <tr><th>First Name</th><th>Last Name</th></tr>
-      </thead>
-      <tbody id="invitedUsers">
-        <tr><td colspan="2">Loading...</td></tr>
-      </tbody>
-    </table>
-  </div>
+<div class="ref-card">
+  <h2>Your Referral Dashboard</h2>
+  <p><strong>Your referral link:</strong></p>
+  <div id="referralLink">Loading...</div>
 </div>
 
-<script>
-async function copyReferral() {
-  const link = document.getElementById('referralLink').innerText;
-  await navigator.clipboard.writeText(link);
-  alert('Referral link copied!');
-}
-
-async function loadReferralData() {
-  const { data: sessionData } = await supabase.auth.getSession();
-
-  // اگر کاربر لاگین نیست → برگرد به صفحه login/signup
-  if (!sessionData?.session?.user) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  const userId = sessionData.session.user.id;
-
-  // دریافت ردیف خودش از جدول users
-  const { data: userRow, error: userError } = await supabase
-    .from('users')
-    .select('referral_code')
-    .eq('id', userId)
-    .single();
-
-  if (userError || !userRow) {
-    document.getElementById('referralLink').innerText = 'Error loading your referral code.';
-    return;
-  }
-
-  const referralCode = userRow.referral_code;
-
-  // لینک ریفرال خود کاربر
-  const referralLink = `${location.origin}/signup.html?ref=${referralCode}`;
-  document.getElementById('referralLink').innerText = referralLink;
-
-  // کاربران دعوت شده
-  const { data: invited, error: invitedError } = await supabase
-    .from('users')
-    .select('first_name,last_name')
-    .eq('referral_id', referralCode);
-
-  const total = invited?.length || 0;
-  document.getElementById('totalInvited').innerText = total;
-
-  if (!invited || invited.length === 0) {
-    document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">No invited users</td></tr>';
-  } else {
-    document.getElementById('invitedUsers').innerHTML = invited.map(u =>
-      `<tr><td>${u.first_name || '-'}</td><td>${u.last_name || '-'}</td></tr>`
-    ).join('');
-  }
-}
-
-// بارگذاری اولیه
-loadReferralData();
-</script>
+<div class="ref-card">
+  <p><strong>Total invited users:</strong> <span id="totalInvited">Loading...</span></p>
+  <table>
+    <thead>
+      <tr>
+        <th>First Name</th>
+        <th>Last Name</th>
+      </tr>
+    </thead>
+    <tbody id="invitedList">
+      <tr><td colspan="2">Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
 
 </body>
 </html>
