@@ -16,14 +16,8 @@
 
 <style>
 body{margin:0;font-family:Roboto,sans-serif;background:#f4f6fa;}
-header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
-header button{background:#4b49ac;border:none;color:#fff;padding:8px 14px;border-radius:5px;cursor:pointer;}
-#sidePanel{position:fixed;top:0;right:-400px;width:33%;max-width:33%;height:100%;background:#fff;box-shadow:-3px 0 10px rgba(0,0,0,.2);padding:20px;overflow-y:auto;transition:right 0.3s;z-index:100;}
-#sidePanel.active{right:0;}
-#sidePanel h2{margin-top:0;}
-#sidePanel a{display:block;margin:10px 0;color:#1a1a2e;text-decoration:none;font-weight:500;}
 .container{padding:20px;}
-.card{background:#fff;padding:25px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,0.1);margin-bottom:20px;}
+.card{background:#fff;padding:25px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:20px;}
 h2,h3{margin-top:0;}
 table{width:100%;border-collapse:collapse;margin-top:10px;}
 th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd;}
@@ -32,19 +26,6 @@ th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd;}
 </head>
 
 <body>
-
-<header>
-  <h2>Referral Dashboard</h2>
-  <button onclick="togglePanel()">Menu</button>
-</header>
-
-<div id="sidePanel">
-  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
-  <h2>Menu</h2>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="profile.html">Profile</a>
-  <a href="referral.html" class="active">Referral</a>
-</div>
 
 <div class="container">
   <div class="card">
@@ -62,10 +43,7 @@ th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd;}
     <h3>Invited Users</h3>
     <table>
       <thead>
-        <tr>
-          <th>First Name</th>
-          <th>Last Name</th>
-        </tr>
+        <tr><th>First Name</th><th>Last Name</th></tr>
       </thead>
       <tbody id="invitedUsers">
         <tr><td colspan="2">Loading...</td></tr>
@@ -75,10 +53,6 @@ th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd;}
 </div>
 
 <script>
-function togglePanel() {
-  document.getElementById('sidePanel').classList.toggle('active');
-}
-
 async function copyReferral() {
   const link = document.getElementById('referralLink').innerText;
   await navigator.clipboard.writeText(link);
@@ -86,25 +60,33 @@ async function copyReferral() {
 }
 
 async function loadReferralData() {
-  const { data: { user }, error: sessionError } = await supabase.auth.getUser();
-  if (sessionError || !user) {
-    document.getElementById('referralLink').innerText = 'Please login.';
-    document.getElementById('totalInvited').innerText = 0;
-    document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">Please login</td></tr>';
+  const { data: sessionData } = await supabase.auth.getSession();
+
+  if (!sessionData?.session?.user) {
+    document.getElementById('referralLink').innerText = 'Please login to see your referral link';
+    document.getElementById('totalInvited').innerText = '0';
+    document.getElementById('invitedUsers').innerHTML = '<tr><td colspan="2">Login required</td></tr>';
     return;
   }
 
-  // همیشه کد ریفرال خودش را بخوان
+  const userId = sessionData.session.user.id;
+
+  // دریافت کد ریفرال خود کاربر
   const { data: userData, error } = await supabase
     .from('users')
     .select('referral_code')
-    .eq('id', user.id)
+    .eq('id', userId)
     .single();
 
-  const referralCode = userData?.referral_code || 'N/A';
+  if (error || !userData) {
+    document.getElementById('referralLink').innerText = 'Error loading your referral code.';
+    return;
+  }
+
+  const referralCode = userData.referral_code;
   document.getElementById('referralLink').innerText = `${location.origin}/signup.html?ref=${referralCode}`;
 
-  // کاربران دعوت شده (اگر داشت)
+  // کاربران دعوت شده
   const { data: invited } = await supabase
     .from('users')
     .select('first_name,last_name')
