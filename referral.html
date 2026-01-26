@@ -2,100 +2,171 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Referral Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Supabase -->
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
 
-async function loadReferralData() {
-  // کاربر جاری
+<style>
+body {
+  margin:0;
+  font-family: Roboto,sans-serif;
+  background:#f4f6fa;
+  padding-bottom:0;
+}
+/* HEADER */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:5px;
+  cursor:pointer;
+}
+/* SIDE PANEL */
+#sidePanel{
+  position:fixed;
+  top:0;
+  right:-400px;
+  width:33%;
+  max-width:33%;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  overflow-y:auto;
+  transition:right 0.3s;
+  z-index:100;
+}
+#sidePanel.active{right:0;}
+#sidePanel h2{margin-top:0;}
+#sidePanel a{
+  display:block;
+  margin:10px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
+}
+#sidePanel a.active{font-weight:bold;}
+/* CONTAINER */
+.container{
+  padding:20px;
+}
+.card{
+  background:#fff;
+  padding:25px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom:20px;
+}
+.card h2{margin-top:0;}
+ul{list-style:none;padding:0;}
+ul li{background:#f0f0f0;margin:5px 0;padding:10px;border-radius:5px;}
+.ref-link{
+  display:block;
+  margin:10px 0;
+  padding:10px;
+  background:#4b49ac;
+  color:#fff;
+  text-decoration:none;
+  border-radius:5px;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>Referral Dashboard</h2>
+  <button onclick="togglePanel()">Menu</button>
+</header>
+
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
+  <h2>Menu</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="profile.html">Profile</a>
+  <a href="changepassword.html">Change Password</a>
+  <a href="referral.html" class="active">Referral</a>
+</div>
+
+<div class="container">
+  <div class="card">
+    <h2>Your Referral Link</h2>
+    <a id="refLink" class="ref-link" href="#" target="_blank">Loading...</a>
+  </div>
+
+  <div class="card">
+    <h2>Total Invited Users: <span id="totalInvited">0</span></h2>
+    <ul id="invitedList">
+      <li>Loading...</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// Toggle menu
+function togglePanel(){document.getElementById('sidePanel').classList.toggle('active');}
+
+// Load referral data
+async function loadReferral() {
   const { data: { user }, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !user) {
-    document.getElementById('refLink').innerText = "You must be logged in.";
-    document.getElementById('totalInvited').innerText = "0";
-    document.getElementById('invitedList').innerHTML = "<li>Not logged in</li>";
-    return;
-  }
+  if(userErr || !user) return;
 
-  // اطلاعات کاربر در جدول users
-  const { data: meData, error: meErr } = await supabase
+  // Get current user's referral code
+  const { data: meData } = await supabase
     .from('users')
     .select('referral_code')
     .eq('user_id', user.id)
     .single();
 
-  if (meErr || !meData) {
-    document.getElementById('refLink').innerText = "Error loading your referral code.";
-    return;
-  }
+  if(!meData) return;
 
-  const myReferralCode = meData.referral_code;
-  const referralLink = `${location.origin}/signup.html?ref=${myReferralCode}`;
+  const myCode = meData.referral_code;
+  const link = `${location.origin}/signup.html?ref=${myCode}`;
   const refLinkEl = document.getElementById('refLink');
-  refLinkEl.innerText = referralLink;
-  refLinkEl.href = referralLink;
+  refLinkEl.innerText = link;
+  refLinkEl.href = link;
 
-  // دریافت کاربران دعوت شده
-  const { data: invitedUsers, error: invitedErr } = await supabase
+  // Get invited users
+  const { data: invitedUsers } = await supabase
     .from('users')
     .select('first_name,last_name')
-    .eq('referral_id', myReferralCode);
-
-  if (invitedErr) {
-    document.getElementById('invitedList').innerText = "Error loading invited users.";
-    return;
-  }
+    .eq('referral_id', myCode);
 
   document.getElementById('totalInvited').innerText = invitedUsers.length;
-
   const listEl = document.getElementById('invitedList');
   listEl.innerHTML = '';
-  if (invitedUsers.length === 0) {
-    listEl.innerHTML = '<li>No users invited yet.</li>';
+  if(invitedUsers.length===0){
+    listEl.innerHTML='<li>No invited users yet.</li>';
   } else {
-    invitedUsers.forEach(u => {
-      const li = document.createElement('li');
-      li.innerText = `${u.first_name || ''} ${u.last_name || ''}`;
+    invitedUsers.forEach(u=>{
+      const li=document.createElement('li');
+      li.innerText=`${u.first_name || ''} ${u.last_name || ''}`;
       listEl.appendChild(li);
     });
   }
 }
 
-window.addEventListener('DOMContentLoaded', loadReferralData);
+window.addEventListener('DOMContentLoaded', loadReferral);
 </script>
 
-<style>
-body{font-family:'Segoe UI',sans-serif;background:#f8f9fa;margin:0;padding:20px;}
-.container{max-width:600px;margin:auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.1);}
-h2{text-align:center;color:#1a1a2e;}
-#refLink{display:block;text-align:center;margin:15px 0;padding:10px;background:#4b49ac;color:#fff;text-decoration:none;border-radius:5px;}
-ul{list-style:none;padding:0;}
-ul li{background:#f0f0f0;margin:5px 0;padding:10px;border-radius:5px;}
-.info-box{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;}
-</style>
-</head>
-<body>
-<div class="container">
-  <h2>Referral Dashboard</h2>
-  <div class="info-box">
-    <span>Your referral link:</span>
-    <a href="#" id="refLink" target="_blank"></a>
-  </div>
-  <div class="info-box">
-    <span>Total invited users:</span>
-    <span id="totalInvited">0</span>
-  </div>
-
-  <h3>Invited Users</h3>
-  <ul id="invitedList">
-    <li>Loading...</li>
-  </ul>
-</div>
 </body>
 </html>
