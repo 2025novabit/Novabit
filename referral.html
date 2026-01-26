@@ -2,68 +2,155 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Referral Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Supabase -->
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+  const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <style>
-body{font-family:Arial,sans-serif;margin:0;background:#f4f6fa;}
-.container{max-width:800px;margin:40px auto;padding:20px;background:#fff;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.1);}
-h2{color:#1a1a2e;}
-.ref-link{padding:10px;background:#e0e0ff;border-radius:5px;margin-bottom:15px;display:block;width:100%;overflow-wrap:break-word;}
-.user-list{margin-top:20px;}
-.user-list table{width:100%;border-collapse:collapse;}
-.user-list th, .user-list td{border:1px solid #ccc;padding:10px;text-align:left;}
-.user-list th{background:#f0f0f0;}
+body {
+  margin:0;
+  font-family: Roboto,sans-serif;
+  background:#f4f6fa;
+  padding-bottom:0;
+}
+/* HEADER */
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#4b49ac;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:5px;
+  cursor:pointer;
+}
+/* SIDE PANEL */
+#sidePanel{
+  position:fixed;
+  top:0;
+  right:-400px;
+  width:33%;
+  max-width:33%;
+  height:100%;
+  background:#fff;
+  box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:20px;
+  overflow-y:auto;
+  transition:right 0.3s;
+  z-index:100;
+}
+#sidePanel.active{right:0;}
+#sidePanel h2{margin-top:0;}
+#sidePanel a{
+  display:block;
+  margin:10px 0;
+  color:#1a1a2e;
+  text-decoration:none;
+  font-weight:500;
+}
+/* CONTAINER */
+.container{padding:20px;}
+.form-card{
+  background:#fff;
+  padding:25px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom:20px;
+}
+h2{margin-top:0;margin-bottom:15px;}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+table, th, td{
+  border:1px solid #ccc;
+}
+th, td{
+  padding:10px;
+  text-align:left;
+}
 </style>
 </head>
 
 <body>
+
+<header>
+  <h2>Referral Dashboard</h2>
+  <button onclick="togglePanel()">Menu</button>
+</header>
+
+<div id="sidePanel">
+  <button onclick="togglePanel()" style="background:#e74c3c;color:#fff;padding:8px 12px;border:none;border-radius:5px;cursor:pointer;margin-bottom:15px;">Close</button>
+  <h2>Menu</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="profile.html">Profile</a>
+  <a href="referral.html" class="active">Referral</a>
+</div>
+
 <div class="container">
-  <h2>Your Referral Dashboard</h2>
+  <div class="form-card">
+    <h2>Your referral link:</h2>
+    <p id="referralLink">Loading...</p>
+  </div>
 
-  <p>Your referral link:</p>
-  <div id="referralLink" class="ref-link">Loading...</div>
+  <div class="form-card">
+    <h2>Total invited users:</h2>
+    <p id="totalInvited">0</p>
+  </div>
 
-  <p>Total invited users: <span id="totalInvited">0</span></p>
-
-  <div class="user-list">
-    <h3>Invited Users</h3>
+  <div class="form-card">
+    <h2>Invited Users</h2>
     <table>
       <thead>
-        <tr><th>First Name</th><th>Last Name</th></tr>
+        <tr>
+          <th>First Name</th>
+          <th>Last Name</th>
+        </tr>
       </thead>
-      <tbody id="invitedTable">
+      <tbody id="invitedList">
         <tr><td colspan="2">Loading...</td></tr>
       </tbody>
     </table>
   </div>
 </div>
 
-<script type="module">
+<script>
+// Toggle side panel
+function togglePanel(){document.getElementById('sidePanel').classList.toggle('active');}
+
+// Load referral data
 async function loadReferral() {
   const user = supabase.auth.user();
   if (!user) {
-    document.getElementById('referralLink').innerText = "Please login first.";
+    alert("Please login first.");
+    window.location.href="login.html";
     return;
   }
 
-  // 1️⃣ دریافت اطلاعات خود کاربر
-  const { data: me, error: errMe } = await supabase
+  // گرفتن referral_code خود کاربر
+  const { data: me, error: meErr } = await supabase
     .from('users')
     .select('referral_code')
     .eq('id', user.id)
     .single();
 
-  if (errMe || !me) {
+  if (meErr || !me) {
     document.getElementById('referralLink').innerText = "Error loading your referral code.";
     return;
   }
@@ -71,31 +158,32 @@ async function loadReferral() {
   const referralLink = `${window.location.origin}/signup.html?ref=${me.referral_code}`;
   document.getElementById('referralLink').innerText = referralLink;
 
-  // 2️⃣ دریافت کاربران دعوت‌شده
-  const { data: invited, error: errInvited } = await supabase
+  // گرفتن کاربران دعوت شده
+  const { data: invited, error: invErr } = await supabase
     .from('users')
-    .select('first_name, last_name')
+    .select('first_name,last_name')
     .eq('referral_id', me.referral_code)
     .order('created_at', { ascending: true });
 
-  if (errInvited) {
-    document.getElementById('invitedTable').innerHTML = `<tr><td colspan="2">Error loading invited users.</td></tr>`;
+  if (invErr || !invited) {
+    document.getElementById('invitedList').innerHTML = '<tr><td colspan="2">No invited users.</td></tr>';
+    document.getElementById('totalInvited').innerText = 0;
     return;
   }
 
-  // 3️⃣ نمایش تعداد
   document.getElementById('totalInvited').innerText = invited.length;
-
-  // 4️⃣ پر کردن جدول
-  const tbody = document.getElementById('invitedTable');
+  const tbody = document.getElementById('invitedList');
   if (invited.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="2">No invited users yet.</td></tr>`;
-  } else {
-    tbody.innerHTML = invited.map(u => `<tr><td>${u.first_name || ''}</td><td>${u.last_name || ''}</td></tr>`).join('');
+    tbody.innerHTML = '<tr><td colspan="2">No invited users.</td></tr>';
+    return;
   }
+
+  tbody.innerHTML = invited.map(u => `<tr><td>${u.first_name || ''}</td><td>${u.last_name || ''}</td></tr>`).join('');
 }
 
+// اجرا هنگام بارگذاری
 loadReferral();
 </script>
+
 </body>
 </html>
