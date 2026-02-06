@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin KYC Requests</title>
+
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;}
 header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
@@ -12,12 +13,13 @@ header button{background:#e74c3c;border:none;color:#fff;padding:8px 14px;border-
 table{width:100%;border-collapse:collapse;}
 th,td{padding:10px;border:1px solid #ccc;text-align:center;}
 th{background:#1a1a2e;color:#fff;}
-button.action-btn{padding:5px 10px;margin:2px;border:none;border-radius:5px;cursor:pointer;}
-button.action-btn.approve{background:#27ae60;color:#fff;}
-button.action-btn.reject{background:#c0392b;color:#fff;}
-button.action-btn:hover{opacity:0.8;}
+button.action-btn{padding:6px 12px;margin:2px;border:none;border-radius:5px;cursor:pointer;}
+button.approve{background:#27ae60;color:#fff;}
+button.reject{background:#c0392b;color:#fff;}
+button:disabled{opacity:0.5;cursor:not-allowed;}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -30,133 +32,164 @@ button.action-btn:hover{opacity:0.8;}
     <thead>
       <tr>
         <th>Name</th>
-        <th>Date of Birth</th>
+        <th>DOB</th>
         <th>Country</th>
-        <th>Document Type</th>
-        <th>ID Number</th>
+        <th>Doc Type</th>
+        <th>Doc Number</th>
         <th>Status</th>
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody id="kycBody">
-      <!-- KYC Requests will be loaded here -->
-    </tbody>
+    <tbody id="kycBody"></tbody>
   </table>
 </div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-// Supabase config
+/* 🔑 Supabase */
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Check admin login
+/* 🔐 admin check */
 if (!localStorage.getItem('admin_logged_in')) {
-  alert("Please login as admin!");
-  window.location.href = "admin.html";
+  alert("Admin login required");
+  location.href = "admin.html";
 }
 
-function goBack() { window.location.href = "admin_dashboard.html"; }
+function goBack(){
+  location.href = "admin_dashboard.html";
+}
 
-// Load KYC requests
-async function loadKYC() {
+/* 📥 load KYC */
+async function loadKYC(){
   const { data, error } = await supabase
     .from('kyc_requests')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at',{ascending:false});
 
-  if (error) { console.error(error); return; }
+  if(error){
+    console.error("Load KYC error:",error);
+    return;
+  }
 
-  const tbody = document.getElementById('kycBody');
-  tbody.innerHTML = '';
+  const body = document.getElementById('kycBody');
+  body.innerHTML = '';
 
-  data.forEach(row => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${row.first_name || ''} ${row.last_name || ''}</td>
-      <td>${row.dob || ''}</td>
-      <td>${row.country || ''}</td>
-      <td>${row.doc_type || ''}</td>
-      <td>${row.doc_number || ''}</td>
-      <td>${row.status || 'Pending'}</td>
-      <td>
-        <button class="action-btn approve" onclick="approve('${row.id}')">Approve</button>
-        <button class="action-btn reject" onclick="reject('${row.id}')">Reject</button>
-      </td>
+  data.forEach(r=>{
+    body.innerHTML += `
+      <tr>
+        <td>${r.first_name || ''} ${r.last_name || ''}</td>
+        <td>${r.dob || ''}</td>
+        <td>${r.country || ''}</td>
+        <td>${r.doc_type || ''}</td>
+        <td>${r.doc_number || ''}</td>
+        <td>${r.status || 'pending'}</td>
+        <td>
+          <button class="action-btn approve"
+            ${r.status==='approved'?'disabled':''}
+            onclick="approve('${r.id}')">Approve</button>
+          <button class="action-btn reject"
+            ${r.status!=='pending'?'disabled':''}
+            onclick="rejectReq('${r.id}')">Reject</button>
+        </td>
+      </tr>
     `;
-    tbody.appendChild(tr);
   });
 }
 
-// Approve KYC + Referral Reward
-window.approve = async (kycId) => {
+/* ✅ approve + reward */
+window.approve = async (kycId)=>{
+  try{
+    /* 1️⃣ approve kyc */
+    const { data:kyc, error:kycErr } = await supabase
+      .from('kyc_requests')
+      .update({ status:'approved' })
+      .eq('id',kycId)
+      .select('user_id')
+      .single();
 
-  // 1️⃣ تایید KYC و گرفتن user_id
-  const { data: kyc, error } = await supabase
+    if(kycErr || !kyc){
+      alert("KYC approval failed");
+      console.error(kycErr);
+      return;
+    }
+
+    /* 2️⃣ get referral id */
+    const { data:user } = await supabase
+      .from('users')
+      .select('referral_id')
+      .eq('id',kyc.user_id)
+      .single();
+
+    if(!user?.referral_id){
+      alert("KYC approved (no referrer)");
+      loadKYC();
+      return;
+    }
+
+    /* 3️⃣ find referrer */
+    const { data:referrer } = await supabase
+      .from('users')
+      .select('id')
+      .eq('referral_code',user.referral_id)
+      .single();
+
+    if(!referrer){
+      alert("Referrer not found");
+      loadKYC();
+      return;
+    }
+
+    /* 4️⃣ get USDT wallet */
+    const { data:wallet } = await supabase
+      .from('wallets')
+      .select('balance')
+      .eq('user_id',referrer.id)
+      .eq('coin_symbol','USDT')
+      .single();
+
+    if(!wallet){
+      alert("USDT wallet not found for referrer");
+      loadKYC();
+      return;
+    }
+
+    /* 5️⃣ add reward */
+    const newBalance = Number(wallet.balance) + 2;
+
+    const { error:updateErr } = await supabase
+      .from('wallets')
+      .update({ balance:newBalance })
+      .eq('user_id',referrer.id)
+      .eq('coin_symbol','USDT');
+
+    if(updateErr){
+      console.error(updateErr);
+      alert("Reward update failed");
+      return;
+    }
+
+    alert("✅ KYC approved & 2 USDT reward added");
+    loadKYC();
+
+  }catch(e){
+    console.error("Approve error:",e);
+  }
+}
+
+/* ❌ reject */
+window.rejectReq = async (id)=>{
+  await supabase
     .from('kyc_requests')
-    .update({ status: 'approved' })
-    .eq('id', kycId)
-    .select('user_id')
-    .single();
+    .update({ status:'rejected' })
+    .eq('id',id);
 
-  if (error || !kyc) { alert("KYC approve failed"); return; }
-  const verifiedUserId = kyc.user_id;
-
-  // 2️⃣ گرفتن referral_id کاربر تایید شده
-  const { data: verifiedUser, error: userError } = await supabase
-    .from('users')
-    .select('referral_id')
-    .eq('id', verifiedUserId)
-    .single();
-
-  if (userError || !verifiedUser || !verifiedUser.referral_id) { loadKYC(); return; }
-
-  // 3️⃣ پیدا کردن دعوت‌کننده
-  const { data: referrer, error: refError } = await supabase
-    .from('users')
-    .select('id')
-    .eq('referral_code', verifiedUser.referral_id)
-    .single();
-
-  if (refError || !referrer) { loadKYC(); return; }
-
-  // 4️⃣ گرفتن ردیف USDT دعوت‌کننده
-  const { data: wallets, error: walletError } = await supabase
-    .from('wallets')
-    .select('balance')
-    .eq('user_id', referrer.id)
-    .eq('coin_symbol', 'USDT')
-    .single();
-
-  if (walletError || !wallets) { loadKYC(); return; }
-
-  // 5️⃣ اضافه کردن 2 USDT
-  const { error: updateError } = await supabase
-    .from('wallets')
-    .update({ balance: Number(wallet.balance) + 2 })
-    .eq('user_id', referrer.id)
-    .eq('coin_symbol', 'USDT');
-
-  if (updateError) { console.error(updateError); }
-
+  alert("KYC rejected");
   loadKYC();
-};
+}
 
-// Reject KYC
-window.reject = async (id) => {
-  const { error } = await supabase
-    .from('kyc_requests')
-    .update({ status: 'rejected' })
-    .eq('id', id);
-
-  if (error) { alert(error.message); return; }
-  loadKYC();
-};
-
-// Initial load
 window.onload = loadKYC;
 </script>
 
