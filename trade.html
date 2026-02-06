@@ -19,18 +19,13 @@ header h1 { margin:0; font-size:20px; }
 #closeMenu { background:#e74c3c; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-bottom:15px; }
 /* Container */
 .container{ padding:20px; }
-/* Coin Selector */
-.coin-scroll { display:flex; overflow-x:auto; gap:10px; padding:10px 0; }
-.coin-card { background:#fff; border:1px solid #ccc; border-radius:10px; padding:10px; text-align:center; width:80px; flex-shrink:0; cursor:pointer; }
-.coin-card:hover { border-color:#4b49ac; }
-.coin-card img { width:40px; height:40px; margin-bottom:5px; }
 /* Cards */
 .card { background:#fff; padding:25px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); margin-bottom:20px; }
 .card h2 { margin-top:0; }
 /* Inputs */
 .input-group { margin-bottom:15px; }
 .input-group label { display:block; margin-bottom:5px; font-weight:500; }
-.input-group input { width:100%; padding:10px; border:1px solid #ccc; border-radius:5px; }
+.input-group input, .input-group select { width:100%; padding:10px; border:1px solid #ccc; border-radius:5px; }
 /* Buttons */
 button { padding:10px 20px; margin-right:10px; background:#4b49ac; color:#fff; border:none; border-radius:5px; cursor:pointer; font-weight:500; }
 button:hover { background:#3a3690; }
@@ -74,24 +69,16 @@ tr:nth-child(even){ background:#f1f1f1; }
     <div id="walletBalances">Loading...</div>
   </div>
 
-  <!-- Coin Selector -->
-  <div class="card">
-    <h2>Select Coins</h2>
-    <div class="coin-scroll" id="coinScroll">
-      <!-- Coin cards dynamic -->
-    </div>
-  </div>
-
   <!-- Trade Form -->
   <div class="card">
     <h2>Trade Spot</h2>
     <div class="input-group">
       <label for="coinFrom">From Coin</label>
-      <input type="text" id="coinFrom" readonly>
+      <select id="coinFrom" onchange="updateConvertedAmount()"></select>
     </div>
     <div class="input-group">
       <label for="coinTo">To Coin</label>
-      <input type="text" id="coinTo" readonly>
+      <select id="coinTo" onchange="updateConvertedAmount()"></select>
     </div>
     <div class="input-group">
       <label>Amount (From Coin)</label>
@@ -176,7 +163,7 @@ async function loadWallets(){
   data.forEach(w => { if(Number(w.balance)>0) wallets[w.coin_symbol] = Number(w.balance); });
 
   renderWallet();
-  loadCoins();
+  populateCoinSelects();
 }
 
 /* Render Wallet */
@@ -189,60 +176,46 @@ function renderWallet(){
   document.getElementById('walletBalances').innerHTML=html;
 }
 
-/* Load Coins for selection */
-function loadCoins(){
-  const coinScroll=document.getElementById('coinScroll');
-  coinScroll.innerHTML='';
-  const symbols = Object.keys(wallets);
-  if(symbols.length<2) return alert("Need at least 2 coins in wallet");
-
-  coinFrom = symbols[0]; 
-  coinTo = symbols[1];
-  document.getElementById('coinFrom').value = coinFrom;
-  document.getElementById('coinTo').value = coinTo;
-
-  symbols.forEach(symbol=>{
-    const div=document.createElement('div');
-    div.className='coin-card';
-    div.innerHTML=`<div>${symbol}</div>`;
-    div.onclick=()=>selectCoin(symbol);
-    coinScroll.appendChild(div);
+/* Populate select options */
+function populateCoinSelects(){
+  const selectFrom = document.getElementById('coinFrom');
+  const selectTo = document.getElementById('coinTo');
+  selectFrom.innerHTML=''; selectTo.innerHTML='';
+  Object.keys(wallets).forEach(c=>{
+    selectFrom.innerHTML+=`<option value="${c}">${c}</option>`;
+    selectTo.innerHTML+=`<option value="${c}">${c}</option>`;
   });
-
+  coinFrom = selectFrom.value;
+  coinTo = selectTo.value;
   updateConvertedAmount();
 }
 
-/* Select Coin */
-function selectCoin(symbol){
-  if(symbol===coinFrom) return;
-  coinTo = symbol;
-  document.getElementById('coinTo').value = coinTo;
-  updateConvertedAmount();
-}
-
-/* Update Converted Amount */
+/* Update converted amount */
 async function updateConvertedAmount(){
   const amount = Number(document.getElementById('amount').value) || 0;
-  if(!coinFrom || !coinTo || amount===0) { document.getElementById('convertedAmount').innerText = '-'; return; }
+  coinFrom = document.getElementById('coinFrom').value;
+  coinTo = document.getElementById('coinTo').value;
+
+  if(!coinFrom || !coinTo || amount===0) { document.getElementById('convertedAmount').innerText='-'; return; }
 
   const res=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinFrom.toLowerCase()},${coinTo.toLowerCase()}&vs_currencies=usd`);
   const json=await res.json();
-  const fromPrice = json[coinFrom.toLowerCase()].usd;
-  const toPrice = json[coinTo.toLowerCase()].usd;
-  prices[coinFrom] = fromPrice;
-  prices[coinTo] = toPrice;
+  const fromPrice=json[coinFrom.toLowerCase()].usd;
+  const toPrice=json[coinTo.toLowerCase()].usd;
+  prices[coinFrom]=fromPrice; prices[coinTo]=toPrice;
 
-  const converted = (amount*fromPrice)/toPrice;
-  document.getElementById('convertedAmount').innerText = converted.toFixed(6);
+  const converted=(amount*fromPrice)/toPrice;
+  document.getElementById('convertedAmount').innerText=converted.toFixed(6);
 }
 
 /* Trade Spot */
 window.tradeSpot=async()=>{
-  const amount = Number(document.getElementById('amount').value);
+  const amount=Number(document.getElementById('amount').value);
+  coinFrom=document.getElementById('coinFrom').value;
+  coinTo=document.getElementById('coinTo').value;
+
   if(!coinFrom || !coinTo || amount<=0) return alert("Invalid input");
-
-  const converted = (amount*prices[coinFrom])/prices[coinTo];
-
+  const converted=(amount*prices[coinFrom])/prices[coinTo];
   if(wallets[coinFrom]<amount) return alert("Insufficient balance");
 
   // Update wallets
