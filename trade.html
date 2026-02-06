@@ -1,178 +1,118 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Trade | Novabit</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- Supabase -->
+<title>Trade</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- Chart -->
-<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-
 <style>
-body{margin:0;font-family:Arial;background:#f4f6fa}
-header{background:#1a1a2e;color:#fff;padding:15px}
-.card{background:#fff;margin:15px;padding:15px;border-radius:8px}
-button{padding:10px;width:100%;margin-top:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer}
-select,input{width:100%;padding:10px;margin-top:8px}
-#chart{height:300px}
-.wallet-row{margin-bottom:6px}
+body{font-family:Arial;background:#f4f6fa;padding:20px}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-radius:8px}
+select,input,button{width:100%;padding:10px;margin-top:8px}
+button{background:#4b49ac;color:#fff;border:none}
 </style>
 </head>
-
 <body>
 
-<header>
-  <b>Spot Trade</b>
-</header>
+<h2>Spot Trade (Convert)</h2>
 
 <div class="card">
-  <b>Wallet</b>
-  <div id="walletBox">Loading...</div>
+  <label>From</label>
+  <select id="fromCoin"></select>
+
+  <label>To</label>
+  <select id="toCoin"></select>
+
+  <label>Amount</label>
+  <input id="amount" type="number">
+
+  <div>Rate: <span id="rate">-</span></div>
+
+  <button onclick="convert()">Convert</button>
 </div>
 
-<div class="card">
-  <b>Select Coin</b>
-  <select id="coinSelect"></select>
-  <div>Price: <span id="price">-</span> USD</div>
-</div>
-
-<div class="card">
-  <b>Amount (USDT)</b>
-  <input type="number" id="amount" placeholder="e.g. 10">
-  <button onclick="buy()">Buy</button>
-</div>
-
-<div class="card">
-  <b>Chart</b>
-  <div id="chart"></div>
-</div>
+<h2>Wallet</h2>
+<div class="card" id="walletBox"></div>
 
 <script>
-/* ================= CONFIG ================= */
 const supabase = supabasejs.createClient(
   "https://iecnioogmafgxwarmkxz.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
 );
 
-let user;
-let wallet = {};
-let prices = {};
-let coinMap = {};
+let user, wallet={}, prices={};
 
-/* ================= AUTH ================= */
-(async ()=>{
-  const { data } = await supabase.auth.getUser();
-  if(!data.user){
-    alert("Login first");
-    location.href="login.html";
-    return;
-  }
-  user = data.user;
+(async()=>{
+  user = (await supabase.auth.getUser()).data.user;
+  if(!user){ alert("Login"); return; }
   await loadWallet();
-  await loadCoins();
 })();
 
-/* ================= WALLET ================= */
 async function loadWallet(){
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from('wallets')
     .select('coin_symbol,balance')
     .eq('user_id', user.id);
 
-  if(error){ alert(error.message); return; }
-
-  wallet = {};
+  wallet={};
   let html='';
+  fromCoin.innerHTML='';
+  toCoin.innerHTML='';
+
   data.forEach(w=>{
-    wallet[w.coin_symbol] = Number(w.balance);
-    html += `<div class="wallet-row">${w.coin_symbol}: ${w.balance}</div>`;
-  });
-  document.getElementById('walletBox').innerHTML = html || 'Empty';
-}
-
-/* ================= COINS ================= */
-async function loadCoins(){
-  const { data, error } = await supabase
-    .from('coins')
-    .select('symbol,coingecko_id')
-    .eq('is_active', true);
-
-  if(error){ alert(error.message); return; }
-
-  const sel = document.getElementById('coinSelect');
-  sel.innerHTML='';
-
-  data.forEach(c=>{
-    coinMap[c.symbol] = c.coingecko_id;
-    sel.innerHTML += `<option value="${c.symbol}">${c.symbol}</option>`;
+    wallet[w.coin_symbol]=Number(w.balance);
+    html+=`${w.coin_symbol}: ${w.balance}<br>`;
+    fromCoin.innerHTML+=`<option>${w.coin_symbol}</option>`;
+    toCoin.innerHTML+=`<option>${w.coin_symbol}</option>`;
   });
 
-  sel.onchange = updatePrice;
-  await updatePrice();
+  walletBox.innerHTML=html;
+  fromCoin.onchange=toCoin.onchange=updateRate;
+  updateRate();
 }
 
-/* ================= PRICE ================= */
-async function updatePrice(){
-  const symbol = coinSelect.value;
-  const id = coinMap[symbol];
-  const res = await fetch(
-    `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`
-  );
-  const json = await res.json();
-  const price = json[id].usd;
-  prices[symbol] = price;
-  document.getElementById('price').innerText = price;
-  updateChart(id);
+async function updateRate(){
+  const f=fromCoin.value, t=toCoin.value;
+  if(f===t){ rate.innerText='1'; return; }
+
+  const r=await fetch(
+    `https://api.coingecko.com/api/v3/simple/price?ids=${f.toLowerCase()},${t.toLowerCase()}&vs_currencies=usd`
+  ).then(r=>r.json());
+
+  const rf=r[f.toLowerCase()].usd;
+  const rt=r[t.toLowerCase()].usd;
+  prices[f]=rf; prices[t]=rt;
+  rate.innerText=(rf/rt).toFixed(6);
 }
 
-/* ================= BUY ================= */
-async function buy(){
-  const usdt = Number(amount.value);
-  const coin = coinSelect.value;
-  const price = prices[coin];
+async function convert(){
+  const f=fromCoin.value, t=toCoin.value;
+  const amt=Number(amount.value);
+  if(amt<=0 || wallet[f]<amt) return alert("Invalid");
 
-  if(!usdt || usdt<=0) return alert("Invalid amount");
-  if(!wallet.USDT || wallet.USDT < usdt) return alert("Not enough USDT");
+  const receive = amt * (prices[f]/prices[t]);
 
-  const coinAmount = usdt / price;
-
-  // update USDT
   await supabase.from('wallets')
-    .update({ balance: wallet.USDT - usdt })
-    .eq('user_id', user.id)
-    .eq('coin_symbol', 'USDT');
+    .update({ balance: wallet[f]-amt })
+    .eq('user_id', user.id).eq('coin_symbol', f);
 
-  // update coin
   await supabase.from('wallets')
-    .update({ balance: (wallet[coin] || 0) + coinAmount })
-    .eq('user_id', user.id)
-    .eq('coin_symbol', coin);
+    .update({ balance: (wallet[t]||0)+receive })
+    .eq('user_id', user.id).eq('coin_symbol', t);
 
-  alert("Trade successful");
+  await supabase.from('trade_history').insert({
+    user_id:user.id,
+    type:'spot',
+    side:'buy',
+    from_symbol:f,
+    to_symbol:t,
+    amount:amt,
+    price:prices[f]
+  });
+
   amount.value='';
   await loadWallet();
-}
-
-/* ================= CHART ================= */
-const chart = LightweightCharts.createChart(
-  document.getElementById('chart'),
-  { height:300 }
-);
-const series = chart.addLineSeries();
-
-async function updateChart(id){
-  const res = await fetch(
-    `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=1`
-  );
-  const data = await res.json();
-  series.setData(
-    data.prices.map(p=>({ time:p[0]/1000, value:p[1] }))
-  );
+  alert("Converted");
 }
 </script>
-
 </body>
 </html>
