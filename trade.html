@@ -34,8 +34,6 @@ header h1 { margin:0; font-size:20px; }
 /* Buttons */
 button { padding:10px 20px; margin-right:10px; background:#4b49ac; color:#fff; border:none; border-radius:5px; cursor:pointer; font-weight:500; }
 button:hover { background:#3a3690; }
-/* Chart */
-#chart { height:300px; }
 /* Table */
 .table-container { max-height:200px; overflow-y:auto; margin-top:20px; }
 table { width:100%; border-collapse:collapse; }
@@ -78,7 +76,7 @@ tr:nth-child(even){ background:#f1f1f1; }
 
   <!-- Coin Selector -->
   <div class="card">
-    <h2>Select Coin (From wallets)</h2>
+    <h2>Select Coins</h2>
     <div class="coin-scroll" id="coinScroll">
       <!-- Coin cards dynamic -->
     </div>
@@ -88,25 +86,22 @@ tr:nth-child(even){ background:#f1f1f1; }
   <div class="card">
     <h2>Trade Spot</h2>
     <div class="input-group">
-      <label for="buyCoin">Coin Symbol</label>
-      <input type="text" id="buyCoin" placeholder="Select a coin above">
+      <label for="coinFrom">From Coin</label>
+      <input type="text" id="coinFrom" readonly>
     </div>
     <div class="input-group">
-      <label for="amount">Amount</label>
+      <label for="coinTo">To Coin</label>
+      <input type="text" id="coinTo" readonly>
+    </div>
+    <div class="input-group">
+      <label>Amount (From Coin)</label>
       <input type="number" id="amount" placeholder="0.0000">
     </div>
     <div class="input-group">
-      <label>Price (USD)</label>
-      <div id="currentPrice">-</div>
+      <label>Converted Amount (To Coin)</label>
+      <div id="convertedAmount">-</div>
     </div>
-    <button onclick="buyCoin()">Buy</button>
-    <button onclick="sellCoin()">Sell</button>
-  </div>
-
-  <!-- Chart -->
-  <div class="card">
-    <h2>Price Chart</h2>
-    <div id="chart"></div>
+    <button onclick="tradeSpot()">Trade</button>
   </div>
 
   <!-- Trade History -->
@@ -115,7 +110,7 @@ tr:nth-child(even){ background:#f1f1f1; }
     <div class="table-container">
       <table>
         <thead>
-          <tr><th>Date</th><th>Type</th><th>Coin</th><th>Amount</th><th>Price (USD)</th></tr>
+          <tr><th>Date</th><th>From</th><th>To</th><th>Amount</th><th>Converted</th></tr>
         </thead>
         <tbody id="tradeHistory">
           <tr><td colspan="5">No trades yet</td></tr>
@@ -134,8 +129,6 @@ tr:nth-child(even){ background:#f1f1f1; }
   <a href="trade.html" class="active">Trade</a>
 </div>
 
-<!-- Scripts -->
-<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const supabase = createClient(
@@ -146,9 +139,8 @@ const supabase = createClient(
 let user;
 let wallets = {};
 let prices = {};
-let currentSymbol = "";
-let chart, lineSeries;
-let tradeHistory = [];
+let coinFrom = '';
+let coinTo = '';
 
 /* Side Menu */
 const sideMenu = document.getElementById('sideMenu');
@@ -170,8 +162,6 @@ async function init(){
 
   await loadWallets();
   await loadTradeHistory();
-  await loadCoins();
-  initChart();
 }
 window.onload = init;
 
@@ -183,73 +173,93 @@ async function loadWallets(){
     .eq('user_id', user.id);
 
   wallets = {};
-  data.forEach(w => wallets[w.coin_symbol] = Number(w.balance));
+  data.forEach(w => { if(Number(w.balance)>0) wallets[w.coin_symbol] = Number(w.balance); });
+
   renderWallet();
+  loadCoins();
 }
 
 /* Render Wallet */
 function renderWallet(){
   let html='<ul>';
   Object.keys(wallets).forEach(c=>{
-    if(wallets[c]>0) html+=`<li>${c}: ${wallets[c]}</li>`;
+    html+=`<li>${c}: ${wallets[c]}</li>`;
   });
   html+='</ul>';
   document.getElementById('walletBalances').innerHTML=html;
 }
 
-/* Load Coins for selection (from wallets) */
-async function loadCoins(){
+/* Load Coins for selection */
+function loadCoins(){
   const coinScroll=document.getElementById('coinScroll');
   coinScroll.innerHTML='';
-  for(const symbol of Object.keys(wallets)){
+  const symbols = Object.keys(wallets);
+  if(symbols.length<2) return alert("Need at least 2 coins in wallet");
+
+  coinFrom = symbols[0]; 
+  coinTo = symbols[1];
+  document.getElementById('coinFrom').value = coinFrom;
+  document.getElementById('coinTo').value = coinTo;
+
+  symbols.forEach(symbol=>{
     const div=document.createElement('div');
     div.className='coin-card';
     div.innerHTML=`<div>${symbol}</div>`;
     div.onclick=()=>selectCoin(symbol);
     coinScroll.appendChild(div);
-  }
+  });
+
+  updateConvertedAmount();
 }
 
 /* Select Coin */
-async function selectCoin(symbol){
-  currentSymbol=symbol;
-  document.getElementById('buyCoin').value=symbol;
+function selectCoin(symbol){
+  if(symbol===coinFrom) return;
+  coinTo = symbol;
+  document.getElementById('coinTo').value = coinTo;
+  updateConvertedAmount();
+}
 
-  const res=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${symbol.toLowerCase()},tether&vs_currencies=usd`);
+/* Update Converted Amount */
+async function updateConvertedAmount(){
+  const amount = Number(document.getElementById('amount').value) || 0;
+  if(!coinFrom || !coinTo || amount===0) { document.getElementById('convertedAmount').innerText = '-'; return; }
+
+  const res=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinFrom.toLowerCase()},${coinTo.toLowerCase()}&vs_currencies=usd`);
   const json=await res.json();
-  prices[symbol]=json[symbol.toLowerCase()].usd;
-  prices['USDT']=1;
+  const fromPrice = json[coinFrom.toLowerCase()].usd;
+  const toPrice = json[coinTo.toLowerCase()].usd;
+  prices[coinFrom] = fromPrice;
+  prices[coinTo] = toPrice;
 
-  document.getElementById('currentPrice').innerText=`$${prices[symbol]}`;
-  updateChart(symbol);
+  const converted = (amount*fromPrice)/toPrice;
+  document.getElementById('convertedAmount').innerText = converted.toFixed(6);
 }
 
-/* Spot Buy */
-window.buyCoin=async()=>{
-  if(!currentSymbol) return alert("Select coin");
-  const amount=Number(document.getElementById('amount').value);
-  if(!amount) return alert("Enter amount");
-  const cost=amount*prices[currentSymbol];
-  if((wallets['USDT']||0)<cost) return alert("Insufficient USDT");
+/* Trade Spot */
+window.tradeSpot=async()=>{
+  const amount = Number(document.getElementById('amount').value);
+  if(!coinFrom || !coinTo || amount<=0) return alert("Invalid input");
 
-  await supabase.from('wallets').update({balance: wallets['USDT']-cost}).eq('user_id',user.id).eq('coin_symbol','USDT');
-  await supabase.from('wallets').update({balance:(wallets[currentSymbol]||0)+amount}).eq('user_id',user.id).eq('coin_symbol',currentSymbol);
-  await supabase.from('trade_history').insert({user_id:user.id,type:'spot',side:'buy',from_symbol:'USDT',to_symbol:currentSymbol,amount,price:prices[currentSymbol]});
-  await loadWallets();
-  await loadTradeHistory();
-}
+  const converted = (amount*prices[coinFrom])/prices[coinTo];
 
-/* Spot Sell */
-window.sellCoin=async()=>{
-  if(!currentSymbol) return alert("Select coin");
-  const amount=Number(document.getElementById('amount').value);
-  if(!amount) return alert("Enter amount");
-  if((wallets[currentSymbol]||0)<amount) return alert("Insufficient balance");
-  const receive=amount*prices[currentSymbol];
+  if(wallets[coinFrom]<amount) return alert("Insufficient balance");
 
-  await supabase.from('wallets').update({balance:wallets[currentSymbol]-amount}).eq('user_id',user.id).eq('coin_symbol',currentSymbol);
-  await supabase.from('wallets').update({balance:(wallets['USDT']||0)+receive}).eq('user_id',user.id).eq('coin_symbol','USDT');
-  await supabase.from('trade_history').insert({user_id:user.id,type:'spot',side:'sell',from_symbol:currentSymbol,to_symbol:'USDT',amount,price:prices[currentSymbol]});
+  // Update wallets
+  await supabase.from('wallets').update({balance:wallets[coinFrom]-amount}).eq('user_id',user.id).eq('coin_symbol',coinFrom);
+  await supabase.from('wallets').update({balance:(wallets[coinTo]||0)+converted}).eq('user_id',user.id).eq('coin_symbol',coinTo);
+
+  // Insert trade history
+  await supabase.from('trade_history').insert({
+    user_id:user.id,
+    type:'spot',
+    side:'convert',
+    from_symbol:coinFrom,
+    to_symbol:coinTo,
+    amount,
+    converted_amount:converted
+  });
+
   await loadWallets();
   await loadTradeHistory();
 }
@@ -262,33 +272,14 @@ async function loadTradeHistory(){
   if(!data.length) { tbody.innerHTML='<tr><td colspan="5">No trades yet</td></tr>'; return; }
   data.forEach(t=>{
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${new Date(t.created_at).toLocaleString()}</td><td>${t.side}</td><td>${t.to_symbol}</td><td>${t.amount}</td><td>$${t.price}</td>`;
+    tr.innerHTML=`<td>${new Date(t.created_at).toLocaleString()}</td><td>${t.from_symbol}</td><td>${t.to_symbol}</td><td>${t.amount}</td><td>${t.converted_amount.toFixed(6)}</td>`;
     tbody.appendChild(tr);
   });
 }
 
-/* Chart */
-function initChart(){
-  const chartContainer=document.getElementById('chart');
-  chartContainer.innerHTML='';
-  chart=LightweightCharts.createChart(chartContainer,{width:chartContainer.clientWidth,height:300,layout:{textColor:'#000',background:{type:'solid',color:'#fff'}},grid:{vertLines:{color:'#eee'},horzLines:{color:'#eee'}},rightPriceScale:{borderColor:'#ccc'},timeScale:{borderColor:'#ccc'}});
-  lineSeries=chart.addLineSeries();
-}
-function updateChart(symbol){
-  const id=symbol.toLowerCase();
-  fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=7`)
-  .then(res=>res.json())
-  .then(data=>{
-    if(!data.prices) return;
-    const pricesData=data.prices.map(p=>({time:Math.floor(p[0]/1000),value:p[1]}));
-    lineSeries.setData(pricesData);
-    chart.timeScale().fitContent();
-  }).catch(e=>console.log(e));
-}
+/* Update converted amount on input change */
+document.getElementById('amount').addEventListener('input', updateConvertedAmount);
 
-/* Responsive chart */
-window.addEventListener('resize',()=>{ if(chart) chart.resize(document.getElementById('chart').clientWidth,300); });
 </script>
-
 </body>
 </html>
