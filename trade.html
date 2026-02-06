@@ -177,14 +177,24 @@ function renderWallet(){
 }
 
 /* Populate select options */
-function populateCoinSelects(){
+async function populateCoinSelects(){
   const selectFrom = document.getElementById('coinFrom');
   const selectTo = document.getElementById('coinTo');
   selectFrom.innerHTML=''; selectTo.innerHTML='';
+
+  // Load all coins from 'coins' table
+  const { data: allCoins } = await supabase.from('coins').select('*').eq('is_active', true);
+
+  // From Coin: فقط ارزهایی که موجودی دارد
   Object.keys(wallets).forEach(c=>{
     selectFrom.innerHTML+=`<option value="${c}">${c}</option>`;
-    selectTo.innerHTML+=`<option value="${c}">${c}</option>`;
   });
+
+  // To Coin: همه ارزهای فعال
+  allCoins.forEach(c=>{
+    selectTo.innerHTML+=`<option value="${c.symbol}">${c.symbol}</option>`;
+  });
+
   coinFrom = selectFrom.value;
   coinTo = selectTo.value;
   updateConvertedAmount();
