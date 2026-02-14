@@ -10,7 +10,7 @@ body { font-family:'Roboto',sans-serif; margin:0; background:#f8f9fa; padding-bo
 header { background:#1a1a2e; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10; }
 header h1 { margin:0; font-size:20px; }
 #menuBtn { background:#4b49ac; color:#fff; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; }
-#sideMenu { position:fixed; top:0; right:-300px; width:280px; height:100%; background:#fff; box-shadow:-2px 0 6px rgba(0,0,0,0.2); transition:right .3s; z-index:100; padding:20px; }
+#sideMenu { position:fixed; top:0; right:-400px; width:280px; height:100%; background:#fff; box-shadow:-2px 0 6px rgba(0,0,0,0.2); transition:right .3s; z-index:100; padding:20px; }
 #sideMenu.active { right:0; }
 #closeMenu { background:#e74c3c; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-bottom:15px; }
 .container{ padding:20px; }
@@ -107,8 +107,8 @@ let marketCoins = [];
 
 /* ========== MENU ========== */
 const sideMenu = document.getElementById("sideMenu");
-document.getElementById("menuBtn").onclick = ()=>sideMenu.classList.toggle("active");
-document.getElementById("closeMenu").onclick = ()=>sideMenu.classList.remove("active");
+document.getElementById("menuBtn").onclick = () => sideMenu.classList.toggle("active");
+document.getElementById("closeMenu").onclick = () => sideMenu.classList.remove("active");
 
 /* ========== INIT ========== */
 async function init(){
@@ -118,12 +118,11 @@ async function init(){
 
   await loadMarketCoins();
   await loadWallets();
-  await insertTradeHistory(from, to, amount, fromCoin.current_price);
   await loadTradeHistory();
 }
 window.onload = init;
 
-/* ========== LOAD MARKET COINS (100) ========== */
+/* ========== LOAD MARKET COINS ========== */
 async function loadMarketCoins(){
   const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1");
   marketCoins = await res.json();
@@ -131,13 +130,18 @@ async function loadMarketCoins(){
 
 /* ========== LOAD WALLET ========== */
 async function loadWallets(){
-  const { data } = await supabase.from('wallets').select('*').eq('user_id', user.id);
+  const { data } = await supabase.from('wallets')
+    .select('*')
+    .eq('user_id', user.id);
+
   wallets = {};
   if(data){
     data.forEach(w=>{
-      if(Number(w.balance)>0) wallets[w.coin_symbol.toUpperCase()] = Number(w.balance);
+      if(Number(w.balance)>0)
+        wallets[w.coin_symbol.toLowerCase()] = Number(w.balance);
     });
   }
+
   renderWallet();
   populateSelects();
 }
@@ -145,10 +149,11 @@ async function loadWallets(){
 /* ========== RENDER WALLET ========== */
 function renderWallet(){
   let html='<ul>';
-  if(Object.keys(wallets).length===0){ html+='<li>No balance</li>'; }
-  else{
+  if(Object.keys(wallets).length===0){
+    html+='<li>No balance</li>';
+  } else {
     Object.keys(wallets).forEach(c=>{
-      html+=`<li>${c}: ${wallets[c]}</li>`;
+      html+=`<li>${c.toUpperCase()}: ${wallets[c]}</li>`;
     });
   }
   html+='</ul>';
@@ -161,17 +166,13 @@ function populateSelects(){
   const to = document.getElementById('coinTo');
   from.innerHTML=''; to.innerHTML='';
 
-  // From: فقط ارزهایی که موجودی دارند
   Object.keys(wallets).forEach(c=>{
-    from.innerHTML+=`<option value="${c}">${c}</option>`;
+    from.innerHTML+=`<option value="${c}">${c.toUpperCase()}</option>`;
   });
 
-  // To: همه ارزهای بازار
   marketCoins.forEach(c=>{
-    to.innerHTML+=`<option value="${c.symbol.toUpperCase()}">${c.symbol.toUpperCase()} - $${c.current_price}</option>`;
+    to.innerHTML+=`<option value="${c.symbol.toLowerCase()}">${c.symbol.toUpperCase()} - $${c.current_price}</option>`;
   });
-
-  updateConverted();
 }
 
 /* ========== UPDATE CONVERTED ========== */
@@ -181,13 +182,14 @@ function updateConverted(){
   const to = document.getElementById('coinTo').value;
   if(!amount || !from || !to){ document.getElementById('convertedAmount').innerText='-'; return; }
 
-  const fromCoin = marketCoins.find(c=>c.symbol.toUpperCase()===from);
-  const toCoin = marketCoins.find(c=>c.symbol.toUpperCase()===to);
+  const fromCoin = marketCoins.find(c=>c.symbol.toLowerCase()===from);
+  const toCoin = marketCoins.find(c=>c.symbol.toLowerCase()===to);
   if(!fromCoin || !toCoin) return;
 
-  const converted = (amount * fromCoin.current_price)/toCoin.current_price;
+  const converted = (amount * fromCoin.current_price) / toCoin.current_price;
   document.getElementById('convertedAmount').innerText = converted.toFixed(6);
 }
+
 document.getElementById('amount').addEventListener('input', updateConverted);
 document.getElementById('coinFrom').addEventListener('change', updateConverted);
 document.getElementById('coinTo').addEventListener('change', updateConverted);
@@ -197,76 +199,54 @@ document.getElementById("tradeBtn").onclick = async function(){
   const amount = Number(document.getElementById('amount').value);
   const from = document.getElementById('coinFrom').value;
   const to = document.getElementById('coinTo').value;
+  if(!amount || !from || !to) return alert("Invalid input");
+  if(wallets[from]<amount) return alert("Insufficient balance");
 
-  if(!amount || amount<=0) return alert("Invalid amount");
-  if(!wallets[from] || wallets[from] < amount) return alert("Insufficient balance");
+  const fromCoin = marketCoins.find(c=>c.symbol.toLowerCase()===from);
+  const toCoin = marketCoins.find(c=>c.symbol.toLowerCase()===to);
+  const converted = (amount * fromCoin.current_price) / toCoin.current_price;
 
-  const fromCoin = marketCoins.find(c=>c.symbol.toUpperCase()===from);
-  const toCoin = marketCoins.find(c=>c.symbol.toUpperCase()===to);
-  const converted = (amount*fromCoin.current_price)/toCoin.current_price;
+  wallets[from]-=amount;
+  wallets[to] = (wallets[to]||0)+converted;
 
-  // UPDATE FROM WALLET
-  const { error: eFrom } = await supabase.from('wallets')
-    .update({balance: wallets[from]-amount})
-    .eq('user_id', user.id)
-    .eq('coin_symbol', from);
-  if(eFrom){ console.error(eFrom); return alert("Wallet FROM update failed"); }
+  // Update wallets in Supabase
+  await supabase.from('wallets').upsert({user_id:user.id, coin_symbol:from, balance:wallets[from]}, {onConflict:['user_id','coin_symbol']});
+  await supabase.from('wallets').upsert({user_id:user.id, coin_symbol:to, balance:wallets[to]}, {onConflict:['user_id','coin_symbol']});
 
-  // UPDATE TO WALLET
-  const { data: existingTo } = await supabase.from('wallets')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('coin_symbol', to);
+  // Insert trade history
+  await supabase.from('trade_history').insert({
+    user_id: user.id,
+    trade_type: 'spot',
+    coin_symbol: from+'->'+to,
+    amount: amount,
+    price_usd: fromCoin.current_price,
+    created_at: new Date()
+  });
 
-  if(existingTo.length>0){
-    await supabase.from('wallets')
-      .update({balance: existingTo[0].balance + converted})
-      .eq('user_id', user.id)
-      .eq('coin_symbol', to);
-  } else {
-    await supabase.from('wallets').insert({user_id:user.id, coin_symbol:to, balance:converted});
-  }
-
-/* ========== INSERT TRADE HISTORY ========== */
-async function insertTradeHistory(from, to, amount, priceUsd){
-  const { error } = await supabase
-    .from('trade_history')
-    .insert({
-      user_id: user.id,
-      trade_type: 'spot',
-      coin_symbol: from + '->' + to, // نمایش از -> به
-      amount: amount,
-      price_usd: priceUsd,
-      created_at: new Date()
-    });
-  if(error) console.error("Trade history insert error:", error);
-}
+  alert("Trade Successful ✅");
+  await loadWallets();
+  await loadTradeHistory();
+};
 
 /* ========== LOAD TRADE HISTORY ========== */
 async function loadTradeHistory(){
-  const { data, error } = await supabase
-    .from('trade_history')
+  const { data, error } = await supabase.from('trade_history')
     .select('*')
     .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
-
-  if(error){ console.error("Load trade history error:", error); return; }
+    .order('created_at', {ascending:false});
 
   const tbody = document.getElementById('tradeHistory');
-  tbody.innerHTML = '';
+  tbody.innerHTML='';
 
-  if(!data || data.length===0){
-    tbody.innerHTML = '<tr><td colspan="5">No trades yet</td></tr>';
-    return;
-  }
+  if(error){ console.error(error); tbody.innerHTML='<tr><td colspan="5">Error loading history</td></tr>'; return; }
+  if(!data || data.length===0){ tbody.innerHTML='<tr><td colspan="5">No trades yet</td></tr>'; return; }
 
   data.forEach(t=>{
-    // برای هر ردیف، مقدار تبدیل تقریبی را با توجه به قیمت لحظه‌ای To Coin محاسبه می‌کنیم
     const coins = t.coin_symbol.split('->');
     const fromCoin = coins[0];
     const toCoin = coins[1];
 
-    const toMarket = marketCoins.find(c=>c.symbol.toUpperCase()===toCoin);
+    const toMarket = marketCoins.find(c=>c.symbol.toLowerCase()===toCoin);
     const converted = toMarket ? ((t.amount*t.price_usd)/toMarket.current_price).toFixed(6) : '-';
 
     const tr = document.createElement('tr');
@@ -281,5 +261,6 @@ async function loadTradeHistory(){
   });
 }
 </script>
+
 </body>
 </html>
