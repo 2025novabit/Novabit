@@ -221,56 +221,56 @@ document.getElementById("tradeBtn").onclick = async function(){
   wallets[from] -= amount;
   wallets[toSymbol] = (wallets[toSymbol] || 0) + converted;
 
-  await supabase.from('wallets').upsert(
-    { user_id:user.id, coin_symbol:from, balance:wallets[from] },
-    { onConflict:'user_id,coin_symbol' }
-  );
+  /* UPDATE FROM */
+  const { error: errorFrom } = await supabase
+    .from('wallets')
+    .upsert(
+      { user_id:user.id, coin_symbol:from, balance:wallets[from] },
+      { onConflict:'user_id,coin_symbol' }
+    );
 
-  await supabase.from('wallets').upsert(
-    { user_id:user.id, coin_symbol:toSymbol, balance:wallets[toSymbol] },
-    { onConflict:'user_id,coin_symbol' }
-  );
+  if(errorFrom){
+    console.error("Wallet From Error:", errorFrom);
+    return alert("Wallet update failed (FROM)");
+  }
 
-  await supabase.from('trade_history').insert({
-    user_id:user.id,
-    type:'spot',
-    from_symbol:from,
-    to_symbol:toSymbol,
-    amount,
-    converted_amount:converted,
-    created_at:new Date()
-  });
+  /* UPDATE TO */
+  const { error: errorTo } = await supabase
+    .from('wallets')
+    .upsert(
+      { user_id:user.id, coin_symbol:toSymbol, balance:wallets[toSymbol] },
+      { onConflict:'user_id,coin_symbol' }
+    );
+
+  if(errorTo){
+    console.error("Wallet To Error:", errorTo);
+    return alert("Wallet update failed (TO)");
+  }
+
+  /* INSERT HISTORY */
+  const { error: historyError } = await supabase
+    .from('trade_history')
+    .insert({
+      user_id:user.id,
+      type:'spot',
+      from_symbol:from,
+      to_symbol:toSymbol,
+      amount,
+      converted_amount:converted,
+      created_at:new Date()
+    });
+
+  if(historyError){
+    console.error("History Error:", historyError);
+    return alert("History insert failed");
+  }
 
   alert("Trade Successful ✅");
+
   await loadWallets();
   await loadTradeHistory();
 };
 
-/* ================= HISTORY ================= */
-async function loadTradeHistory(){
-  const { data } = await supabase.from('trade_history')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at',{ascending:false});
-
-  const tbody=document.getElementById('tradeHistory');
-  tbody.innerHTML='';
-
-  if(!data || data.length===0){
-    tbody.innerHTML='<tr><td colspan="5">No trades yet</td></tr>';
-    return;
-  }
-
-  data.forEach(t=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${new Date(t.created_at).toLocaleString()}</td>
-      <td>${t.from_symbol}</td>
-      <td>${t.to_symbol}</td>
-      <td>${t.amount}</td>
-      <td>${Number(t.converted_amount).toFixed(6)}</td>`;
-    tbody.appendChild(tr);
-  });
 }
 </script>
 
