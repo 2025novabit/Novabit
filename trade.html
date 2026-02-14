@@ -7,39 +7,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 <style>
 body { font-family:'Roboto',sans-serif; margin:0; background:#f8f9fa; padding-bottom:60px; }
-/* Header */
 header { background:#1a1a2e; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10; }
 header h1 { margin:0; font-size:20px; }
 #menuBtn { background:#4b49ac; color:#fff; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:500; }
-/* Side Menu */
 #sideMenu { position:fixed; top:0; right:-400px; width:33%; max-width:300px; height:100%; background:#fff; box-shadow:-2px 0 6px rgba(0,0,0,0.2); transition:right .3s; z-index:100; padding:20px; overflow-y:auto; }
 #sideMenu.active { right:0; }
-#sideMenu h2 { margin-top:0; }
-#sideMenu a { display:block; margin:15px 0; color:#1a1a2e; text-decoration:none; font-weight:500; }
-#closeMenu { background:#e74c3c; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-bottom:15px; }
-/* Container */
 .container{ padding:20px; }
-/* Cards */
 .card { background:#fff; padding:25px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); margin-bottom:20px; }
-.card h2 { margin-top:0; }
-/* Inputs */
 .input-group { margin-bottom:15px; }
 .input-group label { display:block; margin-bottom:5px; font-weight:500; }
 .input-group input, .input-group select { width:100%; padding:10px; border:1px solid #ccc; border-radius:5px; }
-/* Buttons */
-button { padding:10px 20px; margin-right:10px; background:#4b49ac; color:#fff; border:none; border-radius:5px; cursor:pointer; font-weight:500; }
+button { padding:10px 20px; background:#4b49ac; color:#fff; border:none; border-radius:5px; cursor:pointer; }
 button:hover { background:#3a3690; }
-/* Table */
 .table-container { max-height:200px; overflow-y:auto; margin-top:20px; }
 table { width:100%; border-collapse:collapse; }
 th,td { padding:10px; text-align:left; }
-th { background:#1a1a2e; color:#fff; position:sticky; top:0; }
+th { background:#1a1a2e; color:#fff; }
 tr:nth-child(even){ background:#f1f1f1; }
-/* Bottom Navbar */
-.bottom-nav { position:fixed; bottom:0; width:100%; background:#1a1a2e; display:flex; justify-content:space-around; padding:10px 0; z-index:10; }
-.bottom-nav a { color:#fff; text-decoration:none; font-size:14px; display:flex; flex-direction:column; align-items:center; }
+.bottom-nav { position:fixed; bottom:0; width:100%; background:#1a1a2e; display:flex; justify-content:space-around; padding:10px 0; }
+.bottom-nav a { color:#fff; text-decoration:none; font-size:14px; }
 .bottom-nav a.active { color:#4b49ac; }
-@media(min-width:768px){ .bottom-nav{ display:none; } }
 </style>
 </head>
 <body>
@@ -49,220 +36,214 @@ tr:nth-child(even){ background:#f1f1f1; }
   <button id="menuBtn" onclick="toggleMenu()">Menu</button>
 </header>
 
-<!-- Side Menu -->
-<div id="sideMenu">
-  <button id="closeMenu" onclick="toggleMenu()">Close</button>
-  <h2>Menu</h2>
-  <a href="profile.html">Profile</a>
-  <a href="kyc.html">KYC</a>
-  <a href="changepassword.html">Change Password</a>
-  <a href="2fa.html">2FA Settings</a>
-  <a href="fee.html">Fees</a>
-  <a href="referral.html">Referral</a>
-</div>
-
 <div class="container">
 
-  <!-- Wallet Balances -->
-  <div class="card">
-    <h2>Wallet Balances</h2>
-    <div id="walletBalances">Loading...</div>
-  </div>
-
-  <!-- Trade Form -->
-  <div class="card">
-    <h2>Trade Spot</h2>
-    <div class="input-group">
-      <label for="coinFrom">From Coin</label>
-      <select id="coinFrom" onchange="updateConvertedAmount()"></select>
-    </div>
-    <div class="input-group">
-      <label for="coinTo">To Coin</label>
-      <select id="coinTo" onchange="updateConvertedAmount()"></select>
-    </div>
-    <div class="input-group">
-      <label>Amount (From Coin)</label>
-      <input type="number" id="amount" placeholder="0.0000">
-    </div>
-    <div class="input-group">
-      <label>Converted Amount (To Coin)</label>
-      <div id="convertedAmount">-</div>
-    </div>
-    <button onclick="tradeSpot()">Trade</button>
-  </div>
-
-  <!-- Trade History -->
-  <div class="card">
-    <h2>Trade History</h2>
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr><th>Date</th><th>From</th><th>To</th><th>Amount</th><th>Converted</th></tr>
-        </thead>
-        <tbody id="tradeHistory">
-          <tr><td colspan="5">No trades yet</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
+<div class="card">
+  <h2>Wallet Balances</h2>
+  <div id="walletBalances">Loading...</div>
 </div>
 
-<!-- Bottom Nav -->
-<div class="bottom-nav">
-  <a href="index.html">Home</a>
-  <a href="wallet.html">Wallet</a>
-  <a href="market.html">Markets</a>
-  <a href="trade.html" class="active">Trade</a>
+<div class="card">
+  <h2>Trade Spot</h2>
+
+  <div class="input-group">
+    <label>From Coin</label>
+    <select id="coinFrom"></select>
+  </div>
+
+  <div class="input-group">
+    <label>To Coin</label>
+    <select id="coinTo"></select>
+  </div>
+
+  <div class="input-group">
+    <label>Amount</label>
+    <input type="number" id="amount" placeholder="0.0000">
+  </div>
+
+  <div class="input-group">
+    <label>Converted Amount</label>
+    <div id="convertedAmount">-</div>
+  </div>
+
+  <button onclick="tradeSpot()">Trade</button>
+</div>
+
+<div class="card">
+  <h2>Trade History</h2>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Date</th><th>From</th><th>To</th><th>Amount</th><th>Converted</th></tr>
+      </thead>
+      <tbody id="tradeHistory">
+        <tr><td colspan="5">No trades yet</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 </div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
 const supabase = createClient(
   "https://iecnioogmafgxwarmkxz.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
+  "YOUR_ANON_KEY"
 );
 
 let user;
 let wallets = {};
+let marketCoins = [];
 let prices = {};
-let coinFrom = '';
-let coinTo = '';
 
-/* Side Menu */
-const sideMenu = document.getElementById('sideMenu');
-function toggleMenu(){ sideMenu.classList.toggle('active'); }
-
-/* Init auth + KYC + wallets */
 async function init(){
   const { data:{ user:authUser } } = await supabase.auth.getUser();
   if(!authUser){ alert("Login required"); return; }
   user = authUser;
 
-  const { data:kyc } = await supabase
-    .from('kyc_requests')
+  const { data:kyc } = await supabase.from('kyc_requests')
     .select('status')
     .eq('user_id', user.id)
     .single();
 
   if(!kyc || kyc.status!=='approved'){ alert("KYC required"); return; }
 
+  await loadMarketCoins();
   await loadWallets();
   await loadTradeHistory();
 }
 window.onload = init;
 
-/* Load Wallets */
+async function loadMarketCoins(){
+  const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1");
+  marketCoins = await res.json();
+}
+
 async function loadWallets(){
-  const { data } = await supabase
-    .from('wallets')
+  const { data } = await supabase.from('wallets')
     .select('coin_symbol,balance')
     .eq('user_id', user.id);
 
   wallets = {};
-  data.forEach(w => { if(Number(w.balance)>0) wallets[w.coin_symbol] = Number(w.balance); });
+  data.forEach(w=>{
+    wallets[w.coin_symbol.toLowerCase()] = Number(w.balance);
+  });
 
   renderWallet();
-  populateCoinSelects();
+  populateSelects();
 }
 
-/* Render Wallet */
 function renderWallet(){
   let html='<ul>';
   Object.keys(wallets).forEach(c=>{
-    html+=`<li>${c}: ${wallets[c]}</li>`;
+    html+=`<li>${c.toUpperCase()}: ${wallets[c]}</li>`;
   });
   html+='</ul>';
   document.getElementById('walletBalances').innerHTML=html;
 }
 
-/* Populate select options */
-async function populateCoinSelects(){
-  const selectFrom = document.getElementById('coinFrom');
-  const selectTo = document.getElementById('coinTo');
-  selectFrom.innerHTML=''; selectTo.innerHTML='';
+function populateSelects(){
+  const from = document.getElementById('coinFrom');
+  const to = document.getElementById('coinTo');
+  from.innerHTML='';
+  to.innerHTML='';
 
-  // Load all coins from 'coins' table
-  const { data: allCoins } = await supabase.from('coins').select('*').eq('is_active', true);
-
-  // From Coin: فقط ارزهایی که موجودی دارد
   Object.keys(wallets).forEach(c=>{
-    selectFrom.innerHTML+=`<option value="${c}">${c}</option>`;
+    if(wallets[c]>0)
+      from.innerHTML+=`<option value="${c}">${c.toUpperCase()}</option>`;
   });
 
-  // To Coin: همه ارزهای فعال
-  allCoins.forEach(c=>{
-    selectTo.innerHTML+=`<option value="${c.symbol}">${c.symbol}</option>`;
+  marketCoins.forEach(c=>{
+    to.innerHTML+=`<option value="${c.id}">${c.symbol.toUpperCase()} - $${c.current_price}</option>`;
   });
 
-  coinFrom = selectFrom.value;
-  coinTo = selectTo.value;
-  updateConvertedAmount();
+  updateConverted();
 }
 
-/* Update converted amount */
-async function updateConvertedAmount(){
-  const amount = Number(document.getElementById('amount').value) || 0;
-  coinFrom = document.getElementById('coinFrom').value;
-  coinTo = document.getElementById('coinTo').value;
+async function updateConverted(){
+  const amount = Number(document.getElementById('amount').value);
+  const from = document.getElementById('coinFrom').value;
+  const to = document.getElementById('coinTo').value;
 
-  if(!coinFrom || !coinTo || amount===0) { document.getElementById('convertedAmount').innerText='-'; return; }
+  if(!from || !to || amount<=0 || from===to){
+    document.getElementById('convertedAmount').innerText='-';
+    return;
+  }
 
-  const res=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinFrom.toLowerCase()},${coinTo.toLowerCase()}&vs_currencies=usd`);
-  const json=await res.json();
-  const fromPrice=json[coinFrom.toLowerCase()].usd;
-  const toPrice=json[coinTo.toLowerCase()].usd;
-  prices[coinFrom]=fromPrice; prices[coinTo]=toPrice;
+  const fromCoin = marketCoins.find(c=>c.symbol.toLowerCase()===from);
+  const toCoin = marketCoins.find(c=>c.id===to);
 
-  const converted=(amount*fromPrice)/toPrice;
-  document.getElementById('convertedAmount').innerText=converted.toFixed(6);
+  const converted = (amount * fromCoin.current_price) / toCoin.current_price;
+  document.getElementById('convertedAmount').innerText = converted.toFixed(6);
+
+  prices[from]=fromCoin.current_price;
+  prices[to]=toCoin.current_price;
 }
 
-/* Trade Spot */
-window.tradeSpot=async()=>{
-  const amount=Number(document.getElementById('amount').value);
-  coinFrom=document.getElementById('coinFrom').value;
-  coinTo=document.getElementById('coinTo').value;
+document.getElementById('amount').addEventListener('input', updateConverted);
+document.getElementById('coinFrom').addEventListener('change', updateConverted);
+document.getElementById('coinTo').addEventListener('change', updateConverted);
 
-  if(!coinFrom || !coinTo || amount<=0) return alert("Invalid input");
-  const converted=(amount*prices[coinFrom])/prices[coinTo];
-  if(wallets[coinFrom]<amount) return alert("Insufficient balance");
+window.tradeSpot = async ()=>{
+  const amount = Number(document.getElementById('amount').value);
+  const from = document.getElementById('coinFrom').value;
+  const to = document.getElementById('coinTo').value;
 
-  // Update wallets
-  await supabase.from('wallets').update({balance:wallets[coinFrom]-amount}).eq('user_id',user.id).eq('coin_symbol',coinFrom);
-  await supabase.from('wallets').update({balance:(wallets[coinTo]||0)+converted}).eq('user_id',user.id).eq('coin_symbol',coinTo);
+  if(!from || !to || amount<=0) return alert("Invalid input");
+  if(wallets[from] < amount) return alert("Insufficient balance");
 
-  // Insert trade history
+  const fromPrice = prices[from];
+  const toPrice = prices[to];
+  const converted = (amount * fromPrice) / toPrice;
+
+  wallets[from] -= amount;
+  const toSymbol = marketCoins.find(c=>c.id===to).symbol.toLowerCase();
+  wallets[toSymbol] = (wallets[toSymbol]||0) + converted;
+
+  await supabase.from('wallets').upsert({ user_id:user.id, coin_symbol:from, balance:wallets[from] });
+  await supabase.from('wallets').upsert({ user_id:user.id, coin_symbol:toSymbol, balance:wallets[toSymbol] });
+
   await supabase.from('trade_history').insert({
     user_id:user.id,
     type:'spot',
-    side:'convert',
-    from_symbol:coinFrom,
-    to_symbol:coinTo,
+    from_symbol:from,
+    to_symbol:toSymbol,
     amount,
     converted_amount:converted
   });
 
+  alert("Trade successful ✅");
   await loadWallets();
   await loadTradeHistory();
-}
+};
 
-/* Load trade history */
 async function loadTradeHistory(){
-  const { data } = await supabase.from('trade_history').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
+  const { data } = await supabase.from('trade_history')
+    .select('*')
+    .eq('user_id',user.id)
+    .order('created_at',{ascending:false});
+
   const tbody=document.getElementById('tradeHistory');
   tbody.innerHTML='';
-  if(!data.length) { tbody.innerHTML='<tr><td colspan="5">No trades yet</td></tr>'; return; }
+
+  if(!data.length){
+    tbody.innerHTML='<tr><td colspan="5">No trades yet</td></tr>';
+    return;
+  }
+
   data.forEach(t=>{
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${new Date(t.created_at).toLocaleString()}</td><td>${t.from_symbol}</td><td>${t.to_symbol}</td><td>${t.amount}</td><td>${t.converted_amount.toFixed(6)}</td>`;
+    tr.innerHTML=`<td>${new Date(t.created_at).toLocaleString()}</td>
+                  <td>${t.from_symbol}</td>
+                  <td>${t.to_symbol}</td>
+                  <td>${t.amount}</td>
+                  <td>${t.converted_amount.toFixed(6)}</td>`;
     tbody.appendChild(tr);
   });
 }
-
-/* Update converted amount on input change */
-document.getElementById('amount').addEventListener('input', updateConvertedAmount);
-
 </script>
+
 </body>
 </html>
