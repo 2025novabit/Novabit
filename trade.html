@@ -118,6 +118,7 @@ async function init(){
 
   await loadMarketCoins();
   await loadWallets();
+  await insertTradeHistory(from, to, amount, fromCoin.current_price);
   await loadTradeHistory();
 }
 window.onload = init;
