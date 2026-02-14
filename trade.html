@@ -226,34 +226,56 @@ document.getElementById("tradeBtn").onclick = async function(){
     await supabase.from('wallets').insert({user_id:user.id, coin_symbol:to, balance:converted});
   }
 
-  // INSERT TRADE HISTORY
-  await supabase.from('trade_history').insert({
-    user_id:user.id,
-    trade_type:'spot',
-    coin_symbol_from: from,
-    coin_symbol_to: to,
-    amount,
-    price_usd: fromCoin.current_price,
-    created_at: new Date()
-  });
-
-  alert("Trade Successful ✅");
-  await loadWallets();
-  await loadTradeHistory();
-};
+/* ========== INSERT TRADE HISTORY ========== */
+async function insertTradeHistory(from, to, amount, priceUsd){
+  const { error } = await supabase
+    .from('trade_history')
+    .insert({
+      user_id: user.id,
+      trade_type: 'spot',
+      coin_symbol: from + '->' + to, // نمایش از -> به
+      amount: amount,
+      price_usd: priceUsd,
+      created_at: new Date()
+    });
+  if(error) console.error("Trade history insert error:", error);
+}
 
 /* ========== LOAD TRADE HISTORY ========== */
 async function loadTradeHistory(){
-  const { data } = await supabase.from('trade_history')
+  const { data, error } = await supabase
+    .from('trade_history')
     .select('*')
     .eq('user_id', user.id)
-    .order('created_at', {ascending:false});
+    .order('created_at', { ascending: false });
+
+  if(error){ console.error("Load trade history error:", error); return; }
+
   const tbody = document.getElementById('tradeHistory');
-  tbody.innerHTML='';
-  if(!data.length){ tbody.innerHTML='<tr><td colspan="5">No trades yet</td></tr>'; return; }
+  tbody.innerHTML = '';
+
+  if(!data || data.length===0){
+    tbody.innerHTML = '<tr><td colspan="5">No trades yet</td></tr>';
+    return;
+  }
+
   data.forEach(t=>{
+    // برای هر ردیف، مقدار تبدیل تقریبی را با توجه به قیمت لحظه‌ای To Coin محاسبه می‌کنیم
+    const coins = t.coin_symbol.split('->');
+    const fromCoin = coins[0];
+    const toCoin = coins[1];
+
+    const toMarket = marketCoins.find(c=>c.symbol.toUpperCase()===toCoin);
+    const converted = toMarket ? ((t.amount*t.price_usd)/toMarket.current_price).toFixed(6) : '-';
+
     const tr = document.createElement('tr');
-    tr.innerHTML=`<td>${new Date(t.created_at).toLocaleString()}</td><td>${t.coin_symbol_from}</td><td>${t.coin_symbol_to}</td><td>${t.amount}</td><td>${((t.amount*t.price_usd)/marketCoins.find(c=>c.symbol.toUpperCase()===t.coin_symbol_to).current_price).toFixed(6)}</td>`;
+    tr.innerHTML = `
+      <td>${new Date(t.created_at).toLocaleString()}</td>
+      <td>${fromCoin}</td>
+      <td>${toCoin}</td>
+      <td>${t.amount}</td>
+      <td>${converted}</td>
+    `;
     tbody.appendChild(tr);
   });
 }
