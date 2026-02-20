@@ -9,57 +9,17 @@
 body { font-family:'Roboto',sans-serif; margin:0; background:#f8f9fa; padding-bottom:60px; }
 header { background:#1a1a2e; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10; }
 header h1 { margin:0; font-size:20px; }
-
-/* FIXED BUTTON CSS */
-#menuBtn { 
-  background:#4b49ac; 
-  color:#fff; 
-  border:none; 
-  padding:8px 15px; 
-  border-radius:5px; 
-  cursor:pointer; 
-}
-
-/* Side menu */
-#sideMenu {
-  position: fixed;
-  top: 0;
-  right: -400px;
-  width: 33%;
-  max-width: 300px;
-  height: 100%;
-  background-color: #fff;
-  box-shadow: -2px 0 6px rgba(0,0,0,0.2);
-  transition: right 0.3s;
-  z-index: 100;
-  padding: 20px;
-}
-#sideMenu.active { right: 0; }
-
-#sideMenu a {
-  display: block;
-  margin: 15px 0;
-  color: #1a1a2e;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-#closeMenu {
-  background-color: #e74c3c;
-  color: #fff;
-  border: none;
-  padding: 8px 12px;
-  cursor: pointer;
-  border-radius: 5px;
-  margin-bottom: 15px;
-}
-
+#menuBtn { background:#4b49ac; color:#fff; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:500; }
+#sideMenu { position:fixed; top:0; right:-300px; width:300px; height:100%; background:#fff; box-shadow:-2px 0 6px rgba(0,0,0,0.2); transition:right .3s; z-index:100; padding:20px; }
+#sideMenu.active { right:0; }
+#sideMenu a { display:block; margin:15px 0; color:#1a1a2e; text-decoration:none; font-weight:500; }
+#closeMenu { background:#e74c3c; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-bottom:15px; }
 .container{ padding:20px; }
 .card { background:#fff; padding:25px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); margin-bottom:20px; }
 .input-group { margin-bottom:15px; }
 .input-group label { display:block; margin-bottom:5px; font-weight:500; }
 .input-group input, .input-group select { width:100%; padding:10px; border:1px solid #ccc; border-radius:5px; }
-button { padding:10px 20px; background:#4b49ac; color:#fff; border:none; border-radius:5px; cursor:pointer; }
+button { padding:10px 20px; background:#4b49ac; color:#fff; border:none; border-radius:5px; cursor:pointer; font-weight:500; }
 button:hover { background:#3a3690; }
 .table-container { max-height:200px; overflow-y:auto; margin-top:20px; }
 table { width:100%; border-collapse:collapse; }
@@ -71,35 +31,15 @@ tr:nth-child(even){ background:#f1f1f1; }
 .bottom-nav a.active { color:#4b49ac; }
 </style>
 </head>
-  
-  <h1>Trade</h1>
-  header {
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  position:sticky;
-  top:0;
-  z-index:10;
-}
+<body>
 
-#menuBtn {
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  padding:8px 15px;
-  border-radius:5px;
-  cursor:pointer;
-  font-size:14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+<header>
+  <h1>Trade</h1>
+  <button id="menuBtn">Menu</button>
+</header>
 
 <div id="sideMenu">
-  <button id="closeMenu" onclick="toggleMenu()">Close</button>
+  <button id="closeMenu">Close</button>
   <h2>Menu</h2>
   <a href="profile.html">Profile</a>
   <a href="kyc.html">KYC</a>
@@ -119,7 +59,6 @@ tr:nth-child(even){ background:#f1f1f1; }
 
 <div class="card">
   <h2>Trade Spot</h2>
-
   <div class="input-group">
     <label>From Coin</label>
     <select id="coinFrom"></select>
@@ -131,12 +70,10 @@ tr:nth-child(even){ background:#f1f1f1; }
   </div>
 
   <div class="input-group">
-  <label>Amount</label>
-  <input type="number" id="amount" placeholder="0.0000">
-  <button type="button" id="maxBtn" style="margin-top:8px;width:100%;background:#28a745;">
-    Use Max Balance
-  </button>
-</div>
+    <label>Amount</label>
+    <input type="number" id="amount" placeholder="0.0000">
+    <button type="button" id="maxBtn" style="margin-top:8px;width:100%;background:#28a745;">Use Max Balance</button>
+  </div>
 
   <div class="input-group">
     <label>Converted Amount</label>
@@ -167,17 +104,17 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   "https://iecnioogmafgxwarmkxz.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
+  "YOUR_SUPABASE_ANON_KEY_HERE"
 );
 
-let user;
-let wallets = {};
-let marketCoins = [];
+let user, wallets={}, marketCoins=[];
 
+/* ========== MENU ========== */
 const sideMenu = document.getElementById("sideMenu");
 document.getElementById("menuBtn").onclick = ()=>sideMenu.classList.toggle("active");
 document.getElementById("closeMenu").onclick = ()=>sideMenu.classList.remove("active");
 
+/* ========== INIT ========== */
 async function init(){
   const { data:{ session } } = await supabase.auth.getSession();
   if(!session){ alert("Login required"); return; }
@@ -188,48 +125,43 @@ async function init(){
 }
 window.onload = init;
 
+/* ========== LOAD MARKET COINS ========== */
 async function loadMarket(){
   const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1");
   marketCoins = await res.json();
 }
 
+/* ========== LOAD WALLET ========== */
 async function loadWallets(){
   const { data } = await supabase.from('wallets').select('*').eq('user_id', user.id);
   wallets = {};
-  data.forEach(w=>{
-    if(Number(w.balance)>0)
-      wallets[w.coin_symbol.toUpperCase()] = Number(w.balance);
+  if(data) data.forEach(w=>{
+    if(Number(w.balance)>0) wallets[w.coin_symbol.toUpperCase()] = Number(w.balance);
   });
-
   renderWallet();
   populateSelects();
 }
 
 function renderWallet(){
   let html="<ul>";
-  const keys = Object.keys(wallets);
+  const keys=Object.keys(wallets);
   if(keys.length===0) html+="<li>No balance</li>";
   keys.forEach(c=> html+=`<li>${c}: ${wallets[c]}</li>`);
   html+="</ul>";
-  document.getElementById("walletBalances").innerHTML = html;
+  document.getElementById("walletBalances").innerHTML=html;
 }
 
+/* ========== POPULATE SELECTS ========== */
 function populateSelects(){
   const from=document.getElementById("coinFrom");
   const to=document.getElementById("coinTo");
   from.innerHTML=""; to.innerHTML="";
-
-  Object.keys(wallets).forEach(c=>{
-    from.innerHTML+=`<option value="${c}">${c}</option>`;
-  });
-
-  marketCoins.forEach(c=>{
-    to.innerHTML+=`<option value="${c.symbol.toUpperCase()}">${c.symbol.toUpperCase()} - $${c.current_price}</option>`;
-  });
-
+  Object.keys(wallets).forEach(c=> from.innerHTML+=`<option value="${c}">${c}</option>`);
+  marketCoins.forEach(c=> to.innerHTML+=`<option value="${c.symbol.toUpperCase()}">${c.symbol.toUpperCase()} - $${c.current_price}</option>`);
   updateConverted();
 }
 
+/* ========== CONVERT ========== */
 function updateConverted(){
   const amount=Number(document.getElementById("amount").value);
   const from=document.getElementById("coinFrom").value;
@@ -245,23 +177,20 @@ function updateConverted(){
 document.getElementById("amount").addEventListener("input",updateConverted);
 document.getElementById("coinFrom").addEventListener("change",updateConverted);
 document.getElementById("coinTo").addEventListener("change",updateConverted);
-/* ========== USE MAX BUTTON ========== */
-document.getElementById("maxBtn").addEventListener("click", function(){
-  const from = document.getElementById("coinFrom").value;
-  if(!from || !wallets[from]){
-    alert("No balance available");
-    return;
-  }
 
-  document.getElementById("amount").value = wallets[from];
+/* ========== USE MAX BALANCE ========== */
+document.getElementById("maxBtn").addEventListener("click", function(){
+  const from=document.getElementById("coinFrom").value;
+  if(!wallets[from]){ alert("No balance"); return; }
+  document.getElementById("amount").value=wallets[from];
   updateConverted();
 });
-document.getElementById("tradeBtn").onclick = async function(){
 
+/* ========== TRADE ========== */
+document.getElementById("tradeBtn").onclick = async function(){
   const amount=Number(document.getElementById("amount").value);
   const from=document.getElementById("coinFrom").value;
   const to=document.getElementById("coinTo").value;
-
   if(!amount||amount<=0) return alert("Invalid amount");
   if(!wallets[from]||wallets[from]<amount) return alert("Insufficient balance");
 
@@ -269,28 +198,30 @@ document.getElementById("tradeBtn").onclick = async function(){
   const t=marketCoins.find(c=>c.symbol.toUpperCase()===to);
   const converted=(amount*f.current_price)/t.current_price;
 
-  const { error:e1 }=await supabase.from("wallets")
-    .update({ balance: wallets[from]-amount })
-    .eq("user_id",user.id)
-    .eq("coin_symbol",from);
-  if(e1) return alert("Wallet update failed");
+  // UPDATE FROM WALLET
+  const { error:e1 } = await supabase.from('wallets')
+    .update({balance: wallets[from]-amount})
+    .eq('user_id', user.id)
+    .eq('coin_symbol', from);
+  if(e1){ console.error(e1); return alert("Wallet update failed"); }
 
-  const { data:existing }=await supabase.from("wallets")
-    .select("*")
-    .eq("user_id",user.id)
-    .eq("coin_symbol",to);
-
+  // UPDATE TO WALLET
+  const { data: existing } = await supabase.from('wallets')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('coin_symbol', to);
   if(existing.length>0){
-    await supabase.from("wallets")
-      .update({ balance: Number(existing[0].balance)+converted })
-      .eq("user_id",user.id)
-      .eq("coin_symbol",to);
-  }else{
-    await supabase.from("wallets")
-      .insert({ user_id:user.id, coin_symbol:to, balance:converted, locked:0 });
+    await supabase.from('wallets')
+      .update({balance: Number(existing[0].balance)+converted})
+      .eq('user_id', user.id)
+      .eq('coin_symbol', to);
+  } else {
+    await supabase.from('wallets')
+      .insert({user_id:user.id, coin_symbol:to, balance:converted, locked:0});
   }
 
-  await supabase.from("trade_history").insert({
+  // INSERT HISTORY
+  await supabase.from('trade_history').insert({
     user_id:user.id,
     trade_type:"spot",
     coin_symbol: from+"/"+to,
@@ -305,19 +236,15 @@ document.getElementById("tradeBtn").onclick = async function(){
   await loadHistory();
 };
 
+/* ========== LOAD HISTORY ========== */
 async function loadHistory(){
-  const { data }=await supabase.from("trade_history")
-    .select("*")
-    .eq("user_id",user.id)
-    .order("created_at",{ascending:false});
-
+  const { data } = await supabase.from('trade_history')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at',{ascending:false});
   const tbody=document.getElementById("tradeHistory");
   tbody.innerHTML="";
-  if(!data||data.length===0){
-    tbody.innerHTML='<tr><td colspan="4">No trades yet</td></tr>';
-    return;
-  }
-
+  if(!data||data.length===0){ tbody.innerHTML='<tr><td colspan="4">No trades yet</td></tr>'; return; }
   data.forEach(t=>{
     const tr=document.createElement("tr");
     tr.innerHTML=`
