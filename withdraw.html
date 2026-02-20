@@ -17,6 +17,7 @@ table{width:100%;border-collapse:collapse;margin-top:20px}
 th,td{padding:8px;text-align:left;border-bottom:1px solid #ddd}
 th{background:#1a1a2e;color:#fff}
 .back{background:#e74c3c;width:auto;padding:6px 12px}
+.card{background:#fff;padding:15px;border-radius:10px;margin-top:20px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
 </style>
 </head>
 <body>
@@ -37,7 +38,7 @@ th{background:#1a1a2e;color:#fff}
   <input type="number" id="amountInput" placeholder="Enter amount">
   <button type="button" class="max-btn" id="maxBtn">Use Max Balance</button>
 
-  <button onclick="submitRequest()">Submit Request</button>
+  <button id="submitBtn">Submit Request</button>
 
   <div class="card">
     <h2>Withdrawal History</h2>
@@ -70,34 +71,34 @@ const historyBody = document.getElementById('historyBody');
 
 async function init(){
   const { data } = await supabase.auth.getSession();
-  if(!data.session){
-    location.href='login.html';
-    return;
-  }
+  if(!data.session){ location.href='login.html'; return; }
   userId = data.session.user.id;
   await loadWallets();
   await loadNetworks();
   await loadHistory();
 }
+
 window.onload = init;
 
+// بارگذاری ارزها از جدول wallets
 async function loadWallets(){
   const { data, error } = await supabase.from('wallets').select('*').eq('user_id', userId);
   if(error) return alert('Failed to load wallets');
   wallets = {};
   data.forEach(w=>{
-    if(Number(w.balance)>0) wallets[w.coin_symbol] = Number(w.balance);
+    if(Number(w.balance) > 0) wallets[w.coin_symbol] = Number(w.balance);
   });
-
-  coinSelect.innerHTML='';
+  coinSelect.innerHTML = '';
   Object.keys(wallets).forEach(c=>{
     const opt = document.createElement('option');
     opt.value=c;
     opt.innerText=c;
     coinSelect.appendChild(opt);
   });
+  loadNetworks();
 }
 
+// بارگذاری شبکه‌ها از جدول deposit_wallets
 async function loadNetworks(){
   networkSelect.innerHTML='';
   if(!coinSelect.value) return;
@@ -114,38 +115,40 @@ async function loadNetworks(){
   });
 }
 
+// تغییر شبکه هنگام تغییر ارز
 coinSelect.addEventListener('change', loadNetworks);
 
+// دکمه Use Max
 document.getElementById('maxBtn').addEventListener('click', function(){
   const coin = coinSelect.value;
   if(!coin || !wallets[coin]) return alert("No balance");
   amountInput.value = wallets[coin];
 });
 
-async function submitRequest(){
+// ثبت درخواست برداشت
+document.getElementById('submitBtn').addEventListener('click', async function(){
   const coin = coinSelect.value;
   const network = networkSelect.value;
   const amount = Number(amountInput.value);
 
-  if(!coin || !network || !amount || amount<=0) return alert('Please fill all fields');
+  if(!coin || !network || !amount || amount <= 0) return alert('Please fill all fields');
 
-  // Lock amount in wallet
+  // دریافت کیف پول کاربر
   const { data: wallet } = await supabase.from('wallets')
-    .select('*').eq('user_id', userId).eq('coin_symbol', coin).single();
-
+    .select('*')
+    .eq('user_id', userId)
+    .eq('coin_symbol', coin)
+    .single();
   if(!wallet) return alert('Wallet not found');
   if(wallet.balance < amount) return alert('Insufficient balance');
 
+  // قفل کردن موجودی
   const { error: updateError } = await supabase.from('wallets')
-    .update({
-      balance: wallet.balance - amount,
-      locked: wallet.locked + amount
-    })
+    .update({ balance: wallet.balance - amount, locked: wallet.locked + amount })
     .eq('id', wallet.id);
-
   if(updateError) return alert('Failed to lock wallet');
 
-  // Insert withdrawal request
+  // ایجاد درخواست برداشت
   const { error } = await supabase.from('withdrawal_requests')
     .insert({
       user_id: userId,
@@ -155,15 +158,15 @@ async function submitRequest(){
       status: 'pending',
       created_at: new Date()
     });
-
   if(error) return alert('Failed to submit withdrawal');
 
   alert('Withdrawal request submitted ✅');
   amountInput.value='';
   await loadWallets();
   await loadHistory();
-}
+});
 
+// بارگذاری تاریخچه
 async function loadHistory(){
   const { data } = await supabase.from('withdrawal_requests')
     .select('*')
