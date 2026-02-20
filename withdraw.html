@@ -12,17 +12,14 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
 label{display:block;margin-top:12px;font-size:14px}
 select,input{width:100%;padding:8px;margin-top:5px;border-radius:5px;border:1px solid #ccc}
 button{margin-top:20px;width:100%;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer}
-button.back{background:#e74c3c;width:auto;padding:6px 12px;margin-right:10px}
-.table-container{max-height:250px;overflow-y:auto;margin-top:20px}
+.back{background:#e74c3c;width:auto;padding:6px 12px}
+.table-container{margin-top:20px;max-height:200px;overflow-y:auto;background:#fff;border-radius:5px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
 table{width:100%;border-collapse:collapse}
-th,td{padding:10px;text-align:left}
+th,td{padding:8px;text-align:left;border-bottom:1px solid #eee}
 th{background:#1a1a2e;color:#fff}
-tr:nth-child(even){background:#f1f1f1}
-.status-pending{color:orange;font-weight:600}
-.status-approved{color:green;font-weight:600}
-.status-rejected{color:red;font-weight:600}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -32,36 +29,31 @@ tr:nth-child(even){background:#f1f1f1}
 
 <div class="container">
 
-<div class="card">
   <label>Coin</label>
   <select id="coinSelect"></select>
 
   <label>Network</label>
   <select id="networkSelect"></select>
 
-  <label>Withdraw Address</label>
-  <input type="text" id="addressInput" placeholder="Enter your wallet address">
-
   <label>Amount</label>
   <input type="number" id="amountInput" placeholder="Enter amount">
-  <button type="button" id="maxBtn" style="margin-top:8px;background:#28a745;">Use Max Balance</button>
 
-  <button id="withdrawBtn">Submit Withdraw</button>
-</div>
+  <label>Address</label>
+  <input type="text" id="addressInput" placeholder="Enter withdrawal address">
 
-<div class="card">
-  <h2>Withdraw History</h2>
+  <button onclick="submitWithdraw()">Submit Request</button>
+
   <div class="table-container">
+    <h3>Withdraw History</h3>
     <table>
       <thead>
-        <tr><th>Date</th><th>Coin</th><th>Network</th><th>Amount</th><th>Address</th><th>Status</th></tr>
+        <tr><th>Date</th><th>Coin</th><th>Amount</th><th>Network</th><th>Status</th></tr>
       </thead>
       <tbody id="withdrawHistory">
-        <tr><td colspan="6">No withdraw requests</td></tr>
+        <tr><td colspan="5">No withdraws yet</td></tr>
       </tbody>
     </table>
   </div>
-</div>
 
 </div>
 
@@ -69,50 +61,40 @@ tr:nth-child(even){background:#f1f1f1}
 <script>
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY,{
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+});
 
 let userId = null;
-let wallets = {};
-
 const coinSelect = document.getElementById('coinSelect');
 const networkSelect = document.getElementById('networkSelect');
 
 async function init(){
   const { data } = await supabase.auth.getSession();
-  if(!data.session){
-    location.href='login.html';
-    return;
-  }
+  if(!data.session){ location.href='login.html'; return; }
   userId = data.session.user.id;
-
   await loadWallets();
   await loadWithdrawHistory();
 }
-window.onload = init;
 
 async function loadWallets(){
-  const { data } = await supabase.from('wallets').select('*').eq('user_id', userId);
-  wallets = {};
-  if(data){
-    data.forEach(w=>{
-      if(w.coin_symbol) wallets[w.coin_symbol.toUpperCase()] = Number(w.balance);
-    });
-  }
+  const { data, error } = await supabase
+    .from('wallets')
+    .select('coin_symbol,balance')
+    .eq('user_id', userId);
+
+  if(error){ alert('Failed to load wallets'); return; }
 
   coinSelect.innerHTML = '';
-  if(Object.keys(wallets).length===0){
-    const { data: coins } = await supabase.from('coins').select('symbol');
-    coins.forEach(c=>{
-      const opt = document.createElement('option');
-      opt.value = c.symbol.toUpperCase();
-      opt.innerText = c.symbol.toUpperCase();
-      coinSelect.appendChild(opt);
-    });
+  const available = data.filter(w=>Number(w.balance)>0);
+  if(available.length===0){
+    coinSelect.innerHTML='<option value="">No coins available</option>';
   } else {
-    Object.keys(wallets).forEach(c=>{
+    available.forEach(w=>{
       const opt = document.createElement('option');
-      opt.value = c;
-      opt.innerText = c;
+      opt.value = w.coin_symbol;
+      opt.innerText = `${w.coin_symbol} (Balance: ${w.balance})`;
       coinSelect.appendChild(opt);
     });
   }
@@ -122,10 +104,14 @@ async function loadWallets(){
 
 async function loadNetworks(){
   networkSelect.innerHTML='';
-  const { data } = await supabase.from('withdraw_wallets')
+  if(!coinSelect.value) return;
+
+  const { data } = await supabase
+    .from('withdraw_wallets')
     .select('network')
     .eq('asset', coinSelect.value)
     .eq('is_active', true);
+
   data.forEach(n=>{
     const opt = document.createElement('option');
     opt.value = n.network;
@@ -136,38 +122,35 @@ async function loadNetworks(){
 
 coinSelect.addEventListener('change', loadNetworks);
 
-document.getElementById('maxBtn').addEventListener('click', ()=>{
-  const coin = coinSelect.value;
-  if(wallets[coin]) document.getElementById('amountInput').value = wallets[coin];
-});
-
-document.getElementById('withdrawBtn').addEventListener('click', async ()=>{
-  const coin = coinSelect.value;
-  const network = networkSelect.value;
-  const amount = Number(document.getElementById('amountInput').value);
+async function submitWithdraw(){
+  const amount = document.getElementById('amountInput').value;
   const address = document.getElementById('addressInput').value;
 
-  if(!coin || !amount || amount<=0){ alert('Invalid amount'); return; }
+  if(!amount || Number(amount)<=0){ alert('Amount required'); return; }
+  if(!coinSelect.value){ alert('Coin required'); return; }
+  if(!networkSelect.value){ alert('Network required'); return; }
   if(!address){ alert('Address required'); return; }
-  if(wallets[coin]<amount){ alert('Insufficient balance'); return; }
 
   const { error } = await supabase.from('withdraw_requests').insert({
-    user_id:userId,
-    coin_symbol: coin,
-    network: network,
-    withdraw_address: address,
+    user_id: userId,
+    asset: coinSelect.value,
+    network: networkSelect.value,
     amount: amount,
+    address: address,
     status: 'pending',
     created_at: new Date()
   });
 
-  if(error){ alert('Failed to submit withdraw'); return; }
-  alert('Withdraw request submitted ✅');
+  if(error){ alert('Submit failed'); return; }
+  alert('Withdraw request submitted');
+  document.getElementById('amountInput').value='';
+  document.getElementById('addressInput').value='';
   await loadWithdrawHistory();
-});
+}
 
 async function loadWithdrawHistory(){
-  const { data } = await supabase.from('withdraw_requests')
+  const { data } = await supabase
+    .from('withdraw_requests')
     .select('*')
     .eq('user_id', userId)
     .order('created_at',{ascending:false});
@@ -175,27 +158,25 @@ async function loadWithdrawHistory(){
   const tbody = document.getElementById('withdrawHistory');
   tbody.innerHTML='';
   if(!data || data.length===0){
-    tbody.innerHTML='<tr><td colspan="6">No withdraw requests</td></tr>';
+    tbody.innerHTML='<tr><td colspan="5">No withdraws yet</td></tr>';
     return;
   }
 
   data.forEach(r=>{
-    let statusClass = 'status-pending';
-    if(r.status==='approved') statusClass='status-approved';
-    else if(r.status==='rejected') statusClass='status-rejected';
-
     const tr = document.createElement('tr');
     tr.innerHTML=`
       <td>${new Date(r.created_at).toLocaleString()}</td>
-      <td>${r.coin_symbol}</td>
-      <td>${r.network}</td>
+      <td>${r.asset}</td>
       <td>${r.amount}</td>
-      <td>${r.withdraw_address}</td>
-      <td class="${statusClass}">${r.status}</td>
+      <td>${r.network}</td>
+      <td>${r.status}</td>
     `;
     tbody.appendChild(tr);
   });
 }
+
+window.onload = init;
 </script>
+
 </body>
 </html>
