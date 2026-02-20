@@ -2,251 +2,138 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Withdraw | Novabit</title>
+<title>Withdraw Request | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<script src="coins.js"></script>
-<script src="wallets.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 
 <style>
-body{
-  margin:0;
-  font-family:Roboto,Arial,sans-serif;
-  background:#f5f6fa;
-}
-
-/* Header */
-header{
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px;
-  text-align:center;
-  font-size:18px;
-}
-
-/* Layout */
-.container{
-  max-width:1100px;
-  margin:20px auto;
-  padding:0 20px;
-}
-
-/* Search */
-.search-box input{
-  width:100%;
-  padding:12px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:16px;
-  margin-bottom:15px;
-}
-
-/* Coin List */
-.coin-list{
-  background:#fff;
-  border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
-  overflow:hidden;
-}
-
-.coin-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:15px;
-  border-bottom:1px solid #eee;
-  cursor:pointer;
-  transition:0.2s;
-}
-.coin-row:hover{background:#f1f1f9}
-
-.coin-left{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.coin-left img{
-  width:32px;
-  height:32px;
-}
-.coin-symbol{
-  font-weight:600;
-}
-.coin-name{
-  font-size:13px;
-  color:#666;
-}
-.coin-balance{
-  font-weight:600;
-}
-
-/* Withdraw Panel */
-.withdraw-panel{
-  position:fixed;
-  top:0;
-  right:-400px;
-  width:380px;
-  max-width:50%;
-  height:100%;
-  background:#fff;
-  box-shadow:-2px 0 15px rgba(0,0,0,0.25);
-  padding:25px;
-  transition:0.3s;
-  z-index:100;
-  overflow-y:auto;
-}
-.withdraw-panel.active{right:0}
-
-.close-btn{
-  background:#e74c3c;
-  color:#fff;
-  border:none;
-  padding:8px 12px;
-  border-radius:5px;
-  cursor:pointer;
-  margin-bottom:15px;
-}
-
-label{
-  font-weight:500;
-  margin-top:15px;
-  display:block;
-}
-select,input{
-  width:100%;
-  padding:12px;
-  margin-top:6px;
-  border-radius:6px;
-  border:1px solid #ccc;
-  font-size:15px;
-}
-
-.submit-btn{
-  width:100%;
-  margin-top:20px;
-  padding:14px;
-  background:#4b49ac;
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  font-size:16px;
-  cursor:pointer;
-}
-
-.notice{
-  background:#fff3cd;
-  padding:12px;
-  border-radius:8px;
-  margin-top:15px;
-  font-size:14px;
-  color:#856404;
-}
+body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
+header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.container{padding:20px}
+label{display:block;margin-top:12px;font-size:14px}
+select,input{width:100%;padding:8px;margin-top:5px;border-radius:5px;border:1px solid #ccc}
+button{margin-top:20px;width:100%;padding:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer}
+button.back{background:#e74c3c;width:auto;padding:6px 12px;margin-right:10px}
+.table-container{max-height:250px;overflow-y:auto;margin-top:20px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;text-align:left}
+th{background:#1a1a2e;color:#fff}
+tr:nth-child(even){background:#f1f1f1}
+.status-pending{color:orange;font-weight:600}
+.status-approved{color:green;font-weight:600}
+.status-rejected{color:red;font-weight:600}
 </style>
 </head>
 <body>
 
-<header>Withdraw</header>
+<header>
+  <button class="back" onclick="history.back()">Back</button>
+  Withdraw Request
+</header>
 
 <div class="container">
 
-  <!-- Search -->
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Search coin...">
-  </div>
-
-  <!-- Coin List -->
-  <div class="coin-list" id="coinList"></div>
-
-</div>
-
-<!-- Withdraw Panel -->
-<div class="withdraw-panel" id="withdrawPanel">
-  <button class="close-btn" onclick="closePanel()">Close</button>
-
-  <h3 id="panelTitle"></h3>
-  <div id="panelBalance" style="margin-bottom:10px;font-weight:500;"></div>
-
-  <label>Network</label>
-  <select id="networkSelect"></select>
-
-  <label>Withdraw Address</label>
-  <input type="text" id="toAddress" placeholder="Enter destination address">
+<div class="card">
+  <label>Coin</label>
+  <select id="coinSelect"></select>
 
   <label>Amount</label>
-  <input type="number" id="amount" placeholder="0.00">
+  <input type="number" id="amountInput" placeholder="Enter amount">
+  <button type="button" id="maxBtn" style="margin-top:8px;background:#28a745;">Use Max Balance</button>
 
-  <button class="submit-btn">Submit Withdraw</button>
+  <button id="withdrawBtn">Submit Withdraw</button>
+</div>
 
-  <div class="notice">
-    ⚠️ Withdraw requests are processed manually.
+<div class="card">
+  <h2>Withdraw History</h2>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Coin</th><th>Amount</th><th>Status</th></tr>
+      </thead>
+      <tbody id="withdrawHistory">
+        <tr><td colspan="4">No withdraw requests</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
-<script>
-const coinList = document.getElementById('coinList');
-const searchInput = document.getElementById('searchInput');
-const withdrawPanel = document.getElementById('withdrawPanel');
-const panelTitle = document.getElementById('panelTitle');
-const panelBalance = document.getElementById('panelBalance');
-const networkSelect = document.getElementById('networkSelect');
+</div>
 
-/* ----- DEMO BALANCES ----- */
-const DEMO_BALANCE = {};
-COINS.forEach(c=>{
-  DEMO_BALANCE[c.symbol] = (Math.random()*5).toFixed(4);
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+const supabase = supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let userId=null, wallets={};
+
+async function init(){
+  const { data } = await supabase.auth.getSession();
+  if(!data.session){ location.href='login.html'; return; }
+  userId = data.session.user.id;
+
+  await loadWallets();
+  await loadWithdrawHistory();
+}
+window.onload = init;
+
+async function loadWallets(){
+  const { data } = await supabase.from('wallets').select('*').eq('user_id',userId);
+  wallets={};
+  if(data) data.forEach(w=> { if(Number(w.balance)>0) wallets[w.coin_symbol.toUpperCase()] = Number(w.balance); });
+
+  const coinSelect=document.getElementById('coinSelect');
+  coinSelect.innerHTML='';
+  Object.keys(wallets).forEach(c=> coinSelect.innerHTML += `<option value="${c}">${c}</option>`);
+}
+
+document.getElementById('maxBtn').addEventListener('click',()=>{
+  const coin=document.getElementById('coinSelect').value;
+  if(wallets[coin]) document.getElementById('amountInput').value = wallets[coin];
 });
 
-/* ----- Render Coins ----- */
-function renderCoins(filter=""){
-  coinList.innerHTML="";
-  COINS
-  .filter(c =>
-    c.symbol.toLowerCase().includes(filter.toLowerCase()) ||
-    c.name.toLowerCase().includes(filter.toLowerCase())
-  )
-  .forEach(c=>{
-    if(!WALLET_ADDRESSES[c.symbol]) return;
+document.getElementById('withdrawBtn').addEventListener('click', async ()=>{
+  const coin=document.getElementById('coinSelect').value;
+  const amount=Number(document.getElementById('amountInput').value);
+  if(!coin || !amount || amount<=0){ alert('Invalid amount'); return; }
+  if(wallets[coin]<amount){ alert('Insufficient balance'); return; }
 
-    const row = document.createElement('div');
-    row.className="coin-row";
-    row.innerHTML=`
-      <div class="coin-left">
-        <img src="${c.icon}">
-        <div>
-          <div class="coin-symbol">${c.symbol}</div>
-          <div class="coin-name">${c.name}</div>
-        </div>
-      </div>
-      <div class="coin-balance">${DEMO_BALANCE[c.symbol]}</div>
-    `;
-    row.onclick=()=>openWithdraw(c.symbol);
-    coinList.appendChild(row);
-  });
-}
-
-searchInput.addEventListener('input',()=>renderCoins(searchInput.value));
-renderCoins();
-
-/* ----- Open Withdraw ----- */
-function openWithdraw(symbol){
-  const wallet = WALLET_ADDRESSES[symbol];
-  panelTitle.innerText = symbol + " Withdraw";
-  panelBalance.innerText = "Available: " + DEMO_BALANCE[symbol];
-
-  networkSelect.innerHTML="";
-  wallet.networks.forEach(n=>{
-    let opt=document.createElement('option');
-    opt.value=n.network;
-    opt.innerText=n.network;
-    networkSelect.appendChild(opt);
+  const { error } = await supabase.from('withdraw_requests').insert({
+    user_id:userId,
+    coin_symbol:coin,
+    amount:amount,
+    status:'pending',
+    created_at:new Date()
   });
 
-  withdrawPanel.classList.add('active');
-}
+  if(error){ alert('Failed to submit withdraw'); return; }
+  alert('Withdraw request submitted ✅');
+  await loadWithdrawHistory();
+});
 
-/* ----- Close Panel ----- */
-function closePanel(){
-  withdrawPanel.classList.remove('active');
+async function loadWithdrawHistory(){
+  const { data } = await supabase.from('withdraw_requests')
+    .select('*')
+    .eq('user_id',userId)
+    .order('created_at',{ascending:false});
+
+  const tbody=document.getElementById('withdrawHistory');
+  tbody.innerHTML='';
+  if(!data || data.length===0){ tbody.innerHTML='<tr><td colspan="4">No withdraw requests</td></tr>'; return; }
+
+  data.forEach(r=>{
+    const tr=document.createElement('tr');
+    let statusClass='status-pending';
+    if(r.status==='approved') statusClass='status-approved';
+    else if(r.status==='rejected') statusClass='status-rejected';
+    tr.innerHTML=`
+      <td>${new Date(r.created_at).toLocaleString()}</td>
+      <td>${r.coin_symbol}</td>
+      <td>${r.amount}</td>
+      <td class="${statusClass}">${r.status}</td>`;
+    tbody.appendChild(tr);
+  });
 }
 </script>
 
