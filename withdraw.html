@@ -10,9 +10,8 @@ body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center;font-size:18px}
 .container{padding:20px}
 .coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:50vh;margin-bottom:10px}
-.coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;cursor:pointer;display:flex;align-items:center;gap:10px}
+.coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
 .coin-card:hover{border-color:#4b49ac}
-.coin-card img{width:40px;height:40px}
 .panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:360px;max-height:90%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;display:none;z-index:100}
 .panel.active{display:block}
 .close{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px;cursor:pointer;margin-bottom:10px}
@@ -50,7 +49,7 @@ th{background:#1a1a2e;color:#fff}
     <label>Withdrawal Address:</label>
     <input type="text" id="addressInput" placeholder="Enter your address">
 
-    <label>After Fee Amount:</label>
+    <label>After Fee (0.01%):</label>
     <input type="text" id="afterFee" readonly>
 
     <button class="main" onclick="submitWithdrawal()">Submit Withdrawal</button>
@@ -89,10 +88,11 @@ const afterFee = document.getElementById('afterFee');
 const maxBtn = document.getElementById('maxBtn');
 const historyBody = document.getElementById('historyBody');
 
-// Fee percent
-const FEE_PERCENT = 0.5;
+const FEE_PERCENT = 0.01;
 
-function formatBalance(balance){ return Number(balance).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:8}); }
+function formatBalance(balance){
+  return Number(balance).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:8});
+}
 
 async function loadUser(){
   const { data: sessionData } = await supabase.auth.getSession();
@@ -126,7 +126,7 @@ async function openPanel(symbol){
   afterFee.value='';
   addressInput.value='';
 
-  const { data, error } = await supabase.from('deposit_wallets').select('network,address').eq('asset', symbol).eq('is_active', true);
+  const { data, error } = await supabase.from('deposit_wallets').select('network').eq('asset', symbol).eq('is_active', true);
   if(error || !data.length){ alert('No active networks'); return; }
   data.forEach(d=>{
     const opt=document.createElement('option');
@@ -149,7 +149,7 @@ amountInput.addEventListener('input', calculateAfterFee);
 
 function calculateAfterFee(){
   let amt = Number(amountInput.value);
-  if(!amt) { afterFee.value=''; return; }
+  if(!amt){ afterFee.value=''; return; }
   let after = amt*(1-FEE_PERCENT/100);
   afterFee.value = after.toFixed(8);
 }
@@ -163,14 +163,12 @@ async function submitWithdrawal(){
   if(!currentSymbol||!amount||!network||!address) return alert('Fill all fields');
   if(amount>userBalances[currentSymbol]) return alert('Insufficient balance');
 
-  // lock wallet
   const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', userId).eq('coin_symbol', currentSymbol).single();
   if(!wallet) return alert('Wallet not found');
 
   const { error: updErr } = await supabase.from('wallets').update({ balance: wallet.balance-amount, locked: wallet.locked+amount }).eq('id', wallet.id);
   if(updErr) return alert('Failed to lock wallet');
 
-  // insert request
   const { error } = await supabase.from('withdrawal_requests').insert({
     user_id: userId,
     coin_symbol: currentSymbol,
@@ -190,7 +188,6 @@ async function submitWithdrawal(){
   loadHistory();
 }
 
-// load history
 async function loadHistory(){
   const { data, error } = await supabase.from('withdrawal_requests').select('*').eq('user_id', userId).order('created_at',{ascending:false});
   historyBody.innerHTML='';
@@ -210,6 +207,5 @@ async function loadHistory(){
 
 loadUser();
 </script>
-
 </body>
 </html>
