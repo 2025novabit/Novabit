@@ -7,9 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
-header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
+header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center;font-size:18px}
 .container{padding:20px}
-.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:70vh;padding:10px 0}
+.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:40vh;padding:10px 0}
 .coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;width:100%;cursor:pointer; display:flex; align-items:center; gap:10px}
 .coin-card:hover{border-color:#4b49ac}
 .panel{position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:360px;max-height:80%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;transition:.3s;z-index:100;display:none}
@@ -21,6 +21,9 @@ button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10
 select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
 input.amount{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
 button.max-btn{background:#28a745;margin-top:8px;width:100%;padding:8px;color:#fff;border:none;border-radius:5px;cursor:pointer}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{padding:8px;text-align:left;border-bottom:1px solid #ddd}
+th{background:#1a1a2e;color:#fff}
 </style>
 </head>
 <body>
@@ -33,30 +36,35 @@ button.max-btn{background:#28a745;margin-top:8px;width:100%;padding:8px;color:#f
 <div class="container">
   <h3>Your Balances</h3>
   <div class="coin-scroll" id="coinScroll">Loading balances...</div>
-</div>
 
-<!-- Withdrawal Panel -->
-<div class="panel" id="panel">
-  <button class="close" onclick="closePanel()">Close</button>
-  <h3 id="panelTitle"></h3>
+  <div class="panel" id="panel">
+    <button class="close" onclick="closePanel()">Close</button>
+    <h3 id="panelTitle"></h3>
 
-  <label for="networkSelect">Network:</label>
-  <select id="networkSelect" class="network"></select>
+    <label for="networkSelect">Network:</label>
+    <select id="networkSelect" class="network"></select>
 
-  <label for="amountInput">Amount:</label>
-  <input type="number" id="amountInput" class="amount" placeholder="Enter amount">
-  <button type="button" class="max-btn" id="maxBtn">Use Max Balance</button>
+    <label for="amountInput">Amount:</label>
+    <input type="number" id="amountInput" class="amount" placeholder="Enter amount">
+    <button type="button" class="max-btn" id="maxBtn">Use Max Balance</button>
 
-  <div class="address" id="userAddress">
-    <span>—</span>
-    <button onclick="copyAddress()" style="background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-radius:4px;cursor:pointer">Copy</button>
+    <div class="address" id="userAddress">
+      <span>—</span>
+      <button onclick="copyAddress()" style="background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-radius:4px;cursor:pointer">Copy</button>
+    </div>
+
+    <div class="notice">
+      After confirming, your withdrawal request will be submitted.
+    </div>
+
+    <button class="main" onclick="submitRequest()">Submit Withdrawal Request</button>
   </div>
 
-  <div class="notice">
-    After confirming, your withdrawal request will be submitted.
-  </div>
-
-  <button class="main" onclick="submitRequest()">Submit Withdrawal Request</button>
+  <h3>Withdrawal History</h3>
+  <table>
+    <thead><tr><th>Date</th><th>Coin</th><th>Network</th><th>Amount</th><th>Status</th></tr></thead>
+    <tbody id="historyBody"><tr><td colspan="5">Loading...</td></tr></tbody>
+  </table>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -73,16 +81,16 @@ const networkSelect = document.getElementById('networkSelect');
 const amountInput = document.getElementById('amountInput');
 const maxBtn = document.getElementById('maxBtn');
 const userAddress = document.getElementById('userAddress');
+const historyBody = document.getElementById('historyBody');
 
 let userBalances = {};
 let selectedCoin = null;
 let currentUserId = null;
 
-function formatBalance(balance){
-  return Number(balance).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:8});
-}
+function formatBalance(balance){ return Number(balance).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:8}); }
 
 async function loadBalances(){
+  coinScroll.innerHTML='Loading balances...';
   const { data: sessionData } = await supabase.auth.getSession();
   if(!sessionData.session){ coinScroll.innerHTML='Not logged in'; return; }
   currentUserId = sessionData.session.user.id;
@@ -92,9 +100,9 @@ async function loadBalances(){
     .eq('user_id', currentUserId);
 
   if(error){ console.error(error); coinScroll.innerHTML='Failed to load balances'; return; }
+
   userBalances = {};
   coinScroll.innerHTML='';
-
   data.forEach(w=>{
     const symbol = w.coin_symbol.toUpperCase();
     const balance = Number(w.balance);
@@ -107,8 +115,8 @@ async function loadBalances(){
       coinScroll.appendChild(div);
     }
   });
-
   if(Object.keys(userBalances).length===0) coinScroll.innerHTML='No balance available';
+  loadHistory();
 }
 
 async function openPanel(symbol){
@@ -118,7 +126,6 @@ async function openPanel(symbol){
   networkSelect.innerHTML='';
   userAddress.querySelector('span').innerText='Loading...';
 
-  // Load active networks
   const { data } = await supabase.from('deposit_wallets')
     .select('*').eq('asset', symbol).eq('is_active', true);
 
@@ -137,7 +144,6 @@ async function openPanel(symbol){
   } else userAddress.querySelector('span').innerText='No network available';
 
   maxBtn.onclick = ()=>{ amountInput.value = userBalances[selectedCoin] || 0; };
-
   panel.classList.add('active');
 }
 
@@ -160,22 +166,29 @@ async function submitRequest(){
     .eq('id', wallet.id);
 
   const { error } = await supabase.from('withdrawal_requests')
-    .insert({
-      user_id: currentUserId,
-      coin_symbol: selectedCoin,
-      network: network,
-      amount: amount,
-      status: 'pending',
-      created_at: new Date()
-    });
-  if(error) return alert('Failed to submit withdrawal');
+    .insert({ user_id: currentUserId, coin_symbol: selectedCoin, network: network, amount: amount, status: 'pending', created_at: new Date() });
 
+  if(error) return alert('Failed to submit withdrawal');
   alert('Withdrawal request submitted ✅');
   closePanel();
   loadBalances();
 }
 
-loadBalances();
+async function loadHistory(){
+  if(!currentUserId) return;
+  const { data } = await supabase.from('withdrawal_requests')
+    .select('*').eq('user_id', currentUserId).order('created_at',{ascending:false});
+  historyBody.innerHTML='';
+  if(!data || data.length===0){ historyBody.innerHTML='<tr><td colspan="5">No withdrawals</td></tr>'; return; }
+  data.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${new Date(r.created_at).toLocaleString()}</td><td>${r.coin_symbol}</td><td>${r.network}</td><td>${r.amount}</td><td>${r.status}</td>`;
+    historyBody.appendChild(tr);
+  });
+}
+
+window.onload = loadBalances;
 </script>
+
 </body>
 </html>
