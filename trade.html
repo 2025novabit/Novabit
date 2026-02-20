@@ -10,7 +10,7 @@ body { font-family:'Roboto',sans-serif; margin:0; background:#f8f9fa; padding-bo
 header { background:#1a1a2e; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10; }
 header h1 { margin:0; font-size:20px; }
 #menuBtn { background:#4b49ac; color:#fff; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; }
-#sideMenu { position:fixed; top:0; right:-400px; width:280px; height:100%; background:#fff; box-shadow:-2px 0 6px rgba(0,0,0,0.2); transition:right .3s; z-index:100; padding:20px; }
+#sideMenu { position:fixed; top:0; right:-300px; width:280px; height:100%; background:#fff; box-shadow:-2px 0 6px rgba(0,0,0,0.2); transition:right .3s; z-index:100; padding:20px; }
 #sideMenu.active { right:0; }
 #closeMenu { background:#e74c3c; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-bottom:15px; }
 .container{ padding:20px; }
@@ -61,7 +61,7 @@ tr:nth-child(even){ background:#f1f1f1; }
   </div>
 
   <div class="input-group">
-    <label>To Coin (Top 100)</label>
+    <label>To Coin</label>
     <select id="coinTo"></select>
   </div>
 
@@ -83,10 +83,10 @@ tr:nth-child(even){ background:#f1f1f1; }
   <div class="table-container">
     <table>
       <thead>
-        <tr><th>Date</th><th>Type</th><th>Coin</th><th>Amount</th><th>Price USD</th></tr>
+        <tr><th>Date</th><th>Pair</th><th>Amount</th><th>Price</th></tr>
       </thead>
       <tbody id="tradeHistory">
-        <tr><td colspan="5">No trades yet</td></tr>
+        <tr><td colspan="4">No trades yet</td></tr>
       </tbody>
     </table>
   </div>
@@ -106,191 +106,150 @@ let user;
 let wallets = {};
 let marketCoins = [];
 
-/* MENU */
 const sideMenu = document.getElementById("sideMenu");
-document.getElementById("menuBtn").onclick = () => sideMenu.classList.toggle("active");
-document.getElementById("closeMenu").onclick = () => sideMenu.classList.remove("active");
+document.getElementById("menuBtn").onclick = ()=>sideMenu.classList.toggle("active");
+document.getElementById("closeMenu").onclick = ()=>sideMenu.classList.remove("active");
 
-/* INIT */
 async function init(){
   const { data:{ session } } = await supabase.auth.getSession();
   if(!session){ alert("Login required"); return; }
   user = session.user;
-
   await loadMarket();
   await loadWallets();
   await loadHistory();
 }
 window.onload = init;
 
-/* LOAD 100 COINS */
 async function loadMarket(){
   const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1");
   marketCoins = await res.json();
 }
 
-/* LOAD WALLET */
 async function loadWallets(){
-  const { data } = await supabase.from('wallets')
-    .select('*')
-    .eq('user_id', user.id);
-
+  const { data } = await supabase.from('wallets').select('*').eq('user_id', user.id);
   wallets = {};
-  if(data){
-    data.forEach(w=>{
-      if(Number(w.balance) > 0){
-        wallets[w.coin_symbol.toLowerCase()] = Number(w.balance);
-      }
-    });
-  }
+  data.forEach(w=>{
+    if(Number(w.balance)>0)
+      wallets[w.coin_symbol.toUpperCase()] = Number(w.balance);
+  });
 
   renderWallet();
   populateSelects();
 }
 
-/* SHOW WALLET */
 function renderWallet(){
-  let html='<ul>';
-  if(Object.keys(wallets).length === 0){
-    html+='<li>No balance</li>';
-  }else{
-    Object.keys(wallets).forEach(c=>{
-      html+=`<li>${c.toUpperCase()} : ${wallets[c]}</li>`;
-    });
-  }
-  html+='</ul>';
-  document.getElementById('walletBalances').innerHTML = html;
+  let html="<ul>";
+  const keys = Object.keys(wallets);
+  if(keys.length===0) html+="<li>No balance</li>";
+  keys.forEach(c=> html+=`<li>${c}: ${wallets[c]}</li>`);
+  html+="</ul>";
+  document.getElementById("walletBalances").innerHTML = html;
 }
 
-/* SELECTS */
 function populateSelects(){
-  const from = document.getElementById('coinFrom');
-  const to = document.getElementById('coinTo');
-  from.innerHTML='';
-  to.innerHTML='';
+  const from=document.getElementById("coinFrom");
+  const to=document.getElementById("coinTo");
+  from.innerHTML=""; to.innerHTML="";
 
   Object.keys(wallets).forEach(c=>{
-    from.innerHTML += `<option value="${c}">${c.toUpperCase()}</option>`;
+    from.innerHTML+=`<option value="${c}">${c}</option>`;
   });
 
   marketCoins.forEach(c=>{
-    to.innerHTML += `<option value="${c.symbol.toLowerCase()}">
-      ${c.symbol.toUpperCase()} - $${c.current_price}
-    </option>`;
+    to.innerHTML+=`<option value="${c.symbol.toUpperCase()}">${c.symbol.toUpperCase()} - $${c.current_price}</option>`;
   });
+
+  updateConverted();
 }
 
-/* CONVERT */
 function updateConverted(){
-  const amount = Number(document.getElementById('amount').value);
-  const from = document.getElementById('coinFrom').value;
-  const to = document.getElementById('coinTo').value;
-
-  if(!amount || !from || !to){
-    document.getElementById('convertedAmount').innerText='-';
-    return;
-  }
-
-  const fromCoin = marketCoins.find(c=>c.symbol.toLowerCase()===from);
-  const toCoin = marketCoins.find(c=>c.symbol.toLowerCase()===to);
-  if(!fromCoin || !toCoin) return;
-
-  const converted = (amount * fromCoin.current_price) / toCoin.current_price;
-  document.getElementById('convertedAmount').innerText = converted.toFixed(6);
+  const amount=Number(document.getElementById("amount").value);
+  const from=document.getElementById("coinFrom").value;
+  const to=document.getElementById("coinTo").value;
+  if(!amount||!from||!to){ document.getElementById("convertedAmount").innerText="-"; return;}
+  const f=marketCoins.find(c=>c.symbol.toUpperCase()===from);
+  const t=marketCoins.find(c=>c.symbol.toUpperCase()===to);
+  if(!f||!t) return;
+  const result=(amount*f.current_price)/t.current_price;
+  document.getElementById("convertedAmount").innerText=result.toFixed(6);
 }
 
-document.getElementById('amount').addEventListener('input', updateConverted);
-document.getElementById('coinFrom').addEventListener('change', updateConverted);
-document.getElementById('coinTo').addEventListener('change', updateConverted);
+document.getElementById("amount").addEventListener("input",updateConverted);
+document.getElementById("coinFrom").addEventListener("change",updateConverted);
+document.getElementById("coinTo").addEventListener("change",updateConverted);
 
-/* TRADE */
 document.getElementById("tradeBtn").onclick = async function(){
 
-  const amount = Number(document.getElementById('amount').value);
-  const from = document.getElementById('coinFrom').value;
-  const to = document.getElementById('coinTo').value;
+  const amount=Number(document.getElementById("amount").value);
+  const from=document.getElementById("coinFrom").value;
+  const to=document.getElementById("coinTo").value;
 
-  if(!amount || amount<=0) return alert("Invalid amount");
-  if(wallets[from] < amount) return alert("Insufficient balance");
+  if(!amount||amount<=0) return alert("Invalid amount");
+  if(!wallets[from]||wallets[from]<amount) return alert("Insufficient balance");
 
-  const fromCoin = marketCoins.find(c=>c.symbol.toLowerCase()===from);
-  const toCoin = marketCoins.find(c=>c.symbol.toLowerCase()===to);
+  const f=marketCoins.find(c=>c.symbol.toUpperCase()===from);
+  const t=marketCoins.find(c=>c.symbol.toUpperCase()===to);
+  const converted=(amount*f.current_price)/t.current_price;
 
-  const converted = (amount * fromCoin.current_price) / toCoin.current_price;
+  const { error:e1 }=await supabase.from("wallets")
+    .update({ balance: wallets[from]-amount })
+    .eq("user_id",user.id)
+    .eq("coin_symbol",from);
+  if(e1) return alert("Wallet update failed");
 
-  const newFrom = wallets[from] - amount;
-  const newTo = (wallets[to] || 0) + converted;
+  const { data:existing }=await supabase.from("wallets")
+    .select("*")
+    .eq("user_id",user.id)
+    .eq("coin_symbol",to);
 
-  await supabase.from('wallets')
-    .update({ balance:newFrom })
-    .eq('user_id', user.id)
-    .eq('coin_symbol', from);
-
-  const { data: check } = await supabase.from('wallets')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('coin_symbol', to)
-    .single();
-
-  if(check){
-    await supabase.from('wallets')
-      .update({ balance:newTo })
-      .eq('user_id', user.id)
-      .eq('coin_symbol', to);
+  if(existing.length>0){
+    await supabase.from("wallets")
+      .update({ balance: Number(existing[0].balance)+converted })
+      .eq("user_id",user.id)
+      .eq("coin_symbol",to);
   }else{
-    await supabase.from('wallets')
-      .insert({
-        user_id:user.id,
-        coin_symbol:to,
-        balance:newTo,
-        locked:0
-      });
+    await supabase.from("wallets")
+      .insert({ user_id:user.id, coin_symbol:to, balance:converted, locked:0 });
   }
 
-  await supabase.from('trade_history').insert({
+  await supabase.from("trade_history").insert({
     user_id:user.id,
-    trade_type:'spot',
-    coin_symbol:from + '->' + to,
+    trade_type:"spot",
+    coin_symbol: from+"/"+to,
     amount:amount,
-    price_usd:fromCoin.current_price,
+    price_usd:f.current_price,
+    side:"convert",
     created_at:new Date()
   });
 
   alert("Trade Successful ✅");
-
   await loadWallets();
   await loadHistory();
 };
 
-/* HISTORY */
 async function loadHistory(){
-  const { data } = await supabase.from('trade_history')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at',{ascending:false});
+  const { data }=await supabase.from("trade_history")
+    .select("*")
+    .eq("user_id",user.id)
+    .order("created_at",{ascending:false});
 
-  const tbody = document.getElementById('tradeHistory');
-  tbody.innerHTML='';
-
-  if(!data || data.length===0){
-    tbody.innerHTML='<tr><td colspan="5">No trades yet</td></tr>';
+  const tbody=document.getElementById("tradeHistory");
+  tbody.innerHTML="";
+  if(!data||data.length===0){
+    tbody.innerHTML='<tr><td colspan="4">No trades yet</td></tr>';
     return;
   }
 
   data.forEach(t=>{
-    const tr=document.createElement('tr');
+    const tr=document.createElement("tr");
     tr.innerHTML=`
       <td>${new Date(t.created_at).toLocaleString()}</td>
-      <td>${t.trade_type}</td>
       <td>${t.coin_symbol}</td>
       <td>${t.amount}</td>
-      <td>${t.price_usd}</td>
-    `;
+      <td>$${t.price_usd}</td>`;
     tbody.appendChild(tr);
   });
 }
-
 </script>
-
 </body>
 </html>
