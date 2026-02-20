@@ -64,13 +64,17 @@ tr:nth-child(even){background:#f1f1f1}
 <script>
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
-const supabase = supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let userId=null, wallets={};
+let userId = null;
+let wallets = {};
 
 async function init(){
   const { data } = await supabase.auth.getSession();
-  if(!data.session){ location.href='login.html'; return; }
+  if(!data.session){
+    location.href='login.html';
+    return;
+  }
   userId = data.session.user.id;
 
   await loadWallets();
@@ -79,32 +83,54 @@ async function init(){
 window.onload = init;
 
 async function loadWallets(){
-  const { data } = await supabase.from('wallets').select('*').eq('user_id',userId);
-  wallets={};
-  if(data) data.forEach(w=> { if(Number(w.balance)>0) wallets[w.coin_symbol.toUpperCase()] = Number(w.balance); });
+  const { data } = await supabase.from('wallets').select('*').eq('user_id', userId);
+  wallets = {};
+  if(data){
+    data.forEach(w=>{
+      if(w.coin_symbol) wallets[w.coin_symbol.toUpperCase()] = Number(w.balance);
+    });
+  }
 
-  const coinSelect=document.getElementById('coinSelect');
-  coinSelect.innerHTML='';
-  Object.keys(wallets).forEach(c=> coinSelect.innerHTML += `<option value="${c}">${c}</option>`);
+  const coinSelect = document.getElementById('coinSelect');
+  coinSelect.innerHTML = '';
+
+  // اگر کاربر هیچ موجودی ندارد، گزینه‌های همه کوین‌ها را نشان بده
+  if(Object.keys(wallets).length === 0){
+    const { data: coins } = await supabase.from('coins').select('symbol');
+    coins.forEach(c=>{
+      const opt = document.createElement('option');
+      opt.value = c.symbol.toUpperCase();
+      opt.innerText = c.symbol.toUpperCase();
+      coinSelect.appendChild(opt);
+    });
+  } else {
+    Object.keys(wallets).forEach(c=>{
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.innerText = c;
+      coinSelect.appendChild(opt);
+    });
+  }
 }
 
-document.getElementById('maxBtn').addEventListener('click',()=>{
-  const coin=document.getElementById('coinSelect').value;
+document.getElementById('maxBtn').addEventListener('click', ()=>{
+  const coin = document.getElementById('coinSelect').value;
   if(wallets[coin]) document.getElementById('amountInput').value = wallets[coin];
 });
 
 document.getElementById('withdrawBtn').addEventListener('click', async ()=>{
-  const coin=document.getElementById('coinSelect').value;
-  const amount=Number(document.getElementById('amountInput').value);
-  if(!coin || !amount || amount<=0){ alert('Invalid amount'); return; }
-  if(wallets[coin]<amount){ alert('Insufficient balance'); return; }
+  const coin = document.getElementById('coinSelect').value;
+  const amount = Number(document.getElementById('amountInput').value);
+
+  if(!coin || !amount || amount <= 0){ alert('Invalid amount'); return; }
+  if(wallets[coin] < amount){ alert('Insufficient balance'); return; }
 
   const { error } = await supabase.from('withdraw_requests').insert({
-    user_id:userId,
-    coin_symbol:coin,
-    amount:amount,
-    status:'pending',
-    created_at:new Date()
+    user_id: userId,
+    coin_symbol: coin,
+    amount: amount,
+    status: 'pending',
+    created_at: new Date()
   });
 
   if(error){ alert('Failed to submit withdraw'); return; }
@@ -115,23 +141,28 @@ document.getElementById('withdrawBtn').addEventListener('click', async ()=>{
 async function loadWithdrawHistory(){
   const { data } = await supabase.from('withdraw_requests')
     .select('*')
-    .eq('user_id',userId)
-    .order('created_at',{ascending:false});
+    .eq('user_id', userId)
+    .order('created_at', {ascending:false});
 
-  const tbody=document.getElementById('withdrawHistory');
-  tbody.innerHTML='';
-  if(!data || data.length===0){ tbody.innerHTML='<tr><td colspan="4">No withdraw requests</td></tr>'; return; }
+  const tbody = document.getElementById('withdrawHistory');
+  tbody.innerHTML = '';
+  if(!data || data.length === 0){
+    tbody.innerHTML = '<tr><td colspan="4">No withdraw requests</td></tr>';
+    return;
+  }
 
   data.forEach(r=>{
-    const tr=document.createElement('tr');
-    let statusClass='status-pending';
-    if(r.status==='approved') statusClass='status-approved';
-    else if(r.status==='rejected') statusClass='status-rejected';
-    tr.innerHTML=`
+    const tr = document.createElement('tr');
+    let statusClass = 'status-pending';
+    if(r.status === 'approved') statusClass = 'status-approved';
+    else if(r.status === 'rejected') statusClass = 'status-rejected';
+
+    tr.innerHTML = `
       <td>${new Date(r.created_at).toLocaleString()}</td>
       <td>${r.coin_symbol}</td>
       <td>${r.amount}</td>
-      <td class="${statusClass}">${r.status}</td>`;
+      <td class="${statusClass}">${r.status}</td>
+    `;
     tbody.appendChild(tr);
   });
 }
