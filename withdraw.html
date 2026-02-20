@@ -5,27 +5,29 @@
 <title>Withdrawal | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center;font-size:18px}
 .container{padding:20px}
-.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:40vh;padding:10px 0}
+#searchInput{width:100%;padding:8px;border-radius:5px;border:1px solid #ccc;margin-bottom:10px}
+.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:50vh;padding:10px 0}
 .coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;width:100%;cursor:pointer; display:flex; align-items:center; gap:10px}
 .coin-card:hover{border-color:#4b49ac}
+.coin-card img{width:40px;height:40px;margin:0}
 .panel{position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:360px;max-height:80%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;transition:.3s;z-index:100;display:none}
 .panel.active{display:block}
 .close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
-.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
-.notice{margin-top:20px;font-size:14px;color:#555}
-button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
-select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
-input.amount{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
-button.max-btn{background:#28a745;margin-top:8px;width:100%;padding:8px;color:#fff;border:none;border-radius:5px;cursor:pointer}
+.notice{margin-top:10px;font-size:14px;color:#555}
+button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer;width:100%}
+select.network,input.amount{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
+button.max-btn{background:#28a745;color:#fff;border:none;padding:8px 12px;margin-top:5px;border-radius:5px;width:100%;cursor:pointer}
 table{width:100%;border-collapse:collapse;margin-top:20px}
 th,td{padding:8px;text-align:left;border-bottom:1px solid #ddd}
 th{background:#1a1a2e;color:#fff}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -35,35 +37,39 @@ th{background:#1a1a2e;color:#fff}
 
 <div class="container">
   <h3>Your Balances</h3>
+  <input type="text" id="searchInput" placeholder="Search coin...">
   <div class="coin-scroll" id="coinScroll">Loading balances...</div>
+</div>
 
-  <div class="panel" id="panel">
-    <button class="close" onclick="closePanel()">Close</button>
-    <h3 id="panelTitle"></h3>
+<!-- Withdrawal Panel -->
+<div class="panel" id="panel">
+  <button class="close" onclick="closePanel()">Close</button>
+  <h3 id="panelTitle">Coin Withdrawal</h3>
 
-    <label for="networkSelect">Network:</label>
-    <select id="networkSelect" class="network"></select>
+  <label for="networkSelect">Network:</label>
+  <select id="networkSelect" class="network"></select>
 
-    <label for="amountInput">Amount:</label>
-    <input type="number" id="amountInput" class="amount" placeholder="Enter amount">
-    <button type="button" class="max-btn" id="maxBtn">Use Max Balance</button>
+  <label for="addressInput">Your Address:</label>
+  <input type="text" id="addressInput" placeholder="Enter your address">
 
-    <div class="address" id="userAddress">
-      <span>—</span>
-      <button onclick="copyAddress()" style="background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-radius:4px;cursor:pointer">Copy</button>
-    </div>
+  <label for="amountInput">Amount:</label>
+  <input type="number" id="amountInput" class="amount" placeholder="0.0">
+  <button type="button" class="max-btn" id="maxBtn">Use Max Balance</button>
 
-    <div class="notice">
-      After confirming, your withdrawal request will be submitted.
-    </div>
-
-    <button class="main" onclick="submitRequest()">Submit Withdrawal Request</button>
+  <div class="notice">
+    The requested amount will be locked in your wallet until processed.
   </div>
+
+  <button class="main" onclick="submitWithdrawal()">Submit Withdrawal</button>
 
   <h3>Withdrawal History</h3>
   <table>
-    <thead><tr><th>Date</th><th>Coin</th><th>Network</th><th>Amount</th><th>Status</th></tr></thead>
-    <tbody id="historyBody"><tr><td colspan="5">Loading...</td></tr></tbody>
+    <thead>
+      <tr><th>Date</th><th>Coin</th><th>Network</th><th>Amount</th><th>Status</th></tr>
+    </thead>
+    <tbody id="historyBody">
+      <tr><td colspan="5">Loading...</td></tr>
+    </tbody>
   </table>
 </div>
 
@@ -74,120 +80,153 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+let userId = null;
+let wallets = {};
+let selectedCoin = null;
+
 const coinScroll = document.getElementById('coinScroll');
 const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panelTitle');
 const networkSelect = document.getElementById('networkSelect');
+const addressInput = document.getElementById('addressInput');
 const amountInput = document.getElementById('amountInput');
 const maxBtn = document.getElementById('maxBtn');
-const userAddress = document.getElementById('userAddress');
 const historyBody = document.getElementById('historyBody');
+const searchInput = document.getElementById('searchInput');
 
-let userBalances = {};
-let selectedCoin = null;
-let currentUserId = null;
-
-function formatBalance(balance){ return Number(balance).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:8}); }
-
-async function loadBalances(){
-  coinScroll.innerHTML='Loading balances...';
-  const { data: sessionData } = await supabase.auth.getSession();
-  if(!sessionData.session){ coinScroll.innerHTML='Not logged in'; return; }
-  currentUserId = sessionData.session.user.id;
-
-  const { data, error } = await supabase.from('wallets')
-    .select('coin_symbol,balance,locked')
-    .eq('user_id', currentUserId);
-
-  if(error){ console.error(error); coinScroll.innerHTML='Failed to load balances'; return; }
-
-  userBalances = {};
-  coinScroll.innerHTML='';
-  data.forEach(w=>{
-    const symbol = w.coin_symbol.toUpperCase();
-    const balance = Number(w.balance);
-    if(balance>0){
-      userBalances[symbol] = balance;
-      const div = document.createElement('div');
-      div.className='coin-card';
-      div.innerHTML = `<div><b>${symbol}</b> Balance: ${formatBalance(balance)}</div>`;
-      div.onclick = ()=>openPanel(symbol);
-      coinScroll.appendChild(div);
-    }
-  });
-  if(Object.keys(userBalances).length===0) coinScroll.innerHTML='No balance available';
-  loadHistory();
+async function init(){
+  const { data } = await supabase.auth.getSession();
+  if(!data.session){
+    alert("Login required"); return;
+  }
+  userId = data.session.user.id;
+  await loadWallets();
+  await loadHistory();
 }
+
+window.onload = init;
+
+async function loadWallets(){
+  const { data, error } = await supabase.from('wallets').select('*').eq('user_id', userId);
+  if(error){ coinScroll.innerHTML='Failed to load balances'; return;}
+  wallets = {};
+  data.forEach(w=>{ if(Number(w.balance) > 0) wallets[w.coin_symbol] = Number(w.balance); });
+  renderCoins();
+}
+
+function renderCoins(){
+  coinScroll.innerHTML='';
+  Object.keys(wallets).forEach(symbol=>{
+    const div = document.createElement('div');
+    div.className='coin-card';
+    div.innerHTML=`<b>${symbol}</b> <small>Balance: ${wallets[symbol]}</small>`;
+    div.onclick=()=>openPanel(symbol);
+    coinScroll.appendChild(div);
+  });
+}
+
+searchInput.addEventListener('input', ()=>{
+  const q = searchInput.value.toLowerCase();
+  const filtered = Object.keys(wallets).filter(k=>k.toLowerCase().includes(q));
+  coinScroll.innerHTML='';
+  filtered.forEach(symbol=>{
+    const div = document.createElement('div');
+    div.className='coin-card';
+    div.innerHTML=`<b>${symbol}</b> <small>Balance: ${wallets[symbol]}</small>`;
+    div.onclick=()=>openPanel(symbol);
+    coinScroll.appendChild(div);
+  });
+});
 
 async function openPanel(symbol){
   selectedCoin = symbol;
   panelTitle.innerText = symbol + ' Withdrawal';
-  amountInput.value='';
   networkSelect.innerHTML='';
-  userAddress.querySelector('span').innerText='Loading...';
+  addressInput.value='';
+  amountInput.value='';
 
-  const { data } = await supabase.from('deposit_wallets')
-    .select('*').eq('asset', symbol).eq('is_active', true);
-
-  if(data.length>0){
+  // Load networks for selected coin
+  const { data, error } = await supabase.from('deposit_wallets')
+    .select('*')
+    .eq('asset', symbol)
+    .eq('is_active', true);
+  if(error || data.length===0){
+    networkSelect.innerHTML='<option value="">No network available</option>';
+  } else {
     data.forEach((n, idx)=>{
       const opt = document.createElement('option');
-      opt.value = n.network;
-      opt.innerText = n.network;
+      opt.value=n.network;
+      opt.innerText=n.network;
       networkSelect.appendChild(opt);
-      if(idx===0) userAddress.querySelector('span').innerText = n.address;
     });
-    networkSelect.onchange = ()=>{
-      const sel = data.find(d=>d.network===networkSelect.value);
-      userAddress.querySelector('span').innerText = sel.address;
-    };
-  } else userAddress.querySelector('span').innerText='No network available';
+  }
 
-  maxBtn.onclick = ()=>{ amountInput.value = userBalances[selectedCoin] || 0; };
   panel.classList.add('active');
 }
 
 function closePanel(){ panel.classList.remove('active'); }
-function copyAddress(){ navigator.clipboard.writeText(userAddress.querySelector('span').innerText).then(()=>alert('Copied')); }
 
-async function submitRequest(){
-  if(!currentUserId) return alert('Not logged in');
-  const amount = Number(amountInput.value);
+maxBtn.addEventListener('click', ()=>{
+  if(selectedCoin && wallets[selectedCoin]) amountInput.value = wallets[selectedCoin];
+});
+
+async function submitWithdrawal(){
   const network = networkSelect.value;
-  if(!selectedCoin || !network || !amount || amount<=0) return alert('Fill all fields');
+  const address = addressInput.value.trim();
+  const amount = Number(amountInput.value);
 
-  const { data: wallet } = await supabase.from('wallets')
-    .select('*').eq('user_id', currentUserId).eq('coin_symbol', selectedCoin).single();
-  if(!wallet) return alert('Wallet not found');
-  if(wallet.balance < amount) return alert('Insufficient balance');
+  if(!selectedCoin || !network || !address || !amount || amount <= 0) return alert("Fill all fields");
 
-  await supabase.from('wallets')
-    .update({ balance: wallet.balance - amount, locked: wallet.locked + amount })
-    .eq('id', wallet.id);
+  // Lock wallet
+  const { data: walletData, error: wError } = await supabase.from('wallets')
+    .select('*').eq('user_id', userId).eq('coin_symbol', selectedCoin).single();
+  if(wError || !walletData) return alert("Wallet not found");
+  if(walletData.balance < amount) return alert("Insufficient balance");
 
-  const { error } = await supabase.from('withdrawal_requests')
-    .insert({ user_id: currentUserId, coin_symbol: selectedCoin, network: network, amount: amount, status: 'pending', created_at: new Date() });
+  const { error:updateError } = await supabase.from('wallets')
+    .update({ balance: walletData.balance - amount, locked: walletData.locked + amount })
+    .eq('id', walletData.id);
+  if(updateError) return alert("Failed to lock wallet");
 
-  if(error) return alert('Failed to submit withdrawal');
-  alert('Withdrawal request submitted ✅');
-  closePanel();
-  loadBalances();
+  // Insert withdrawal request
+  const { error: insertError } = await supabase.from('withdrawal_requests')
+    .insert({
+      user_id: userId,
+      coin_symbol: selectedCoin,
+      network: network,
+      address: address,
+      amount: amount,
+      status: 'pending',
+      created_at: new Date()
+    });
+  if(insertError) return alert("Failed to submit withdrawal");
+
+  alert("Withdrawal request submitted ✅");
+  panel.classList.remove('active');
+  await loadWallets();
+  await loadHistory();
 }
 
 async function loadHistory(){
-  if(!currentUserId) return;
-  const { data } = await supabase.from('withdrawal_requests')
-    .select('*').eq('user_id', currentUserId).order('created_at',{ascending:false});
+  const { data, error } = await supabase.from('withdrawal_requests')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending:false });
   historyBody.innerHTML='';
-  if(!data || data.length===0){ historyBody.innerHTML='<tr><td colspan="5">No withdrawals</td></tr>'; return; }
+  if(error || !data || data.length===0){
+    historyBody.innerHTML='<tr><td colspan="5">No withdrawals yet</td></tr>';
+    return;
+  }
   data.forEach(r=>{
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${new Date(r.created_at).toLocaleString()}</td><td>${r.coin_symbol}</td><td>${r.network}</td><td>${r.amount}</td><td>${r.status}</td>`;
+    tr.innerHTML=`<td>${new Date(r.created_at).toLocaleString()}</td>
+                    <td>${r.coin_symbol}</td>
+                    <td>${r.network}</td>
+                    <td>${r.amount}</td>
+                    <td>${r.status}</td>`;
     historyBody.appendChild(tr);
   });
 }
-
-window.onload = loadBalances;
 </script>
 
 </body>
