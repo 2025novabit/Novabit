@@ -8,23 +8,20 @@
 
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
-header{background:#1a1a2e;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center;font-size:18px}
+header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
 .container{padding:20px}
 #searchInput{width:100%;padding:8px;border-radius:5px;border:1px solid #ccc;margin-bottom:10px}
-.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:50vh;padding:10px 0}
+.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:70vh;padding:10px 0}
 .coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;width:100%;cursor:pointer; display:flex; align-items:center; gap:10px}
 .coin-card:hover{border-color:#4b49ac}
 .coin-card img{width:40px;height:40px;margin:0}
 .panel{position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:360px;max-height:80%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;transition:.3s;z-index:100;display:none}
 .panel.active{display:block}
 .close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
-.notice{margin-top:10px;font-size:14px;color:#555}
-button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer;width:100%}
-select.network,input.amount{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
-button.max-btn{background:#28a745;color:#fff;border:none;padding:8px 12px;margin-top:5px;border-radius:5px;width:100%;cursor:pointer}
-table{width:100%;border-collapse:collapse;margin-top:20px}
-th,td{padding:8px;text-align:left;border-bottom:1px solid #ddd}
-th{background:#1a1a2e;color:#fff}
+.input-group{margin-top:10px}
+input, select{width:100%;padding:8px;border-radius:5px;border:1px solid #ccc}
+button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
+button.max-btn{background:#28a745;color:#fff;border:none;padding:8px;margin-top:5px;width:100%;border-radius:5px;cursor:pointer}
 </style>
 </head>
 
@@ -36,45 +33,46 @@ th{background:#1a1a2e;color:#fff}
 </header>
 
 <div class="container">
-  <h3>Your Balances</h3>
+  <h3>Select Coin to Withdraw</h3>
   <input type="text" id="searchInput" placeholder="Search coin...">
-  <div class="coin-scroll" id="coinScroll">Loading balances...</div>
+  <div class="coin-scroll" id="coinScroll"></div>
 </div>
 
 <!-- Withdrawal Panel -->
 <div class="panel" id="panel">
   <button class="close" onclick="closePanel()">Close</button>
-  <h3 id="panelTitle">Coin Withdrawal</h3>
+  <h3 id="panelTitle"></h3>
 
-  <label for="networkSelect">Network:</label>
-  <select id="networkSelect" class="network"></select>
-
-  <label for="addressInput">Your Address:</label>
-  <input type="text" id="addressInput" placeholder="Enter your address">
-
-  <label for="amountInput">Amount:</label>
-  <input type="number" id="amountInput" class="amount" placeholder="0.0">
-  <button type="button" class="max-btn" id="maxBtn">Use Max Balance</button>
-
-  <div class="notice">
-    The requested amount will be locked in your wallet until processed.
+  <div class="input-group">
+    <label>Network</label>
+    <select id="networkSelect"></select>
   </div>
 
-  <button class="main" onclick="submitWithdrawal()">Submit Withdrawal</button>
+  <div class="input-group">
+    <label>Amount</label>
+    <input type="number" id="amountInput" placeholder="0.0000">
+    <button type="button" class="max-btn" id="maxBtn">Use Max Balance</button>
+  </div>
 
-  <h3>Withdrawal History</h3>
-  <table>
-    <thead>
-      <tr><th>Date</th><th>Coin</th><th>Network</th><th>Amount</th><th>Status</th></tr>
-    </thead>
-    <tbody id="historyBody">
-      <tr><td colspan="5">Loading...</td></tr>
-    </tbody>
-  </table>
+  <div class="input-group">
+    <label>Withdrawal Address</label>
+    <input type="text" id="addressInput" placeholder="Enter your address">
+  </div>
+
+  <button class="main" onclick="submitWithdrawal()">Submit Withdrawal Request</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const coinScroll = document.getElementById('coinScroll');
+const panel = document.getElementById('panel');
+const panelTitle = document.getElementById('panelTitle');
+const networkSelect = document.getElementById('networkSelect');
+const amountInput = document.getElementById('amountInput');
+const addressInput = document.getElementById('addressInput');
+const maxBtn = document.getElementById('maxBtn');
+const searchInput = document.getElementById('searchInput');
+
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
 
@@ -82,44 +80,47 @@ const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let userId = null;
 let wallets = {};
-let selectedCoin = null;
+let allCoins = [];
 
-const coinScroll = document.getElementById('coinScroll');
-const panel = document.getElementById('panel');
-const panelTitle = document.getElementById('panelTitle');
-const networkSelect = document.getElementById('networkSelect');
-const addressInput = document.getElementById('addressInput');
-const amountInput = document.getElementById('amountInput');
-const maxBtn = document.getElementById('maxBtn');
-const historyBody = document.getElementById('historyBody');
-const searchInput = document.getElementById('searchInput');
-
+// --- Load user and wallets ---
 async function init(){
   const { data } = await supabase.auth.getSession();
-  if(!data.session){
-    alert("Login required"); return;
-  }
+  if(!data.session) return alert('Login required');
   userId = data.session.user.id;
-  await loadWallets();
-  await loadHistory();
-}
 
+  await loadWallets();
+  await loadCoins();
+}
 window.onload = init;
 
 async function loadWallets(){
   const { data, error } = await supabase.from('wallets').select('*').eq('user_id', userId);
-  if(error){ coinScroll.innerHTML='Failed to load balances'; return;}
+  if(error) return console.error(error);
   wallets = {};
-  data.forEach(w=>{ if(Number(w.balance) > 0) wallets[w.coin_symbol] = Number(w.balance); });
-  renderCoins();
+  data.forEach(w=>{
+    if(Number(w.balance)>0) wallets[w.coin_symbol] = Number(w.balance);
+  });
 }
 
-function renderCoins(){
+async function loadCoins(){
+  try{
+    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
+    allCoins = await res.json();
+    renderCoins(allCoins);
+  } catch(err){
+    console.error(err);
+    coinScroll.innerHTML = 'Failed to load coins';
+  }
+}
+
+function renderCoins(coins){
   coinScroll.innerHTML='';
-  Object.keys(wallets).forEach(symbol=>{
+  coins.forEach(c=>{
+    const symbol = c.symbol.toUpperCase();
+    if(!wallets[symbol]) return; // فقط ارزهایی که موجودی دارند
     const div = document.createElement('div');
     div.className='coin-card';
-    div.innerHTML=`<b>${symbol}</b> <small>Balance: ${wallets[symbol]}</small>`;
+    div.innerHTML=`<img src="${c.image}" alt="${symbol}"><div><b>${symbol}</b> <small>Balance: ${wallets[symbol]}</small></div>`;
     div.onclick=()=>openPanel(symbol);
     coinScroll.appendChild(div);
   });
@@ -127,105 +128,69 @@ function renderCoins(){
 
 searchInput.addEventListener('input', ()=>{
   const q = searchInput.value.toLowerCase();
-  const filtered = Object.keys(wallets).filter(k=>k.toLowerCase().includes(q));
-  coinScroll.innerHTML='';
-  filtered.forEach(symbol=>{
-    const div = document.createElement('div');
-    div.className='coin-card';
-    div.innerHTML=`<b>${symbol}</b> <small>Balance: ${wallets[symbol]}</small>`;
-    div.onclick=()=>openPanel(symbol);
-    coinScroll.appendChild(div);
+  const filtered = allCoins.filter(c=>{
+    const symbol = c.symbol.toLowerCase();
+    return symbol.includes(q) || c.name.toLowerCase().includes(q);
   });
+  renderCoins(filtered);
 });
 
-async function openPanel(symbol){
-  selectedCoin = symbol;
+function openPanel(symbol){
   panelTitle.innerText = symbol + ' Withdrawal';
   networkSelect.innerHTML='';
   addressInput.value='';
   amountInput.value='';
 
-  // Load networks for selected coin
-  const { data, error } = await supabase.from('deposit_wallets')
-    .select('*')
-    .eq('asset', symbol)
-    .eq('is_active', true);
-  if(error || data.length===0){
-    networkSelect.innerHTML='<option value="">No network available</option>';
-  } else {
+  // Load networks from supabase table
+  supabase.from('withdrawal_networks').select('*').eq('asset', symbol).eq('is_active', true)
+  .then(({data, error})=>{
+    if(error) return console.error(error);
     data.forEach((n, idx)=>{
       const opt = document.createElement('option');
       opt.value=n.network;
       opt.innerText=n.network;
       networkSelect.appendChild(opt);
     });
-  }
+  });
+
+  // Max button
+  maxBtn.onclick=()=>{ amountInput.value = wallets[symbol] || 0; };
 
   panel.classList.add('active');
 }
 
 function closePanel(){ panel.classList.remove('active'); }
 
-maxBtn.addEventListener('click', ()=>{
-  if(selectedCoin && wallets[selectedCoin]) amountInput.value = wallets[selectedCoin];
-});
-
 async function submitWithdrawal(){
+  const coin = panelTitle.innerText.split(' ')[0];
   const network = networkSelect.value;
-  const address = addressInput.value.trim();
   const amount = Number(amountInput.value);
+  const address = addressInput.value.trim();
 
-  if(!selectedCoin || !network || !address || !amount || amount <= 0) return alert("Fill all fields");
+  if(!network || !amount || !address) return alert('All fields are required');
+  if(amount > wallets[coin]) return alert('Insufficient balance');
 
-  // Lock wallet
-  const { data: walletData, error: wError } = await supabase.from('wallets')
-    .select('*').eq('user_id', userId).eq('coin_symbol', selectedCoin).single();
-  if(wError || !walletData) return alert("Wallet not found");
-  if(walletData.balance < amount) return alert("Insufficient balance");
-
-  const { error:updateError } = await supabase.from('wallets')
-    .update({ balance: walletData.balance - amount, locked: walletData.locked + amount })
-    .eq('id', walletData.id);
-  if(updateError) return alert("Failed to lock wallet");
+  // Lock funds
+  const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', userId).eq('coin_symbol', coin).single();
+  await supabase.from('wallets').update({balance: wallet.balance - amount, locked: wallet.locked + amount}).eq('id', wallet.id);
 
   // Insert withdrawal request
-  const { error: insertError } = await supabase.from('withdrawal_requests')
-    .insert({
-      user_id: userId,
-      coin_symbol: selectedCoin,
-      network: network,
-      address: address,
-      amount: amount,
-      status: 'pending',
-      created_at: new Date()
-    });
-  if(insertError) return alert("Failed to submit withdrawal");
+  const { error } = await supabase.from('withdrawal_requests').insert({
+    user_id: userId,
+    coin_symbol: coin,
+    network: network,
+    amount: amount,
+    address: address,
+    status: 'pending',
+    created_at: new Date()
+  });
 
-  alert("Withdrawal request submitted ✅");
+  if(error) return alert('Failed to submit withdrawal');
+
+  alert('Withdrawal request submitted ✅');
   panel.classList.remove('active');
   await loadWallets();
-  await loadHistory();
-}
-
-async function loadHistory(){
-  const { data, error } = await supabase.from('withdrawal_requests')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending:false });
-  historyBody.innerHTML='';
-  if(error || !data || data.length===0){
-    historyBody.innerHTML='<tr><td colspan="5">No withdrawals yet</td></tr>';
-    return;
-  }
-  data.forEach(r=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML=`<td>${new Date(r.created_at).toLocaleString()}</td>
-                    <td>${r.coin_symbol}</td>
-                    <td>${r.network}</td>
-                    <td>${r.amount}</td>
-                    <td>${r.status}</td>`;
-    historyBody.appendChild(tr);
-  });
+  renderCoins(allCoins);
 }
 </script>
 
