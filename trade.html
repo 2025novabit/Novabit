@@ -66,9 +66,12 @@ tr:nth-child(even){ background:#f1f1f1; }
   </div>
 
   <div class="input-group">
-    <label>Amount</label>
-    <input type="number" id="amount" placeholder="0.0000">
-  </div>
+  <label>Amount</label>
+  <input type="number" id="amount" placeholder="0.0000">
+  <button type="button" id="maxBtn" style="margin-top:8px;width:100%;background:#28a745;">
+    Use Max Balance
+  </button>
+</div>
 
   <div class="input-group">
     <label>Converted Amount</label>
@@ -177,7 +180,17 @@ function updateConverted(){
 document.getElementById("amount").addEventListener("input",updateConverted);
 document.getElementById("coinFrom").addEventListener("change",updateConverted);
 document.getElementById("coinTo").addEventListener("change",updateConverted);
+/* ========== USE MAX BUTTON ========== */
+document.getElementById("maxBtn").addEventListener("click", function(){
+  const from = document.getElementById("coinFrom").value;
+  if(!from || !wallets[from]){
+    alert("No balance available");
+    return;
+  }
 
+  document.getElementById("amount").value = wallets[from];
+  updateConverted();
+});
 document.getElementById("tradeBtn").onclick = async function(){
 
   const amount=Number(document.getElementById("amount").value);
