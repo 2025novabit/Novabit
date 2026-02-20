@@ -5,7 +5,6 @@
 <title>Withdraw Request | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px;display:flex;justify-content:space-between;align-items:center}
@@ -37,6 +36,12 @@ tr:nth-child(even){background:#f1f1f1}
   <label>Coin</label>
   <select id="coinSelect"></select>
 
+  <label>Network</label>
+  <select id="networkSelect"></select>
+
+  <label>Withdraw Address</label>
+  <input type="text" id="addressInput" placeholder="Enter your wallet address">
+
   <label>Amount</label>
   <input type="number" id="amountInput" placeholder="Enter amount">
   <button type="button" id="maxBtn" style="margin-top:8px;background:#28a745;">Use Max Balance</button>
@@ -49,10 +54,10 @@ tr:nth-child(even){background:#f1f1f1}
   <div class="table-container">
     <table>
       <thead>
-        <tr><th>Date</th><th>Coin</th><th>Amount</th><th>Status</th></tr>
+        <tr><th>Date</th><th>Coin</th><th>Network</th><th>Amount</th><th>Address</th><th>Status</th></tr>
       </thead>
       <tbody id="withdrawHistory">
-        <tr><td colspan="4">No withdraw requests</td></tr>
+        <tr><td colspan="6">No withdraw requests</td></tr>
       </tbody>
     </table>
   </div>
@@ -68,6 +73,9 @@ const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let userId = null;
 let wallets = {};
+
+const coinSelect = document.getElementById('coinSelect');
+const networkSelect = document.getElementById('networkSelect');
 
 async function init(){
   const { data } = await supabase.auth.getSession();
@@ -91,11 +99,8 @@ async function loadWallets(){
     });
   }
 
-  const coinSelect = document.getElementById('coinSelect');
   coinSelect.innerHTML = '';
-
-  // اگر کاربر هیچ موجودی ندارد، گزینه‌های همه کوین‌ها را نشان بده
-  if(Object.keys(wallets).length === 0){
+  if(Object.keys(wallets).length===0){
     const { data: coins } = await supabase.from('coins').select('symbol');
     coins.forEach(c=>{
       const opt = document.createElement('option');
@@ -111,23 +116,46 @@ async function loadWallets(){
       coinSelect.appendChild(opt);
     });
   }
+
+  await loadNetworks();
 }
 
+async function loadNetworks(){
+  networkSelect.innerHTML='';
+  const { data } = await supabase.from('withdraw_wallets')
+    .select('network')
+    .eq('asset', coinSelect.value)
+    .eq('is_active', true);
+  data.forEach(n=>{
+    const opt = document.createElement('option');
+    opt.value = n.network;
+    opt.innerText = n.network;
+    networkSelect.appendChild(opt);
+  });
+}
+
+coinSelect.addEventListener('change', loadNetworks);
+
 document.getElementById('maxBtn').addEventListener('click', ()=>{
-  const coin = document.getElementById('coinSelect').value;
+  const coin = coinSelect.value;
   if(wallets[coin]) document.getElementById('amountInput').value = wallets[coin];
 });
 
 document.getElementById('withdrawBtn').addEventListener('click', async ()=>{
-  const coin = document.getElementById('coinSelect').value;
+  const coin = coinSelect.value;
+  const network = networkSelect.value;
   const amount = Number(document.getElementById('amountInput').value);
+  const address = document.getElementById('addressInput').value;
 
-  if(!coin || !amount || amount <= 0){ alert('Invalid amount'); return; }
-  if(wallets[coin] < amount){ alert('Insufficient balance'); return; }
+  if(!coin || !amount || amount<=0){ alert('Invalid amount'); return; }
+  if(!address){ alert('Address required'); return; }
+  if(wallets[coin]<amount){ alert('Insufficient balance'); return; }
 
   const { error } = await supabase.from('withdraw_requests').insert({
-    user_id: userId,
+    user_id:userId,
     coin_symbol: coin,
+    network: network,
+    withdraw_address: address,
     amount: amount,
     status: 'pending',
     created_at: new Date()
@@ -142,31 +170,32 @@ async function loadWithdrawHistory(){
   const { data } = await supabase.from('withdraw_requests')
     .select('*')
     .eq('user_id', userId)
-    .order('created_at', {ascending:false});
+    .order('created_at',{ascending:false});
 
   const tbody = document.getElementById('withdrawHistory');
-  tbody.innerHTML = '';
-  if(!data || data.length === 0){
-    tbody.innerHTML = '<tr><td colspan="4">No withdraw requests</td></tr>';
+  tbody.innerHTML='';
+  if(!data || data.length===0){
+    tbody.innerHTML='<tr><td colspan="6">No withdraw requests</td></tr>';
     return;
   }
 
   data.forEach(r=>{
-    const tr = document.createElement('tr');
     let statusClass = 'status-pending';
-    if(r.status === 'approved') statusClass = 'status-approved';
-    else if(r.status === 'rejected') statusClass = 'status-rejected';
+    if(r.status==='approved') statusClass='status-approved';
+    else if(r.status==='rejected') statusClass='status-rejected';
 
-    tr.innerHTML = `
+    const tr = document.createElement('tr');
+    tr.innerHTML=`
       <td>${new Date(r.created_at).toLocaleString()}</td>
       <td>${r.coin_symbol}</td>
+      <td>${r.network}</td>
       <td>${r.amount}</td>
+      <td>${r.withdraw_address}</td>
       <td class="${statusClass}">${r.status}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 </script>
-
 </body>
 </html>
