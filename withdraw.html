@@ -5,12 +5,10 @@
 <title>Withdrawal | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
 .container{padding:20px}
-#searchInput{width:100%;padding:8px;border-radius:5px;border:1px solid #ccc;margin-bottom:10px}
 .coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:70vh;padding:10px 0}
 .coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;width:100%;cursor:pointer; display:flex; align-items:center; gap:10px}
 .coin-card:hover{border-color:#4b49ac}
@@ -26,7 +24,6 @@ input.amount{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px
 button.max-btn{background:#28a745;margin-top:8px;width:100%;padding:8px;color:#fff;border:none;border-radius:5px;cursor:pointer}
 </style>
 </head>
-
 <body>
 
 <header>
@@ -35,9 +32,8 @@ button.max-btn{background:#28a745;margin-top:8px;width:100%;padding:8px;color:#f
 </header>
 
 <div class="container">
-  <h3>Select Coin (Top 100)</h3>
-  <input type="text" id="searchInput" placeholder="Search coin...">
-  <div class="coin-scroll" id="coinScroll"></div>
+  <h3>Your Balances</h3>
+  <div class="coin-scroll" id="coinScroll">Loading balances...</div>
 </div>
 
 <!-- Withdrawal Panel -->
@@ -71,10 +67,6 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let allCoins = [];
-let userBalances = {};
-let selectedCoin = null;
-
 const coinScroll = document.getElementById('coinScroll');
 const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panelTitle');
@@ -82,79 +74,69 @@ const networkSelect = document.getElementById('networkSelect');
 const amountInput = document.getElementById('amountInput');
 const maxBtn = document.getElementById('maxBtn');
 const userAddress = document.getElementById('userAddress');
-const searchInput = document.getElementById('searchInput');
+
+let userBalances = {};
+let selectedCoin = null;
 
 function formatBalance(balance){
   return Number(balance).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:8});
 }
 
-async function loadUserBalances() {
-  const { data: auth } = await supabase.auth.getUser();
-  if(!auth.user) return {};
-  const { data, error } = await supabase.from('wallets').select('coin_symbol,balance').eq('user_id', auth.user.id);
-  if(error){ console.error(error); return {}; }
-  const balances = {};
-  data.forEach(w => balances[w.coin_symbol.toUpperCase()] = Number(w.balance));
-  return balances;
-}
+async function loadBalances(){
+  const { data: auth } = await supabase.auth.getSession();
+  if(!auth.session){ location.href='login.html'; return; }
+  const userId = auth.session.user.id;
 
-async function loadCoins() {
-  userBalances = await loadUserBalances();
-  try{
-    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
-    const data = await res.json();
-    allCoins = data;
-    renderCoins(data);
-  } catch(err){
-    console.error(err);
-    coinScroll.innerHTML = 'Failed to load coins';
-  }
-}
+  const { data, error } = await supabase.from('wallets')
+    .select('coin_symbol,balance,locked')
+    .eq('user_id', userId);
+  if(error){ console.error(error); coinScroll.innerHTML='Failed to load balances'; return; }
 
-function renderCoins(coins){
-  coinScroll.innerHTML = '';
-  coins.forEach(c=>{
-    const symbol = c.symbol.toUpperCase();
-    const balance = userBalances[symbol] || 0;
-    const div = document.createElement('div');
-    div.className='coin-card';
-    div.innerHTML = `<img src="${c.image}" alt="${symbol}">
-                     <div><b>${symbol}</b> <small>Balance: ${formatBalance(balance)}</small></div>`;
-    div.onclick = ()=>openPanel(symbol);
-    coinScroll.appendChild(div);
+  userBalances = {};
+  coinScroll.innerHTML='';
+  data.forEach(w=>{
+    const symbol = w.coin_symbol.toUpperCase();
+    const balance = Number(w.balance);
+    if(balance>0){
+      userBalances[symbol] = balance;
+      const div = document.createElement('div');
+      div.className='coin-card';
+      div.innerHTML = `<div><b>${symbol}</b> Balance: ${formatBalance(balance)}</div>`;
+      div.onclick = ()=>openPanel(symbol, userId);
+      coinScroll.appendChild(div);
+    }
   });
+
+  if(Object.keys(userBalances).length===0) coinScroll.innerHTML='No balance available';
 }
 
-searchInput.addEventListener('input', ()=>{
-  const query = searchInput.value.toLowerCase();
-  const filtered = allCoins.filter(c=>c.symbol.toLowerCase().includes(query) || c.name.toLowerCase().includes(query));
-  renderCoins(filtered);
-});
-
-async function openPanel(symbol){
+async function openPanel(symbol, userId){
   selectedCoin = symbol;
   panelTitle.innerText = symbol + ' Withdrawal';
-  networkSelect.innerHTML = '';
-  amountInput.value = '';
-  userAddress.querySelector('span').innerText = 'Loading...';
+  amountInput.value='';
+  networkSelect.innerHTML='';
+  userAddress.querySelector('span').innerText='Loading...';
 
-  // بارگذاری شبکه‌های فعال ارز
-  const { data } = await supabase.from('deposit_wallets').select('*').eq('asset', symbol).eq('is_active', true);
+  // بارگذاری شبکه‌های فعال
+  const { data } = await supabase.from('deposit_wallets')
+    .select('*').eq('asset', symbol).eq('is_active', true);
+
   if(data.length>0){
-    data.forEach((w, idx)=>{
+    data.forEach((n, idx)=>{
       const opt = document.createElement('option');
-      opt.value = w.network;
-      opt.innerText = w.network;
+      opt.value = n.network;
+      opt.innerText = n.network;
       networkSelect.appendChild(opt);
-      if(idx===0) userAddress.querySelector('span').innerText = w.address;
+      if(idx===0) userAddress.querySelector('span').innerText = n.address;
     });
     networkSelect.onchange = ()=>{
-      const selected = data.find(d=>d.network===networkSelect.value);
-      userAddress.querySelector('span').innerText = selected.address;
+      const sel = data.find(d=>d.network===networkSelect.value);
+      userAddress.querySelector('span').innerText = sel.address;
     };
-  } else userAddress.querySelector('span').innerText = 'No network available';
+  } else userAddress.querySelector('span').innerText='No network available';
 
   maxBtn.onclick = ()=>{ amountInput.value = userBalances[selectedCoin] || 0; };
+
   panel.classList.add('active');
 }
 
@@ -162,36 +144,42 @@ function closePanel(){ panel.classList.remove('active'); }
 function copyAddress(){ navigator.clipboard.writeText(userAddress.querySelector('span').innerText).then(()=>alert('Copied')); }
 
 async function submitRequest(){
+  const { data: auth } = await supabase.auth.getSession();
+  if(!auth.session) return alert('Not logged in');
+  const userId = auth.session.user.id;
   const amount = Number(amountInput.value);
   const network = networkSelect.value;
-  if(!selectedCoin || !network || !amount || amount<=0) { alert('Fill all fields'); return; }
 
-  const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', supabase.auth.user().id).eq('coin_symbol', selectedCoin).single();
-  if(!wallet){ alert('Wallet not found'); return; }
-  if(wallet.balance<amount){ alert('Insufficient balance'); return; }
+  if(!selectedCoin || !network || !amount || amount<=0) return alert('Fill all fields');
+
+  const { data: wallet } = await supabase.from('wallets')
+    .select('*').eq('user_id', userId).eq('coin_symbol', selectedCoin).single();
+  if(!wallet) return alert('Wallet not found');
+  if(wallet.balance < amount) return alert('Insufficient balance');
 
   // قفل کردن موجودی
-  await supabase.from('wallets').update({ balance: wallet.balance - amount, locked: wallet.locked + amount }).eq('id', wallet.id);
+  await supabase.from('wallets')
+    .update({ balance: wallet.balance - amount, locked: wallet.locked + amount })
+    .eq('id', wallet.id);
 
   // ثبت درخواست برداشت
-  const { error } = await supabase.from('withdrawal_requests').insert({
-    user_id: supabase.auth.user().id,
-    coin_symbol: selectedCoin,
-    network: network,
-    amount: amount,
-    status: 'pending',
-    created_at: new Date()
-  });
-  if(error){ alert('Failed'); return; }
+  const { error } = await supabase.from('withdrawal_requests')
+    .insert({
+      user_id: userId,
+      coin_symbol: selectedCoin,
+      network: network,
+      amount: amount,
+      status: 'pending',
+      created_at: new Date()
+    });
+  if(error) return alert('Failed to submit withdrawal');
 
   alert('Withdrawal request submitted ✅');
   closePanel();
-  userBalances = await loadUserBalances();
-  renderCoins(allCoins);
+  loadBalances();
 }
 
-loadCoins();
+loadBalances();
 </script>
-
 </body>
 </html>
