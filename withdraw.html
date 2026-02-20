@@ -2,85 +2,66 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Wallet | Novabit</title>
+<title>Withdrawal | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
-header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
 .container{padding:20px}
 #searchInput{width:100%;padding:8px;border-radius:5px;border:1px solid #ccc;margin-bottom:10px}
-.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:60vh;padding:10px 0}
-.coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;width:100%;cursor:pointer;display:flex;align-items:center;gap:10px}
+.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:70vh;padding:10px 0}
+.coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;width:100%;cursor:pointer; display:flex; align-items:center; gap:10px}
 .coin-card:hover{border-color:#4b49ac}
 .coin-card img{width:40px;height:40px;margin:0}
 .panel{position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:360px;max-height:80%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;transition:.3s;z-index:100;display:none}
 .panel.active{display:block}
-.close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px;cursor:pointer;}
+.close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
+.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
+.notice{margin-top:20px;font-size:14px;color:#555}
+button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
+select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
 input.amount{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
 button.max-btn{background:#28a745;margin-top:8px;width:100%;padding:8px;color:#fff;border:none;border-radius:5px;cursor:pointer}
-select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
-select.tx-type{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
-button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
-.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px;display:flex;justify-content:space-between;align-items:center;}
-.notice{margin-top:10px;font-size:14px;color:#555}
-.card{background:#fff;padding:15px;border-radius:10px;margin-top:20px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:8px;text-align:left;border-bottom:1px solid #ddd}
-th{background:#1a1a2e;color:#fff}
 </style>
 </head>
+
 <body>
 
 <header>
   <button class="back" onclick="history.back()">Back</button>
-  Wallet
+  Withdrawal
 </header>
 
 <div class="container">
-  <h3>Select Coin</h3>
+  <h3>Select Coin (Top 100)</h3>
   <input type="text" id="searchInput" placeholder="Search coin...">
   <div class="coin-scroll" id="coinScroll"></div>
 </div>
 
-<!-- Panel for Deposit/Withdrawal -->
+<!-- Withdrawal Panel -->
 <div class="panel" id="panel">
   <button class="close" onclick="closePanel()">Close</button>
   <h3 id="panelTitle"></h3>
 
-  <label>Transaction Type:</label>
-  <select id="txType" class="tx-type">
-    <option value="deposit">Deposit</option>
-    <option value="withdrawal">Withdrawal</option>
-  </select>
-
-  <label>Network:</label>
+  <label for="networkSelect">Network:</label>
   <select id="networkSelect" class="network"></select>
 
-  <label>Amount:</label>
+  <label for="amountInput">Amount:</label>
   <input type="number" id="amountInput" class="amount" placeholder="Enter amount">
   <button type="button" class="max-btn" id="maxBtn">Use Max Balance</button>
 
-  <div class="address">
-    <span id="userAddress">—</span>
-    <button onclick="copyAddress()">Copy</button>
+  <div class="address" id="userAddress">
+    <span>—</span>
+    <button onclick="copyAddress()" style="background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-radius:4px;cursor:pointer">Copy</button>
   </div>
 
-  <div class="notice">After confirming, your request will be submitted.</div>
-
-  <button class="main" onclick="submitRequest()">Submit Request</button>
-</div>
-
-<div class="container">
-  <div class="card">
-    <h2>Transaction History</h2>
-    <table>
-      <thead>
-        <tr><th>Date</th><th>Coin</th><th>Network</th><th>Type</th><th>Amount</th><th>Status</th></tr>
-      </thead>
-      <tbody id="historyBody"><tr><td colspan="6">No transactions yet</td></tr></tbody>
-    </table>
+  <div class="notice">
+    After confirming, your withdrawal request will be submitted.
   </div>
+
+  <button class="main" onclick="submitRequest()">Submit Withdrawal Request</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -90,136 +71,127 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let allCoins = [], userBalances = {}, userId = null;
+let allCoins = [];
+let userBalances = {};
+let selectedCoin = null;
+
 const coinScroll = document.getElementById('coinScroll');
 const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panelTitle');
 const networkSelect = document.getElementById('networkSelect');
 const amountInput = document.getElementById('amountInput');
 const maxBtn = document.getElementById('maxBtn');
-const historyBody = document.getElementById('historyBody');
-const addressSpan = document.getElementById('userAddress');
+const userAddress = document.getElementById('userAddress');
 const searchInput = document.getElementById('searchInput');
-const txType = document.getElementById('txType');
 
-async function init(){
-  const { data } = await supabase.auth.getSession();
-  if(!data.session){ location.href='login.html'; return; }
-  userId = data.session.user.id;
-  addressSpan.innerText = data.session.user.email || 'N/A';
-  await loadUserBalances();
-  await loadTopCoins();
-  await loadHistory();
+function formatBalance(balance){
+  return Number(balance).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:8});
 }
 
-async function loadUserBalances(){
-  const { data, error } = await supabase.from('wallets').select('coin_symbol,balance').eq('user_id', userId);
-  if(error){ console.error(error); userBalances={}; return; }
-  userBalances = {};
-  data.forEach(w=> userBalances[w.coin_symbol.toUpperCase()] = Number(w.balance));
+async function loadUserBalances() {
+  const { data: auth } = await supabase.auth.getUser();
+  if(!auth.user) return {};
+  const { data, error } = await supabase.from('wallets').select('coin_symbol,balance').eq('user_id', auth.user.id);
+  if(error){ console.error(error); return {}; }
+  const balances = {};
+  data.forEach(w => balances[w.coin_symbol.toUpperCase()] = Number(w.balance));
+  return balances;
 }
 
-async function loadTopCoins(){
+async function loadCoins() {
+  userBalances = await loadUserBalances();
   try{
     const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
     const data = await res.json();
     allCoins = data;
-    renderCoins(allCoins);
-  } catch(err){ console.error(err); coinScroll.innerHTML='Failed to load coins'; }
+    renderCoins(data);
+  } catch(err){
+    console.error(err);
+    coinScroll.innerHTML = 'Failed to load coins';
+  }
 }
 
 function renderCoins(coins){
-  coinScroll.innerHTML='';
+  coinScroll.innerHTML = '';
   coins.forEach(c=>{
-    const sym = c.symbol.toUpperCase();
-    const balance = userBalances[sym] || 0;
+    const symbol = c.symbol.toUpperCase();
+    const balance = userBalances[symbol] || 0;
     const div = document.createElement('div');
     div.className='coin-card';
-    div.innerHTML=`<img src="${c.image}" alt="${sym}"><div><b>${sym}</b><br>Balance: ${balance}</div>`;
-    div.onclick = ()=> openPanel(sym);
+    div.innerHTML = `<img src="${c.image}" alt="${symbol}">
+                     <div><b>${symbol}</b> <small>Balance: ${formatBalance(balance)}</small></div>`;
+    div.onclick = ()=>openPanel(symbol);
     coinScroll.appendChild(div);
   });
 }
 
 searchInput.addEventListener('input', ()=>{
   const query = searchInput.value.toLowerCase();
-  renderCoins(allCoins.filter(c=>c.name.toLowerCase().includes(query) || c.symbol.toLowerCase().includes(query)));
+  const filtered = allCoins.filter(c=>c.symbol.toLowerCase().includes(query) || c.name.toLowerCase().includes(query));
+  renderCoins(filtered);
 });
 
 async function openPanel(symbol){
-  panelTitle.innerText = symbol;
-  networkSelect.innerHTML=''; amountInput.value='';
-  txType.value='deposit';
+  selectedCoin = symbol;
+  panelTitle.innerText = symbol + ' Withdrawal';
+  networkSelect.innerHTML = '';
+  amountInput.value = '';
+  userAddress.querySelector('span').innerText = 'Loading...';
 
-  const { data } = await supabase.from('deposit_wallets').select('network').eq('asset', symbol).eq('is_active', true);
+  // بارگذاری شبکه‌های فعال ارز
+  const { data } = await supabase.from('deposit_wallets').select('*').eq('asset', symbol).eq('is_active', true);
   if(data.length>0){
-    data.forEach(w=>{
+    data.forEach((w, idx)=>{
       const opt = document.createElement('option');
       opt.value = w.network;
       opt.innerText = w.network;
       networkSelect.appendChild(opt);
+      if(idx===0) userAddress.querySelector('span').innerText = w.address;
     });
-  }
-  maxBtn.onclick = ()=> {
-    if(txType.value==='withdrawal') amountInput.value = userBalances[symbol] || 0;
-    else amountInput.value = '';
-  };
+    networkSelect.onchange = ()=>{
+      const selected = data.find(d=>d.network===networkSelect.value);
+      userAddress.querySelector('span').innerText = selected.address;
+    };
+  } else userAddress.querySelector('span').innerText = 'No network available';
+
+  maxBtn.onclick = ()=>{ amountInput.value = userBalances[selectedCoin] || 0; };
   panel.classList.add('active');
 }
 
 function closePanel(){ panel.classList.remove('active'); }
-function copyAddress(){ navigator.clipboard.writeText(addressSpan.innerText).then(()=>alert('Copied: '+addressSpan.innerText)); }
+function copyAddress(){ navigator.clipboard.writeText(userAddress.querySelector('span').innerText).then(()=>alert('Copied')); }
 
 async function submitRequest(){
-  const coin = panelTitle.innerText;
-  const network = networkSelect.value;
   const amount = Number(amountInput.value);
-  const type = txType.value;
+  const network = networkSelect.value;
+  if(!selectedCoin || !network || !amount || amount<=0) { alert('Fill all fields'); return; }
 
-  if(!coin || !network || !amount || amount<=0){ alert('Fill all fields'); return; }
+  const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', supabase.auth.user().id).eq('coin_symbol', selectedCoin).single();
+  if(!wallet){ alert('Wallet not found'); return; }
+  if(wallet.balance<amount){ alert('Insufficient balance'); return; }
 
-  if(type==='withdrawal'){
-    const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', userId).eq('coin_symbol', coin).single();
-    if(!wallet){ alert('Wallet not found'); return; }
-    if(wallet.balance<amount){ alert('Insufficient balance'); return; }
-    await supabase.from('wallets').update({ balance: wallet.balance-amount, locked: wallet.locked+amount }).eq('id', wallet.id);
-  }
+  // قفل کردن موجودی
+  await supabase.from('wallets').update({ balance: wallet.balance - amount, locked: wallet.locked + amount }).eq('id', wallet.id);
 
-  const table = type==='deposit'?'deposit_requests':'withdrawal_requests';
-  const { error } = await supabase.from(table).insert({
-    user_id:userId, coin_symbol:coin, network:network, amount:amount, status:'pending', created_at:new Date()
+  // ثبت درخواست برداشت
+  const { error } = await supabase.from('withdrawal_requests').insert({
+    user_id: supabase.auth.user().id,
+    coin_symbol: selectedCoin,
+    network: network,
+    amount: amount,
+    status: 'pending',
+    created_at: new Date()
   });
   if(error){ alert('Failed'); return; }
-  alert(`${type.charAt(0).toUpperCase()+type.slice(1)} request submitted ✅`);
+
+  alert('Withdrawal request submitted ✅');
   closePanel();
-  await loadUserBalances();
-  await loadTopCoins();
-  await loadHistory();
+  userBalances = await loadUserBalances();
+  renderCoins(allCoins);
 }
 
-async function loadHistory(){
-  const { data: deposits } = await supabase.from('deposit_requests').select('*').eq('user_id',userId).order('created_at',{ascending:false});
-  const { data: withdrawals } = await supabase.from('withdrawal_requests').select('*').eq('user_id',userId).order('created_at',{ascending:false});
-
-  const merged = [...deposits.map(d=>({...d,type:'Deposit'})), ...withdrawals.map(w=>({...w,type:'Withdrawal'}))];
-  merged.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-
-  historyBody.innerHTML='';
-  if(merged.length===0){ historyBody.innerHTML='<tr><td colspan="6">No transactions yet</td></tr>'; return; }
-
-  merged.forEach(r=>{
-    historyBody.innerHTML+=`<tr>
-      <td>${new Date(r.created_at).toLocaleString()}</td>
-      <td>${r.coin_symbol}</td>
-      <td>${r.network}</td>
-      <td>${r.type}</td>
-      <td>${r.amount}</td>
-      <td>${r.status}</td>
-    </tr>`;
-  });
-}
-
-init();
+loadCoins();
 </script>
+
 </body>
 </html>
