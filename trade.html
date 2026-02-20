@@ -73,8 +73,30 @@ tr:nth-child(even){ background:#f1f1f1; }
 </head>
   
   <h1>Trade</h1>
-  <button id="menuBtn">Menu</button>
-</header>
+  header {
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+
+#menuBtn {
+  background:#4b49ac;
+  color:#fff;
+  border:none;
+  padding:8px 15px;
+  border-radius:5px;
+  cursor:pointer;
+  font-size:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 
 <div id="sideMenu">
   <button id="closeMenu" onclick="toggleMenu()">Close</button>
