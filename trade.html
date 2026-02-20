@@ -9,7 +9,18 @@
 body { font-family:'Roboto',sans-serif; margin:0; background:#f8f9fa; padding-bottom:60px; }
 header { background:#1a1a2e; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10; }
 header h1 { margin:0; font-size:20px; }
-#menuBtn { background:#4b49ac; color:#fff; border:none; padding:8px 15px; border-radius:5px; cursor:/* Side menu */
+
+/* FIXED BUTTON CSS */
+#menuBtn { 
+  background:#4b49ac; 
+  color:#fff; 
+  border:none; 
+  padding:8px 15px; 
+  border-radius:5px; 
+  cursor:pointer; 
+}
+
+/* Side menu */
 #sideMenu {
   position: fixed;
   top: 0;
@@ -24,6 +35,7 @@ header h1 { margin:0; font-size:20px; }
   padding: 20px;
 }
 #sideMenu.active { right: 0; }
+
 #sideMenu a {
   display: block;
   margin: 15px 0;
@@ -31,6 +43,7 @@ header h1 { margin:0; font-size:20px; }
   text-decoration: none;
   font-weight: 500;
 }
+
 #closeMenu {
   background-color: #e74c3c;
   color: #fff;
@@ -40,6 +53,7 @@ header h1 { margin:0; font-size:20px; }
   border-radius: 5px;
   margin-bottom: 15px;
 }
+
 .container{ padding:20px; }
 .card { background:#fff; padding:25px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); margin-bottom:20px; }
 .input-group { margin-bottom:15px; }
@@ -57,9 +71,7 @@ tr:nth-child(even){ background:#f1f1f1; }
 .bottom-nav a.active { color:#4b49ac; }
 </style>
 </head>
-<body>
-
-<header>
+  
   <h1>Trade</h1>
   <button id="menuBtn">Menu</button>
 </header>
