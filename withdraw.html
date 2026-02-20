@@ -20,7 +20,6 @@ th{background:#1a1a2e;color:#fff}
 .max-btn{background:#28a745;margin-top:5px}
 </style>
 </head>
-
 <body>
 
 <header>Withdraw Request</header>
@@ -60,22 +59,21 @@ th{background:#1a1a2e;color:#fff}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
 
-const supabase = supabase.createClient(
-"https://iecnioogmafgxwarmkxz.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
-);
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let user;
-let wallets = {};
+let wallets = {};  // structure: { coin: {balance, locked} }
 
+/* ================= INIT ================= */
 async function init(){
   const { data:{ session } } = await supabase.auth.getSession();
   if(!session){
     alert("Login required");
     return;
   }
-
   user = session.user;
 
   await loadWallets();
@@ -84,7 +82,7 @@ async function init(){
 
 window.onload = init;
 
-/* ================= LOAD WALLET ================= */
+/* ================= LOAD ALL WALLET COINS ================= */
 async function loadWallets(){
 
   const { data, error } = await supabase
@@ -98,21 +96,18 @@ async function loadWallets(){
   }
 
   wallets = {};
-  const select = document.getElementById("coinSelect");
-  select.innerHTML = "";
+  const coinSelect = document.getElementById("coinSelect");
+  coinSelect.innerHTML = "";
 
   data.forEach(w=>{
-    if(Number(w.balance) > 0){
-      wallets[w.coin_symbol] = {
-        balance: Number(w.balance),
-        locked: Number(w.locked || 0)
-      };
-
-      const opt = document.createElement("option");
-      opt.value = w.coin_symbol;
-      opt.innerText = `${w.coin_symbol} (Available: ${w.balance})`;
-      select.appendChild(opt);
-    }
+    wallets[w.coin_symbol] = {
+      balance: Number(w.balance),
+      locked: Number(w.locked || 0)
+    };
+    const opt = document.createElement("option");
+    opt.value = w.coin_symbol;
+    opt.innerText = `${w.coin_symbol} (Available: ${w.balance})`;
+    coinSelect.appendChild(opt);
   });
 
 }
@@ -124,7 +119,6 @@ function useMax(){
     alert("No balance");
     return;
   }
-
   document.getElementById("amountInput").value = wallets[coin].balance;
 }
 
@@ -135,7 +129,7 @@ async function submitWithdraw(){
   const amount = Number(document.getElementById("amountInput").value);
   const address = document.getElementById("addressInput").value;
 
-  if(!coin || !amount || amount<=0 || !address){
+  if(!coin || !amount || amount <=0 || !address){
     alert("All fields required");
     return;
   }
@@ -145,8 +139,8 @@ async function submitWithdraw(){
     return;
   }
 
-  /* 1️⃣ ثبت درخواست برداشت */
-  const { error:insertError } = await supabase
+  // ثبت درخواست برداشت
+  const { error: insertError } = await supabase
     .from("withdraw_requests")
     .insert({
       user_id: user.id,
@@ -158,20 +152,17 @@ async function submitWithdraw(){
     });
 
   if(insertError){
-    alert("Insert failed");
+    alert("Withdraw insert failed");
     return;
   }
 
-  /* 2️⃣ قفل کردن موجودی */
+  // قفل کردن موجودی
   const newBalance = wallets[coin].balance - amount;
   const newLocked = wallets[coin].locked + amount;
 
-  const { error:updateError } = await supabase
+  const { error: updateError } = await supabase
     .from("wallets")
-    .update({
-      balance: newBalance,
-      locked: newLocked
-    })
+    .update({ balance: newBalance, locked: newLocked })
     .eq("user_id", user.id)
     .eq("coin_symbol", coin);
 
@@ -182,16 +173,15 @@ async function submitWithdraw(){
 
   alert("Withdraw request submitted ✅");
 
+  document.getElementById("amountInput").value = "";
+  document.getElementById("addressInput").value = "";
+
   await loadWallets();
   await loadHistory();
-
-  document.getElementById("amountInput").value="";
-  document.getElementById("addressInput").value="";
 }
 
 /* ================= LOAD HISTORY ================= */
 async function loadHistory(){
-
   const { data } = await supabase
     .from("withdraw_requests")
     .select("*")
@@ -217,7 +207,6 @@ async function loadHistory(){
     body.appendChild(tr);
   });
 }
-
 </script>
 </body>
 </html>
