@@ -18,9 +18,10 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
 .panel{position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:360px;max-height:80%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;transition:.3s;z-index:100;display:none}
 .panel.active{display:block}
 .close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
-.input-group{margin-top:10px}
-input, select{width:100%;padding:8px;border-radius:5px;border:1px solid #ccc}
+.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
+.notice{margin-top:20px;font-size:14px;color:#555}
 button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
+select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
 button.max-btn{background:#28a745;color:#fff;border:none;padding:8px;margin-top:5px;width:100%;border-radius:5px;cursor:pointer}
 </style>
 </head>
@@ -33,7 +34,7 @@ button.max-btn{background:#28a745;color:#fff;border:none;padding:8px;margin-top:
 </header>
 
 <div class="container">
-  <h3>Select Coin to Withdraw</h3>
+  <h3>Select Coin</h3>
   <input type="text" id="searchInput" placeholder="Search coin...">
   <div class="coin-scroll" id="coinScroll"></div>
 </div>
@@ -43,20 +44,18 @@ button.max-btn{background:#28a745;color:#fff;border:none;padding:8px;margin-top:
   <button class="close" onclick="closePanel()">Close</button>
   <h3 id="panelTitle"></h3>
 
-  <div class="input-group">
-    <label>Network</label>
-    <select id="networkSelect"></select>
-  </div>
+  <label for="networkSelect">Network:</label>
+  <select id="networkSelect" class="network"></select>
 
-  <div class="input-group">
-    <label>Amount</label>
-    <input type="number" id="amountInput" placeholder="0.0000">
-    <button type="button" class="max-btn" id="maxBtn">Use Max Balance</button>
-  </div>
+  <label>Amount:</label>
+  <input type="number" id="amountInput" placeholder="0.0000">
+  <button type="button" class="max-btn" id="maxBtn">Use Max Balance</button>
 
-  <div class="input-group">
-    <label>Withdrawal Address</label>
-    <input type="text" id="addressInput" placeholder="Enter your address">
+  <label>Withdrawal Address:</label>
+  <input type="text" id="addressInput" placeholder="Enter your address">
+
+  <div class="notice">
+    Please ensure your address is correct. Incorrect withdrawals cannot be reversed.
   </div>
 
   <button class="main" onclick="submitWithdrawal()">Submit Withdrawal Request</button>
@@ -82,17 +81,22 @@ let userId = null;
 let wallets = {};
 let allCoins = [];
 
-// --- Load user and wallets ---
+// Format balances
+function formatBalance(balance){
+  return Number(balance).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 8});
+}
+
+// Init
 async function init(){
   const { data } = await supabase.auth.getSession();
   if(!data.session) return alert('Login required');
   userId = data.session.user.id;
-
   await loadWallets();
   await loadCoins();
 }
 window.onload = init;
 
+// Load wallets
 async function loadWallets(){
   const { data, error } = await supabase.from('wallets').select('*').eq('user_id', userId);
   if(error) return console.error(error);
@@ -102,6 +106,7 @@ async function loadWallets(){
   });
 }
 
+// Load coins (top 100)
 async function loadCoins(){
   try{
     const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
@@ -113,19 +118,21 @@ async function loadCoins(){
   }
 }
 
+// Render coins with balance > 0
 function renderCoins(coins){
   coinScroll.innerHTML='';
   coins.forEach(c=>{
     const symbol = c.symbol.toUpperCase();
-    if(!wallets[symbol]) return; // فقط ارزهایی که موجودی دارند
+    if(!wallets[symbol]) return; // only coins with balance
     const div = document.createElement('div');
     div.className='coin-card';
-    div.innerHTML=`<img src="${c.image}" alt="${symbol}"><div><b>${symbol}</b> <small>Balance: ${wallets[symbol]}</small></div>`;
+    div.innerHTML=`<img src="${c.image}" alt="${symbol}"><div><b>${symbol}</b> Balance: ${formatBalance(wallets[symbol])}</div>`;
     div.onclick=()=>openPanel(symbol);
     coinScroll.appendChild(div);
   });
 }
 
+// Search
 searchInput.addEventListener('input', ()=>{
   const q = searchInput.value.toLowerCase();
   const filtered = allCoins.filter(c=>{
@@ -135,17 +142,18 @@ searchInput.addEventListener('input', ()=>{
   renderCoins(filtered);
 });
 
+// Open panel
 function openPanel(symbol){
   panelTitle.innerText = symbol + ' Withdrawal';
   networkSelect.innerHTML='';
   addressInput.value='';
   amountInput.value='';
 
-  // Load networks from supabase table
+  // Load networks from supabase
   supabase.from('withdrawal_networks').select('*').eq('asset', symbol).eq('is_active', true)
   .then(({data, error})=>{
     if(error) return console.error(error);
-    data.forEach((n, idx)=>{
+    data.forEach((n)=>{
       const opt = document.createElement('option');
       opt.value=n.network;
       opt.innerText=n.network;
@@ -159,15 +167,17 @@ function openPanel(symbol){
   panel.classList.add('active');
 }
 
+// Close panel
 function closePanel(){ panel.classList.remove('active'); }
 
+// Submit withdrawal
 async function submitWithdrawal(){
   const coin = panelTitle.innerText.split(' ')[0];
   const network = networkSelect.value;
   const amount = Number(amountInput.value);
   const address = addressInput.value.trim();
 
-  if(!network || !amount || !address) return alert('All fields are required');
+  if(!network || !amount || !address) return alert('All fields required');
   if(amount > wallets[coin]) return alert('Insufficient balance');
 
   // Lock funds
@@ -186,8 +196,8 @@ async function submitWithdrawal(){
   });
 
   if(error) return alert('Failed to submit withdrawal');
-
   alert('Withdrawal request submitted ✅');
+
   panel.classList.remove('active');
   await loadWallets();
   renderCoins(allCoins);
