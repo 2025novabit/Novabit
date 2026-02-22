@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Deposit Requests</title>
+
 <style>
 body{margin:0;font-family:'Roboto',sans-serif;background:#f8f9fa;}
 header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
@@ -43,7 +44,7 @@ const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ✅ admin check */
+/* 🔐 admin check */
 if(!localStorage.getItem('admin_logged_in')){
   alert("Please login as admin");
   window.location.href = "admin.html";
@@ -97,11 +98,19 @@ window.approve = async (requestId,userId,asset)=>{
   const amount = Number(document.getElementById(`amount-${requestId}`).value);
   if(amount<=0){ alert("Invalid amount"); return; }
 
-  await supabase.from('deposit_requests').update({status:'approved'}).eq('id',requestId);
+  // 1️⃣ update request status to approved
+  const { error:upErr } = await supabase.from('deposit_requests').update({status:'approved', amount}).eq('id',requestId);
+  if(upErr){ alert(upErr.message); return; }
 
-  const { data:wallet } = await supabase.from('wallets').select('balance').eq('user_id',userId).eq('coin_symbol',asset).single();
-  const newBalance = Number(wallet.balance) + amount;
-  await supabase.from('wallets').update({balance:newBalance}).eq('user_id',userId).eq('coin_symbol',asset);
+  // 2️⃣ add amount to user's wallet (create wallet if missing)
+  const { data:wallets } = await supabase.from('wallets').select('*').eq('user_id',userId).eq('coin_symbol',asset);
+  if(wallets.length>0){
+    const wallet = wallets[0];
+    const newBalance = Number(wallet.balance) + amount;
+    await supabase.from('wallets').update({balance:newBalance}).eq('id',wallet.id);
+  } else {
+    await supabase.from('wallets').insert({user_id:userId, coin_symbol:asset, balance:amount, locked:0});
+  }
 
   loadDeposits();
 }
@@ -110,6 +119,7 @@ window.approve = async (requestId,userId,asset)=>{
 window.rejectReq = async (requestId)=>{
   const { data:request } = await supabase.from('deposit_requests').select('status').eq('id',requestId).single();
   if(request.status!=='pending'){ alert("Request already processed"); return; }
+
   await supabase.from('deposit_requests').update({status:'rejected'}).eq('id',requestId);
   loadDeposits();
 }
