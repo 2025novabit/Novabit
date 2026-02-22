@@ -65,18 +65,19 @@ async function loadKYC(){
     const card = document.createElement('div');
     card.className="request-card";
 
+    const status = (r.status || 'pending').toLowerCase();
+    const isPending = status === 'pending';
+
     card.innerHTML=`
-      <span class="status-badge ${r.status || 'pending'}">${(r.status || 'pending').toUpperCase()}</span>
+      <span class="status-badge ${status}">${status.toUpperCase()}</span>
       <h3>${r.first_name || ''} ${r.last_name || ''}</h3>
       <p><b>DOB:</b> ${r.dob || '-'}</p>
       <p><b>Country:</b> ${r.country || '-'}</p>
       <p><b>Doc Type:</b> ${r.doc_type || '-'}</p>
       <p><b>Doc Number:</b> ${r.doc_number || '-'}</p>
       <div class="action-buttons">
-        <button class="approve" ${r.status==='pending'?'':'disabled'}
-          onclick="approve('${r.id}')">Approve</button>
-        <button class="reject" ${r.status==='pending'?'':'disabled'}
-          onclick="rejectReq('${r.id}')">Reject</button>
+        <button class="approve" ${isPending ? '' : 'disabled'} onclick="approve('${r.id}')">Approve</button>
+        <button class="reject" ${isPending ? '' : 'disabled'} onclick="rejectReq('${r.id}')">Reject</button>
       </div>
     `;
     container.appendChild(card);
