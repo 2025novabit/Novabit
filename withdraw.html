@@ -13,7 +13,6 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
 .coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:40vh;padding:10px 0}
 .coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;width:100%;cursor:pointer; display:flex; align-items:center; gap:10px}
 .coin-card:hover{border-color:#4b49ac}
-.coin-card img{width:40px;height:40px;margin:0}
 .panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:360px;max-height:90%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;transition:.3s;z-index:100;display:none}
 .panel.active{display:block}
 .close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
@@ -85,7 +84,7 @@ input, select{width:100%;padding:8px;margin-top:5px;border-radius:5px;border:1px
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA'; // جایگزین با کلید خودت
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const coinScroll = document.getElementById('coinScroll');
@@ -101,7 +100,6 @@ const historyBody = document.getElementById('historyBody');
 const searchInput = document.getElementById('searchInput');
 const maxBtn = document.getElementById('maxBtn');
 
-let allCoins = [];
 let userBalances = {};
 let currentCoin = null;
 let currentRequestId = null;
@@ -112,14 +110,13 @@ async function loadUserBalances() {
   const { data, error } = await supabaseClient.from('wallets').select('*').eq('user_id', auth.user.id);
   if(error) { console.error(error); return {}; }
   const balances = {};
-  data.forEach(w=>{ if(w.balance>0) balances[w.coin_symbol] = w; });
+  data.forEach(w => { if(w.balance>0) balances[w.coin_symbol] = w; });
   return balances;
 }
 
 async function loadCoins() {
   userBalances = await loadUserBalances();
-  allCoins = Object.keys(userBalances);
-  renderCoins(allCoins);
+  renderCoins(Object.keys(userBalances));
 }
 
 function renderCoins(coins) {
@@ -136,6 +133,7 @@ function renderCoins(coins) {
 
 async function openPanel(symbol) {
   currentCoin = symbol;
+  currentRequestId = null;
   const coin = userBalances[symbol];
   panelTitle.innerText = `${symbol} Withdrawal`;
   balanceDisplay.innerText = coin.balance;
@@ -144,11 +142,10 @@ async function openPanel(symbol) {
   cancelBtn.style.display='none';
   cancelBtn.disabled=false;
   submitBtn.disabled=false;
-  currentRequestId = null;
 
   networkSelect.innerHTML='';
-  const { data: networks } = await supabaseClient.from('deposit_wallets').select('*').eq('asset', symbol).eq('is_active', true);
-  networks.forEach(w=>{
+  const { data: networks, error } = await supabaseClient.from('deposit_wallets').select('*').eq('asset', symbol).eq('is_active', true);
+  if(networks) networks.forEach(w=>{
     const opt = document.createElement('option');
     opt.value = w.network;
     opt.innerText = w.network;
@@ -162,16 +159,14 @@ function closePanel(){ panel.classList.remove('active'); }
 
 maxBtn.onclick = ()=>{
   if(!currentCoin) return;
-  const coin = userBalances[currentCoin];
-  amountInput.value = coin.balance;
+  amountInput.value = userBalances[currentCoin].balance;
 };
 
 submitBtn.onclick = async ()=>{
   if(!currentCoin) return;
   const amount = parseFloat(amountInput.value);
   const address = addressInput.value.trim();
-  const coin = userBalances[currentCoin];
-  if(!amount || amount<=0 || amount>coin.balance) { alert('Invalid amount'); return; }
+  if(!amount || amount<=0 || amount>userBalances[currentCoin].balance) { alert('Invalid amount'); return; }
   if(!address) { alert('Enter address'); return; }
 
   const fee = amount*0.0001;
@@ -181,11 +176,11 @@ submitBtn.onclick = async ()=>{
     user_id: (await supabaseClient.auth.getUser()).data.user.id,
     coin_symbol: currentCoin,
     amount: finalAmount,
-    status: 'Pending',
     network: networkSelect.value,
-    address: address
-  }]);
-  if(error){ alert('Failed'); return; }
+    address: address,
+    status:'Pending'
+  }]).select();
+  if(error){ alert('Failed to create request'); return; }
 
   currentRequestId = data[0].id;
   submitBtn.disabled=true;
@@ -213,7 +208,7 @@ async function renderHistory() {
       <td>${req.network||''}</td>
       <td>${req.amount}</td>
       <td>${req.status}</td>
-      <td>${req.status==='Pending'?'<button onclick="cancelFromHistory(\''+req.id+'\')">Cancel</button>':'-'}</td>
+      <td>${req.status==='Pending'?'<button onclick="cancelFromHistory(\\''+req.id+'\\')">Cancel</button>':'-'}</td>
     `;
     historyBody.appendChild(tr);
   });
@@ -226,7 +221,7 @@ window.cancelFromHistory = async (id)=>{
 
 searchInput.addEventListener('input', ()=>{
   const query = searchInput.value.toLowerCase();
-  const filtered = allCoins.filter(s=>s.toLowerCase().includes(query));
+  const filtered = Object.keys(userBalances).filter(s=>s.toLowerCase().includes(query));
   renderCoins(filtered);
 });
 
