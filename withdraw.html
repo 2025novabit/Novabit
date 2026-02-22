@@ -99,6 +99,7 @@ const submitBtn = document.getElementById('submitBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 const historyBody = document.getElementById('historyBody');
 const searchInput = document.getElementById('searchInput');
+const maxBtn = document.getElementById('maxBtn');
 
 let allCoins = [];
 let userBalances = {};
@@ -141,9 +142,10 @@ async function openPanel(symbol) {
   amountInput.value='';
   addressInput.value='';
   cancelBtn.style.display='none';
+  cancelBtn.disabled=false;
   submitBtn.disabled=false;
+  currentRequestId = null;
 
-  // load networks
   networkSelect.innerHTML='';
   const { data: networks } = await supabaseClient.from('deposit_wallets').select('*').eq('asset', symbol).eq('is_active', true);
   networks.forEach(w=>{
@@ -172,7 +174,6 @@ submitBtn.onclick = async ()=>{
   if(!amount || amount<=0 || amount>coin.balance) { alert('Invalid amount'); return; }
   if(!address) { alert('Enter address'); return; }
 
-  // Deduct fee 0.01%
   const fee = amount*0.0001;
   const finalAmount = amount - fee;
 
