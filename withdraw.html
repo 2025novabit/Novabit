@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Withdraw | Novabit</title>
+<title>Withdrawal | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 <style>
@@ -10,48 +10,64 @@ body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
 .container{padding:20px}
 #searchInput{width:100%;padding:8px;border-radius:5px;border:1px solid #ccc;margin-bottom:10px}
-.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:35vh;padding:10px 0}
+.coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:40vh;padding:10px 0}
 .coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;width:100%;cursor:pointer; display:flex; align-items:center; gap:10px}
 .coin-card:hover{border-color:#4b49ac}
-.panel{position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:360px;max-height:80%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;transition:.3s;z-index:100;display:none}
+.coin-card img{width:40px;height:40px;margin:0}
+.panel{position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:360px;max-height:90%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;transition:.3s;z-index:100;display:none}
 .panel.active{display:block}
 .close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
-.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
+.address, input, select, .max-btn{margin-top:10px; width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; box-sizing:border-box;}
+.max-btn{background:#4b49ac;color:#fff;border:none;cursor:pointer;margin-top:5px}
 .notice{margin-top:10px;font-size:14px;color:#555}
-button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer;width:100%}
-select.network, input#amountInput, input#addressInput{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
-button.max-btn{background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-radius:4px;cursor:pointer;margin-top:5px;margin-bottom:10px}
-.history-item{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;margin-top:10px;position:relative}
-.status-badge{padding:2px 6px;border-radius:4px;color:#fff;font-size:12px}
-.status-badge.pending{background:orange}
-.status-badge.completed{background:green}
-.status-badge.cancelled{background:red}
-button.cancel{position:absolute;right:10px;top:10px;background:#e74c3c;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer}
+button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer;width:100%;}
+.history{margin-top:20px;}
+.history table{width:100%;border-collapse:collapse}
+.history th, .history td{border:1px solid #ccc;padding:6px;text-align:center;font-size:14px}
+.history th{background:#f1f1f1}
+.cancel-btn{background:#e74c3c;color:#fff;border:none;padding:4px 6px;border-radius:4px;cursor:pointer}
+.cancelled{color:#999;font-weight:bold}
 </style>
 </head>
 <body>
 
 <header>
   <button class="back" onclick="history.back()">Back</button>
-  Withdraw
+  Withdrawal
 </header>
 
 <div class="container">
-  <h3>Your Coins</h3>
+  <h3>Your Balances</h3>
   <input type="text" id="searchInput" placeholder="Search coin...">
   <div class="coin-scroll" id="coinScroll"></div>
 
-  <h3>Withdrawal History</h3>
-  <div id="historyList">Loading...</div>
+  <div class="history">
+    <h3>Withdrawal History</h3>
+    <table id="historyTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Coin</th>
+          <th>Network</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody">
+        <tr><td colspan="6">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<!-- Withdraw Panel -->
+<!-- Withdrawal Panel -->
 <div class="panel" id="panel">
   <button class="close" onclick="closePanel()">Close</button>
   <h3 id="panelTitle"></h3>
 
   <label for="networkSelect">Network:</label>
-  <select id="networkSelect" class="network"></select>
+  <select id="networkSelect"></select>
 
   <label>Amount:</label>
   <input type="number" id="amountInput" placeholder="0.0000">
@@ -60,183 +76,153 @@ button.cancel{position:absolute;right:10px;top:10px;background:#e74c3c;color:#ff
   <label>Withdrawal Address:</label>
   <input type="text" id="addressInput" placeholder="Enter your address">
 
-  <div class="notice" id="feeNotice">Fee: 0.01%</div>
+  <div class="notice" id="feeNotice"></div>
 
-  <button class="main" id="submitBtn">Submit Withdrawal Request</button>
+  <button class="main" onclick="submitWithdrawal()">Submit Withdrawal Request</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://iecnioogmafgxwarmkxz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const coinScroll = document.getElementById('coinScroll');
+const searchInput = document.getElementById('searchInput');
 const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panelTitle');
 const networkSelect = document.getElementById('networkSelect');
 const amountInput = document.getElementById('amountInput');
 const maxBtn = document.getElementById('maxBtn');
 const addressInput = document.getElementById('addressInput');
-const submitBtn = document.getElementById('submitBtn');
-const historyList = document.getElementById('historyList');
+const feeNotice = document.getElementById('feeNotice');
+const historyBody = document.getElementById('historyBody');
 
-let allCoins = [];
 let userBalances = {};
 let selectedCoin = null;
 let userId = null;
 
-async function loadUser(){
-  const { data: auth } = await supabaseClient.auth.getUser();
-  if(!auth.user) return;
-  userId = auth.user.id;
-  return auth.user;
+// Initialize
+async function init(){
+  const { data: authData } = await supabase.auth.getUser();
+  if(!authData.user){ alert("Login required"); return; }
+  userId = authData.user.id;
+  await loadBalances();
+  await loadHistory();
 }
 
-async function loadUserBalances(){
-  if(!userId) return;
-  const { data, error } = await supabaseClient
-    .from('wallets')
-    .select('coin_symbol,balance,locked')
-    .eq('user_id', userId);
-  if(error) return;
+// Load balances
+async function loadBalances(){
+  const { data, error } = await supabase.from('wallets').select('*').eq('user_id', userId);
+  if(error){ console.error(error); return; }
   userBalances = {};
-  data.forEach(w => {
-    if(Number(w.balance) > 0) userBalances[w.coin_symbol] = Number(w.balance);
-  });
-  allCoins = Object.keys(userBalances).map(sym=>({symbol:sym,balance:userBalances[sym]}));
-  renderCoins(allCoins);
-}
-
-function renderCoins(coins){
-  coinScroll.innerHTML = '';
-  coins.forEach(c=>{
-    const div = document.createElement('div');
-    div.className='coin-card';
-    div.innerHTML=`<b>${c.symbol}</b> Balance: ${c.balance}`;
-    div.onclick = ()=>openPanel(c.symbol);
-    coinScroll.appendChild(div);
+  coinScroll.innerHTML='';
+  data.forEach(w=>{
+    if(Number(w.balance)>0){
+      userBalances[w.coin_symbol]=Number(w.balance);
+      const div=document.createElement('div');
+      div.className='coin-card';
+      div.innerHTML=`<b>${w.coin_symbol}</b> <small>Balance: ${w.balance}</small>`;
+      div.onclick=()=>openPanel(w.coin_symbol);
+      coinScroll.appendChild(div);
+    }
   });
 }
 
-document.getElementById('searchInput').addEventListener('input', ()=>{
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  renderCoins(allCoins.filter(c=>c.symbol.toLowerCase().includes(q)));
-});
-
+// Open panel
 async function openPanel(symbol){
-  selectedCoin = symbol;
-  panelTitle.innerText = symbol + ' Withdrawal';
-  amountInput.value = '';
-  addressInput.value = ''; // آدرس مشتری خالی
-  networkSelect.innerHTML = '';
-  submitBtn.disabled = false;
+  selectedCoin=symbol;
+  panelTitle.innerText=symbol+' Withdrawal';
+  amountInput.value='';
+  addressInput.value='';
+  feeNotice.innerText='Fee: 0.01%';
+  networkSelect.innerHTML='';
 
-  const { data } = await supabaseClient.from('deposit_wallets')
-    .select('network,address')
-    .eq('asset',symbol)
-    .eq('is_active',true);
-
+  const { data, error } = await supabase.from('deposit_wallets').select('network,address').eq('asset',symbol).eq('is_active',true);
+  if(error || !data.length){ alert('No networks'); return; }
   data.forEach((w,idx)=>{
-    const opt = document.createElement('option');
+    const opt=document.createElement('option');
     opt.value=w.network;
     opt.innerText=w.network;
     networkSelect.appendChild(opt);
   });
-
   panel.classList.add('active');
 }
 
-maxBtn.onclick = ()=>{
-  if(selectedCoin) amountInput.value = userBalances[selectedCoin];
-};
-
-submitBtn.onclick = async ()=>{
-  const amount = Number(amountInput.value);
-  const fee = amount*0.0001;
-  const withdrawAmount = amount - fee;
-  const address = addressInput.value;
-  const network = networkSelect.value;
-  if(!selectedCoin || amount<=0 || !address) return alert("Enter all fields");
-
-  const { data: wallet } = await supabaseClient.from('wallets')
-    .select('*').eq('user_id',userId).eq('coin_symbol',selectedCoin).single();
-  if(!wallet) return;
-
-  if(wallet.balance < amount) return alert("Insufficient balance");
-  const newBalance = wallet.balance - amount;
-  const newLocked = wallet.locked + amount;
-  await supabaseClient.from('wallets')
-    .update({balance: newBalance, locked: newLocked})
-    .eq('id',wallet.id);
-  userBalances[selectedCoin] = newBalance;
-
-  // ثبت درخواست برداشت
-  await supabaseClient.from('withdraw_requests')
-    .insert([{user_id:userId,coin_symbol:selectedCoin,amount:withdrawAmount,status:'pending',network,created_at:new Date().toISOString(),address}]);
-
-  closePanel();
-  await loadUserBalances();
-  await loadHistory();
-};
-
-function closePanel(){ panel.classList.remove('active'); }
-
-async function cancelWithdrawal(row, btn){
-  if(row.status!=='pending') return;
-
-  await supabaseClient.from('withdraw_requests').update({status:'cancelled'}).eq('id',row.id);
-
-  const { data: wallet } = await supabaseClient.from('wallets')
-    .select('*').eq('user_id',userId).eq('coin_symbol',row.coin_symbol).single();
-  if(wallet){
-    await supabaseClient.from('wallets')
-      .update({balance: wallet.balance + Number(row.amount), locked: Math.max(0,wallet.locked - Number(row.amount))})
-      .eq('id',wallet.id);
-    userBalances[row.coin_symbol] = wallet.balance + Number(row.amount);
-  }
-
-  btn.disabled = true;
-  const statusSpan = btn.previousSibling;
-  if(statusSpan) statusSpan.textContent='CANCELLED';
-  row.status='cancelled';
+// Max button
+maxBtn.onclick=()=>{
+  if(selectedCoin) amountInput.value=userBalances[selectedCoin];
 }
 
+// Submit withdrawal
+async function submitWithdrawal(){
+  const amount=Number(amountInput.value);
+  const address=addressInput.value.trim();
+  const network=networkSelect.value;
+  if(!selectedCoin || !amount || !address || !network){ alert('All fields required'); return; }
+  if(amount>userBalances[selectedCoin]){ alert('Insufficient balance'); return; }
+
+  const fee=amount*0.0001;
+  const finalAmount=amount-fee;
+
+  // Insert withdraw request
+  const { data, error } = await supabase.from('withdraw_requests').insert([{user_id:userId, coin_symbol:selectedCoin, amount:finalAmount,status:'Pending',network,address}]);
+  if(error){ console.error(error); alert('Failed'); return; }
+
+  // Deduct balance locally
+  userBalances[selectedCoin]-=amount;
+  await loadBalances();
+  panel.classList.remove('active');
+  await loadHistory();
+}
+
+// Load history
 async function loadHistory(){
-  const { data } = await supabaseClient.from('withdraw_requests')
-    .select('*')
-    .eq('user_id',userId)
-    .order('created_at',{ascending:false});
-  historyList.innerHTML = '';
-  if(!data || data.length===0){ historyList.innerHTML="No withdrawals yet"; return; }
+  const { data, error } = await supabase.from('withdraw_requests').select('*').eq('user_id',userId).order('created_at',{ascending:false});
+  if(error){ console.error(error); return; }
+  historyBody.innerHTML='';
+  if(!data.length){ historyBody.innerHTML='<tr><td colspan="6">No history</td></tr>'; return; }
   data.forEach(row=>{
-    const div = document.createElement('div');
-    div.className='history-item';
-    const statusSpan = document.createElement('span');
-    statusSpan.className='status-badge ' + row.status;
-    statusSpan.textContent = row.status.toUpperCase();
-    div.innerHTML=`
-      <b>${row.coin_symbol}</b><br>
-      Amount: ${Number(row.amount).toFixed(8)}<br>
-      Date: ${new Date(row.created_at).toLocaleString()}<br>
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${new Date(row.created_at).toLocaleString()}</td>
+      <td>${row.coin_symbol}</td>
+      <td>${row.network}</td>
+      <td>${row.amount.toFixed(6)}</td>
+      <td class="${row.status==='Cancelled'?'cancelled':''}">${row.status}</td>
+      <td>${row.status==='Pending'?`<button class="cancel-btn" onclick="cancelRequest('${row.id}', this)">Cancel</button>`:''}</td>
     `;
-    div.appendChild(statusSpan);
-    if(row.status==='pending'){
-      const btn=document.createElement('button');
-      btn.className='cancel';
-      btn.innerText='Cancel';
-      btn.onclick = ()=>cancelWithdrawal(row, btn);
-      div.appendChild(btn);
-    }
-    historyList.appendChild(div);
+    historyBody.appendChild(tr);
   });
 }
 
-(async()=>{
-  await loadUser();
-  await loadUserBalances();
+// Cancel request
+async function cancelRequest(id, btn){
+  btn.disabled=true;
+  const { data } = await supabase.from('withdraw_requests').select('*').eq('id',id).single();
+  if(!data || data.status!=='Pending') return;
+
+  // Refund
+  const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id',userId).eq('coin_symbol',data.coin_symbol).single();
+  if(wallet){
+    await supabase.from('wallets').update({ balance: wallet.balance + data.amount }).eq('id', wallet.id);
+  }
+
+  await supabase.from('withdraw_requests').update({ status:'Cancelled' }).eq('id',id);
+  await loadBalances();
   await loadHistory();
-})();
+}
+
+function closePanel(){ panel.classList.remove('active'); }
+
+searchInput.addEventListener('input',()=>{
+  const q=searchInput.value.toLowerCase();
+  [...coinScroll.children].forEach(div=>{
+    div.style.display=div.innerText.toLowerCase().includes(q)?'flex':'none';
+  });
+});
+
+init();
 </script>
 </body>
 </html>
