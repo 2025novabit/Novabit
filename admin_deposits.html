@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Withdraw Requests</title>
+<title>Admin Deposit Requests</title>
 
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;}
@@ -27,6 +27,11 @@ header button{
 table{width:100%;border-collapse:collapse;}
 th,td{padding:10px;border:1px solid #ccc;text-align:center;}
 th{background:#1a1a2e;color:#fff;}
+input.amount-input{
+  width:100px;
+  padding:5px;
+  text-align:center;
+}
 button.action-btn{
   padding:6px 12px;
   margin:2px;
@@ -43,7 +48,7 @@ button.action-btn:hover{opacity:0.85;}
 <body>
 
 <header>
-  <h2>Withdraw Requests</h2>
+  <h2>Deposit Requests</h2>
   <button onclick="goBack()">Back</button>
 </header>
 
@@ -52,39 +57,42 @@ button.action-btn:hover{opacity:0.85;}
     <thead>
       <tr>
         <th>User ID</th>
-        <th>Coin</th>
+        <th>Asset</th>
         <th>Network</th>
-        <th>Address</th>
         <th>Amount</th>
         <th>Status</th>
         <th>Date</th>
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody id="withdrawBody"></tbody>
+    <tbody id="depositBody"></tbody>
   </table>
 </div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+/* 🔑 Supabase */
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* 🔐 check admin login */
 if (!localStorage.getItem('admin_logged_in')) {
   alert("Please login as admin");
   window.location.href = "admin.html";
 }
 
+/* 🔙 back */
 function goBack(){
   window.location.href = "admin_dashboard.html";
 }
 
-async function loadWithdraws(){
+/* 📥 load deposit requests */
+async function loadDeposits(){
   const { data, error } = await supabase
-    .from('withdraw_requests')
+    .from('deposit_requests')
     .select('*')
     .order('created_at', { ascending:false });
 
@@ -93,113 +101,138 @@ async function loadWithdraws(){
     return;
   }
 
-  const body = document.getElementById('withdrawBody');
+  const body = document.getElementById('depositBody');
   body.innerHTML = '';
 
   data.forEach(row=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.user_id}</td>
-      <td>${row.coin_symbol}</td>
-      <td>${row.network || '-'}</td>
-      <td>${row.address || '-'}</td>
-      <td>${Number(row.amount).toFixed(8)}</td>
+      <td>${row.asset}</td>
+      <td>${row.network}</td>
+      <td>
+        <input class="amount-input" type="number" step="0.00000001"
+          value="${row.amount || 0}"
+          id="amount-${row.id}"
+          ${row.status !== 'pending' ? 'readonly' : ''}>
+      </td>
       <td>${row.status || 'pending'}</td>
       <td>${new Date(row.created_at).toLocaleString()}</td>
       <td>
         <button class="action-btn approve" ${row.status !== 'pending' ? 'disabled' : ''}
-          onclick="approveWithdraw('${row.id}')">Approve</button>
+          onclick="approve('${row.id}','${row.user_id}','${row.asset}')">Approve</button>
         <button class="action-btn reject" ${row.status !== 'pending' ? 'disabled' : ''}
-          onclick="rejectWithdraw('${row.id}')">Reject</button>
+          onclick="rejectReq('${row.id}')">Reject</button>
       </td>
     `;
     body.appendChild(tr);
   });
 }
 
-window.approveWithdraw = async (requestId) => {
-
-  const { data:request } = await supabase
-    .from('withdraw_requests')
-    .select('*')
+/* ✅ approve */
+window.approve = async (requestId, userId, asset) => {
+  // 1️⃣ دریافت وضعیت فعلی درخواست
+  const { data:request, error: reqErr } = await supabase
+    .from('deposit_requests')
+    .select('status, amount')
     .eq('id', requestId)
     .single();
 
-  if(!request || request.status !== 'pending'){
-    alert("Already processed");
+  if(reqErr){
+    alert(reqErr.message);
     return;
   }
 
-  // 1️⃣ تغییر وضعیت
-  await supabase
-    .from('withdraw_requests')
-    .update({ status:'approved' })
+  if(request.status === 'approved'){
+    alert("This request is already approved!");
+    return;
+  }
+  if(request.status === 'rejected'){
+    alert("This request has been rejected!");
+    return;
+  }
+
+  const amount = Number(document.getElementById(`amount-${requestId}`).value);
+  if(amount <= 0){
+    alert("Invalid amount");
+    return;
+  }
+
+  // 2️⃣ بروزرسانی وضعیت درخواست به approved
+  const { error:upErr } = await supabase
+    .from('deposit_requests')
+    .update({ status:'approved', amount })
     .eq('id', requestId);
 
-  // 2️⃣ کم کردن از locked
-  const { data:wallet } = await supabase
-    .from('wallets')
-    .select('*')
-    .eq('user_id', request.user_id)
-    .eq('coin_symbol', request.coin_symbol)
-    .single();
-
-  if(wallet){
-    const newLocked = Number(wallet.locked) - Number(request.amount);
-
-    await supabase
-      .from('wallets')
-      .update({ locked: newLocked < 0 ? 0 : newLocked })
-      .eq('id', wallet.id);
-  }
-
-  loadWithdraws();
-};
-
-window.rejectWithdraw = async (requestId) => {
-
-  const { data:request } = await supabase
-    .from('withdraw_requests')
-    .select('*')
-    .eq('id', requestId)
-    .single();
-
-  if(!request || request.status !== 'pending'){
-    alert("Already processed");
+  if(upErr){
+    alert(upErr.message);
     return;
   }
 
-  // 1️⃣ تغییر وضعیت
-  await supabase
-    .from('withdraw_requests')
+  // 3️⃣ دریافت موجودی فعلی کیف پول
+  const { data:wallet, error:wErr } = await supabase
+    .from('wallets')
+    .select('balance')
+    .eq('user_id', userId)
+    .eq('coin_symbol', asset)
+    .single();
+
+  if(wErr){
+    alert("Wallet not found");
+    return;
+  }
+
+  // اگر request قبلاً approved نبوده، فقط یک بار موجودی اضافه می‌شود
+  const newBalance = Number(wallet.balance) + amount;
+
+  // 4️⃣ بروزرسانی کیف پول
+  const { error:bErr } = await supabase
+    .from('wallets')
+    .update({ balance: newBalance })
+    .eq('user_id', userId)
+    .eq('coin_symbol', asset);
+
+  if(bErr){
+    alert(bErr.message);
+    return;
+  }
+
+  loadDeposits();
+};
+
+/* ❌ reject */
+window.rejectReq = async (requestId) => {
+  const { data:request, error } = await supabase
+    .from('deposit_requests')
+    .select('status')
+    .eq('id', requestId)
+    .single();
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  if(request.status !== 'pending'){
+    alert("This request has already been processed!");
+    return;
+  }
+
+  const { error:rejErr } = await supabase
+    .from('deposit_requests')
     .update({ status:'rejected' })
     .eq('id', requestId);
 
-  // 2️⃣ برگرداندن پول به balance
-  const { data:wallet } = await supabase
-    .from('wallets')
-    .select('*')
-    .eq('user_id', request.user_id)
-    .eq('coin_symbol', request.coin_symbol)
-    .single();
-
-  if(wallet){
-    const newBalance = Number(wallet.balance) + Number(request.amount);
-    const newLocked = Number(wallet.locked) - Number(request.amount);
-
-    await supabase
-      .from('wallets')
-      .update({
-        balance: newBalance,
-        locked: newLocked < 0 ? 0 : newLocked
-      })
-      .eq('id', wallet.id);
+  if(rejErr){
+    alert(rejErr.message);
+    return;
   }
 
-  loadWithdraws();
+  loadDeposits();
 };
 
-window.onload = loadWithdraws;
+/* init */
+window.onload = loadDeposits;
 </script>
 
 </body>
