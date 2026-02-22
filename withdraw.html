@@ -18,7 +18,11 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
 .close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
 button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer;width:100%}
 button.max{background:#28a745;margin-top:5px}
-button.cancel{background:#dc3545;padding:4px 8px;border:none;border-radius:5px;color:#fff;cursor:pointer}
+button.cancel{background:#dc3545;padding:4px 8px;border:none;border-radius:5px;color:#fff;cursor:pointer;margin-top:5px}
+.status-badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:12px;margin-top:5px}
+.pending{background:#ffc107;color:#000}
+.cancelled{background:#6c757d;color:#fff}
+.approved{background:#28a745;color:#fff}
 select,input{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
 .notice{margin-top:10px;font-size:14px;color:#555}
 .history{margin-top:30px}
@@ -37,14 +41,12 @@ select,input{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px
   <h3>Select Coin</h3>
   <div class="coin-scroll" id="coinScroll"></div>
 
-  <!-- Withdrawal History -->
   <div class="history">
     <h3>Withdrawal History</h3>
     <div id="historyList">Loading history...</div>
   </div>
 </div>
 
-<!-- Withdrawal Panel -->
 <div class="panel" id="panel">
   <button class="close" onclick="closePanel()">Close</button>
   <h3 id="panelTitle"></h3>
@@ -139,11 +141,12 @@ async function loadHistory(){
     const div = document.createElement('div');
     div.className = 'history-item';
 
+    let statusClass = row.status;
     div.innerHTML = `
       <b>${row.coin_symbol}</b><br>
       Amount: ${Number(row.amount).toFixed(8)}<br>
-      Status: ${row.status}<br>
-      Date: ${new Date(row.created_at).toLocaleString()}
+      Date: ${new Date(row.created_at).toLocaleString()}<br>
+      <span class="status-badge ${statusClass}">${row.status.toUpperCase()}</span>
     `;
 
     if(row.status === "pending"){
@@ -159,6 +162,8 @@ async function loadHistory(){
 }
 
 async function cancelWithdrawal(row){
+
+  if(row.status !== "pending") return;
 
   await supabaseClient
     .from('withdraw_requests')
@@ -179,8 +184,6 @@ async function cancelWithdrawal(row){
       locked: Number(wallet.locked) - Number(row.amount)
     })
     .eq('id', wallet.id);
-
-  alert("Withdrawal cancelled");
 
   loadWallets();
   loadHistory();
@@ -249,8 +252,6 @@ async function submitWithdrawal(){
       status: "pending",
       created_at: new Date()
     });
-
-  alert("Withdrawal submitted successfully");
 
   closePanel();
   loadWallets();
