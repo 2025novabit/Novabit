@@ -89,7 +89,6 @@ async function loadUser(){
   const { data: auth } = await supabaseClient.auth.getUser();
   if(!auth.user) return;
   userId = auth.user.id;
-  return auth.user;
 }
 
 async function loadUserBalances(){
@@ -125,7 +124,7 @@ async function openPanel(symbol){
   selectedCoin = symbol;
   panelTitle.innerText = symbol + ' Withdrawal';
   amountInput.value = '';
-  addressInput.value = ''; // آدرس خالی
+  addressInput.value = ''; // خالی
   networkSelect.innerHTML = '';
   submitBtn.disabled = false;
 
@@ -154,7 +153,7 @@ submitBtn.onclick = async ()=>{
   if(!selectedCoin || amount<=0) return alert("Enter valid amount");
   if(!address) return alert("Address required");
 
-  // کاهش موجودی ولت
+  // کاهش موجودی
   const { data: wallet } = await supabaseClient.from('wallets')
     .select('*').eq('user_id',userId).eq('coin_symbol',selectedCoin).single();
   if(!wallet) return;
@@ -163,11 +162,10 @@ submitBtn.onclick = async ()=>{
   await supabaseClient.from('wallets').update({balance:newBalance,locked:newLocked}).eq('id',wallet.id);
   userBalances[selectedCoin]=newBalance;
 
-  // ثبت درخواست برداشت با شبکه و آدرس
+  // ثبت درخواست با شبکه و آدرس
   const { data: wr } = await supabaseClient.from('withdraw_requests')
     .insert([{user_id:userId,coin_symbol:selectedCoin,amount:withdrawAmount,status:'pending',network,address,created_at:new Date().toISOString()}]).select();
 
-  submitBtn.disabled=true;
   closePanel();
   loadUserBalances();
   loadHistory();
@@ -175,12 +173,14 @@ submitBtn.onclick = async ()=>{
 
 function closePanel(){ panel.classList.remove('active'); }
 
-// لغو فقط یک بار + آپدیت در دیتابیس
+// لغو فقط یک بار + آپدیت دیتابیس + تغییر وضعیت فوری در تاریخچه
 async function cancelWithdrawal(row, btn){
   if(row.status!=='pending') return;
+
   // بروزرسانی وضعیت در دیتابیس
   await supabaseClient.from('withdraw_requests').update({status:'cancelled'}).eq('id',row.id);
-  // بازگشت موجودی
+
+  // بازگشت موجودی یکبار
   const { data: wallet } = await supabaseClient.from('wallets')
     .select('*').eq('user_id',userId).eq('coin_symbol',row.coin_symbol).single();
   if(wallet){
@@ -190,9 +190,12 @@ async function cancelWithdrawal(row, btn){
     }).eq('id',wallet.id);
     userBalances[row.coin_symbol]=wallet.balance + Number(row.amount);
   }
-  btn.disabled=true;
-  btn.innerText='CANCELLED';
+
+  // تغییر فوری وضعیت در صفحه
   row.status='cancelled';
+  btn.disabled=true;
+  const badge = btn.previousSibling; // assume status badge is just before button
+  if(badge && badge.classList.contains('status-badge')) badge.textContent='CANCELLED';
   loadUserBalances();
   loadHistory();
 }
