@@ -30,8 +30,14 @@ button:disabled{opacity:0.5;cursor:not-allowed;}
 
 <header>
   <h2>Deposit Requests</h2>
-  <button onclick="goBack()">Back</button>
+  <button id="backBtn">Back</button>
 </header>
+
+<script>
+document.getElementById('backBtn').addEventListener('click',()=>{
+  window.location.href = 'admin_dashboard.html'; // مسیر صحیح به داشبورد ادمین
+});
+</script>
 
 <div class="container">
   <div id="depositBody">Loading...</div>
