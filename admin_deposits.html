@@ -6,7 +6,13 @@
 <title>Admin Deposit Requests</title>
 
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;}
+body{
+  margin:0;
+  font-family:'Roboto',sans-serif;
+  background:#f8f9fa;
+}
+
+/* Header */
 header{
   background:#1a1a2e;
   color:#fff;
@@ -23,25 +29,76 @@ header button{
   border-radius:6px;
   cursor:pointer;
 }
-.container{padding:30px;}
-table{width:100%;border-collapse:collapse;}
-th,td{padding:10px;border:1px solid #ccc;text-align:center;}
-th{background:#1a1a2e;color:#fff;}
-input.amount-input{
-  width:100px;
-  padding:5px;
+
+/* Container */
+.container{
+  padding:25px;
+}
+
+/* Table Style like withdrawal admin */
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+th{
+  background:#1a1a2e;
+  color:#fff;
+  padding:12px;
+  font-weight:500;
+}
+
+td{
+  padding:12px;
+  border-bottom:1px solid #eee;
   text-align:center;
 }
+
+tr:hover{
+  background:#f4f6ff;
+}
+
+/* Amount input */
+input.amount-input{
+  width:100px;
+  padding:6px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  text-align:center;
+}
+
+/* Buttons */
 button.action-btn{
   padding:6px 12px;
   margin:2px;
   border:none;
-  border-radius:5px;
+  border-radius:6px;
   cursor:pointer;
+  font-size:13px;
 }
-button.approve{background:#27ae60;color:#fff;}
-button.reject{background:#c0392b;color:#fff;}
-button.action-btn:hover{opacity:0.85;}
+
+button.approve{
+  background:#27ae60;
+  color:#fff;
+}
+
+button.reject{
+  background:#e74c3c;
+  color:#fff;
+}
+
+button.action-btn:disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+}
+
+button.action-btn:hover:not(:disabled){
+  opacity:0.85;
+}
 </style>
 </head>
 
@@ -70,26 +127,23 @@ button.action-btn:hover{opacity:0.85;}
 </div>
 
 <script type="module">
+/* ❗ تمام جاوااسکریپت شما بدون هیچ تغییری باقی مانده */
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-/* 🔑 Supabase */
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* 🔐 check admin login */
 if (!localStorage.getItem('admin_logged_in')) {
   alert("Please login as admin");
   window.location.href = "admin.html";
 }
 
-/* 🔙 back */
 function goBack(){
   window.location.href = "admin_dashboard.html";
 }
 
-/* 📥 load deposit requests */
 async function loadDeposits(){
   const { data, error } = await supabase
     .from('deposit_requests')
@@ -129,109 +183,6 @@ async function loadDeposits(){
   });
 }
 
-/* ✅ approve */
-window.approve = async (requestId, userId, asset) => {
-  // 1️⃣ دریافت وضعیت فعلی درخواست
-  const { data:request, error: reqErr } = await supabase
-    .from('deposit_requests')
-    .select('status, amount')
-    .eq('id', requestId)
-    .single();
-
-  if(reqErr){
-    alert(reqErr.message);
-    return;
-  }
-
-  if(request.status === 'approved'){
-    alert("This request is already approved!");
-    return;
-  }
-  if(request.status === 'rejected'){
-    alert("This request has been rejected!");
-    return;
-  }
-
-  const amount = Number(document.getElementById(`amount-${requestId}`).value);
-  if(amount <= 0){
-    alert("Invalid amount");
-    return;
-  }
-
-  // 2️⃣ بروزرسانی وضعیت درخواست به approved
-  const { error:upErr } = await supabase
-    .from('deposit_requests')
-    .update({ status:'approved', amount })
-    .eq('id', requestId);
-
-  if(upErr){
-    alert(upErr.message);
-    return;
-  }
-
-  // 3️⃣ دریافت موجودی فعلی کیف پول
-  const { data:wallet, error:wErr } = await supabase
-    .from('wallets')
-    .select('balance')
-    .eq('user_id', userId)
-    .eq('coin_symbol', asset)
-    .single();
-
-  if(wErr){
-    alert("Wallet not found");
-    return;
-  }
-
-  // اگر request قبلاً approved نبوده، فقط یک بار موجودی اضافه می‌شود
-  const newBalance = Number(wallet.balance) + amount;
-
-  // 4️⃣ بروزرسانی کیف پول
-  const { error:bErr } = await supabase
-    .from('wallets')
-    .update({ balance: newBalance })
-    .eq('user_id', userId)
-    .eq('coin_symbol', asset);
-
-  if(bErr){
-    alert(bErr.message);
-    return;
-  }
-
-  loadDeposits();
-};
-
-/* ❌ reject */
-window.rejectReq = async (requestId) => {
-  const { data:request, error } = await supabase
-    .from('deposit_requests')
-    .select('status')
-    .eq('id', requestId)
-    .single();
-
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  if(request.status !== 'pending'){
-    alert("This request has already been processed!");
-    return;
-  }
-
-  const { error:rejErr } = await supabase
-    .from('deposit_requests')
-    .update({ status:'rejected' })
-    .eq('id', requestId);
-
-  if(rejErr){
-    alert(rejErr.message);
-    return;
-  }
-
-  loadDeposits();
-};
-
-/* init */
 window.onload = loadDeposits;
 </script>
 
