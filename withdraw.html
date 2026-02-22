@@ -5,7 +5,6 @@
 <title>Withdrawal | Novabit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
 header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18px; display:flex; justify-content:space-between; align-items:center;}
@@ -14,21 +13,17 @@ header{background:#1a1a2e;color:#fff;padding:15px;text-align:center;font-size:18
 .coin-scroll{display:flex;flex-direction:column;overflow-y:auto;gap:10px;max-height:50vh;padding:10px 0}
 .coin-card{background:#fff;border:1px solid #ccc;border-radius:10px;padding:10px;text-align:center;width:100%;cursor:pointer; display:flex; align-items:center; gap:10px}
 .coin-card:hover{border-color:#4b49ac}
-.coin-card img{width:40px;height:40px;margin:0}
 .panel{position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:360px;max-height:80%;overflow-y:auto;background:#fff;box-shadow:0 0 15px rgba(0,0,0,.3);padding:20px;transition:.3s;z-index:100;display:none}
 .panel.active{display:block}
 .close, .back{background:#e74c3c;color:#fff;border:none;padding:6px 10px;border-radius:5px; cursor:pointer;}
-.address{background:#f1f1f1;padding:10px;border-radius:5px;font-family:monospace;margin-top:10px; display:flex; justify-content:space-between; align-items:center;}
-.notice{margin-top:10px;font-size:14px;color:#555}
+input, select{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
 button.main{margin-top:15px;background:#4b49ac;color:#fff;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}
-select.network{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
-input[type=number], input[type=text]{width:100%;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc}
 button.max-btn{background:#888;color:#fff;border:none;padding:6px 10px;margin-left:5px;border-radius:5px;cursor:pointer}
+button.cancel-btn{background:#e74c3c;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer}
+button.cancel-btn[disabled]{background:#aaa;cursor:not-allowed}
 table{width:100%;border-collapse:collapse;margin-top:20px;background:#fff;border-radius:5px;overflow:hidden}
 th,td{padding:10px;text-align:left;border-bottom:1px solid #ccc;font-size:14px}
 th{background:#1a1a2e;color:#fff}
-button.cancel-btn{background:#e74c3c;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer}
-button.cancel-btn[disabled]{background:#aaa;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -66,8 +61,8 @@ button.cancel-btn[disabled]{background:#aaa;cursor:not-allowed}
   <button class="close" onclick="closePanel()">Close</button>
   <h3 id="panelTitle"></h3>
 
-  <label for="networkSelect">Network:</label>
-  <select id="networkSelect" class="network"></select>
+  <label>Network:</label>
+  <select id="networkSelect"></select>
 
   <label>Amount:</label>
   <div style="display:flex;align-items:center">
@@ -81,7 +76,7 @@ button.cancel-btn[disabled]{background:#aaa;cursor:not-allowed}
   <div class="notice" id="feeNotice"></div>
 
   <button class="main" id="submitBtn">Submit Withdrawal</button>
-  <button class="main" id="cancelBtn" style="background:#e74c3c">Cancel Withdrawal</button>
+  <button class="main" id="cancelBtn">Cancel Withdrawal</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -103,49 +98,48 @@ const submitBtn = document.getElementById('submitBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 const historyBody = document.getElementById('historyBody');
 
-let allCoins = [];
+let userId = null;
 let userBalances = {};
 let currentCoin = '';
 let currentBalance = 0;
 let currentRequestId = null;
 
 // Format balance
-function formatBalance(b){ return Number(b).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:8}); }
+const fmt = b => Number(b).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:8});
 
-// Load balances from wallets table
+// Load user session and balances
 async function loadBalances(){
-  const { data: auth } = await supabase.auth.getUser();
-  if(!auth.user) return;
+  const { data: sessionData } = await supabase.auth.getSession();
+  if(!sessionData.session) { alert('User not logged in'); return; }
+  userId = sessionData.session.user.id;
 
   const { data, error } = await supabase.from('wallets')
     .select('coin_symbol,balance')
-    .eq('user_id', auth.user.id);
+    .eq('user_id',userId);
 
-  if(error) console.error(error);
+  if(error){ console.error(error); return; }
 
   userBalances = {};
-  data.forEach(w=>{ if(Number(w.balance)>0) userBalances[w.coin_symbol] = Number(w.balance); });
-  allCoins = Object.keys(userBalances);
-  renderCoins(allCoins);
+  data.forEach(w => { if(Number(w.balance)>0) userBalances[w.coin_symbol] = Number(w.balance); });
+  renderCoins(Object.keys(userBalances));
   loadHistory();
 }
 
 function renderCoins(coins){
-  coinScroll.innerHTML = '';
-  if(coins.length===0){ coinScroll.innerHTML='No coins available'; return; }
-  coins.forEach(symbol=>{
+  coinScroll.innerHTML='';
+  if(coins.length===0){ coinScroll.innerHTML='No coins'; return; }
+  coins.forEach(sym=>{
     const div = document.createElement('div');
     div.className='coin-card';
-    div.innerHTML=`<b>${symbol}</b> Balance: ${formatBalance(userBalances[symbol])}`;
-    div.onclick=()=>openPanel(symbol);
+    div.innerHTML=`<b>${sym}</b> Balance: ${fmt(userBalances[sym])}`;
+    div.onclick=()=>openPanel(sym);
     coinScroll.appendChild(div);
   });
 }
 
 searchInput.addEventListener('input',()=>{
   const q = searchInput.value.toUpperCase();
-  const filtered = allCoins.filter(s=>s.includes(q));
-  renderCoins(filtered);
+  renderCoins(Object.keys(userBalances).filter(s=>s.includes(q)));
 });
 
 // Open panel
@@ -153,14 +147,13 @@ async function openPanel(symbol){
   currentCoin = symbol;
   currentBalance = userBalances[symbol];
   panelTitle.innerText = symbol + ' Withdrawal';
-  amountInput.value = '';
-  addressInput.value = '';
-  feeNotice.innerText = '';
-  currentRequestId = null;
-  submitBtn.disabled = false;
-  cancelBtn.disabled = false;
+  amountInput.value='';
+  addressInput.value='';
+  feeNotice.innerText='';
+  currentRequestId=null;
+  submitBtn.disabled=false;
+  cancelBtn.disabled=false;
 
-  // Load networks from deposit_wallets
   networkSelect.innerHTML='';
   const { data, error } = await supabase.from('deposit_wallets')
     .select('network,address')
@@ -169,14 +162,14 @@ async function openPanel(symbol){
 
   if(data && data.length>0){
     data.forEach((w,idx)=>{
-      const opt=document.createElement('option');
-      opt.value=w.network;
-      opt.innerText=w.network;
+      const opt = document.createElement('option');
+      opt.value = w.network;
+      opt.innerText = w.network;
       networkSelect.appendChild(opt);
-      if(idx===0) feeNotice.innerText = `Fee: ${ (currentBalance*0.01).toFixed(8) }`; 
+      if(idx===0) feeNotice.innerText = `Fee: ${(currentBalance*0.01).toFixed(8)}`;
     });
   }else{
-    const opt=document.createElement('option');
+    const opt = document.createElement('option');
     opt.value='';
     opt.innerText='No network';
     networkSelect.appendChild(opt);
@@ -186,7 +179,7 @@ async function openPanel(symbol){
 }
 
 // Max button
-maxBtn.onclick=()=>{ amountInput.value = currentBalance.toFixed(8); feeNotice.innerText = `Fee: ${(currentBalance*0.01).toFixed(8)}`; }
+maxBtn.onclick=()=>{ amountInput.value=currentBalance.toFixed(8); feeNotice.innerText=`Fee: ${(currentBalance*0.01).toFixed(8)}`; }
 
 // Submit withdrawal
 submitBtn.onclick=async()=>{
@@ -194,13 +187,13 @@ submitBtn.onclick=async()=>{
   const address = addressInput.value.trim();
   const network = networkSelect.value;
   if(!amount || amount>currentBalance){ alert('Invalid amount'); return; }
-  if(!address){ alert('Enter withdrawal address'); return; }
+  if(!address){ alert('Enter address'); return; }
   if(!network){ alert('Select network'); return; }
 
-  const finalAmount = amount - (amount*0.01); // 1% fee
+  const finalAmount = amount - (amount*0.01);
 
   const { data, error } = await supabase.from('withdraw_requests').insert([{
-    user_id: (await supabase.auth.getUser()).data.user.id,
+    user_id,
     coin_symbol: currentCoin,
     amount: finalAmount,
     network,
@@ -212,7 +205,7 @@ submitBtn.onclick=async()=>{
 
   currentRequestId = data[0].id;
   userBalances[currentCoin]-=amount;
-  renderCoins(allCoins);
+  renderCoins(Object.keys(userBalances));
   loadHistory();
   submitBtn.disabled=true;
   cancelBtn.disabled=false;
@@ -233,47 +226,42 @@ cancelBtn.onclick=async()=>{
 
 function closePanel(){ panel.classList.remove('active'); }
 
-// Load withdrawal history
+// Load history
 async function loadHistory(){
-  const { data: auth } = await supabase.auth.getUser();
-  if(!auth.user) return;
+  if(!userId) return;
   const { data, error } = await supabase.from('withdraw_requests')
     .select('*')
-    .eq('user_id',auth.user.id)
+    .eq('user_id',userId)
     .order('created_at',{ascending:false});
 
   historyBody.innerHTML='';
   if(data && data.length>0){
-    data.forEach(req=>{
+    data.forEach(r=>{
       const tr=document.createElement('tr');
       tr.innerHTML=`
-        <td>${new Date(req.created_at).toLocaleString()}</td>
-        <td>${req.coin_symbol}</td>
-        <td>${req.network||''}</td>
-        <td>${formatBalance(req.amount)}</td>
-        <td>${req.status}</td>
-        <td>${req.status==='Pending'?'<button class="cancel-btn" onclick="cancelRequest(\\''+req.id+'\\')">Cancel</button>':'-'}</td>
+        <td>${new Date(r.created_at).toLocaleString()}</td>
+        <td>${r.coin_symbol}</td>
+        <td>${r.network||''}</td>
+        <td>${fmt(r.amount)}</td>
+        <td>${r.status}</td>
+        <td>${r.status==='Pending'?'<button class="cancel-btn" onclick="cancelRequest(\\''+r.id+'\\')">Cancel</button>':'-'}</td>
       `;
       historyBody.appendChild(tr);
     });
-  }else{
-    historyBody.innerHTML='<tr><td colspan="6">No withdrawals</td></tr>';
-  }
+  }else historyBody.innerHTML='<tr><td colspan="6">No withdrawals</td></tr>';
 }
 
-// Cancel from history
 async function cancelRequest(id){
   const { data, error } = await supabase.from('withdraw_requests')
     .update({ status:'Cancelled' })
     .eq('id',id)
     .select();
-  if(error){ alert('Error cancelling'); console.error(error); return; }
+  if(error){ console.error(error); return; }
   loadBalances();
 }
 
 // Initial load
 loadBalances();
-
 </script>
 </body>
 </html>
