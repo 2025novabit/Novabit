@@ -51,6 +51,35 @@ button.action{
   border-radius:5px;
   cursor:pointer;
 }
+/* وضعیت‌ها */
+.status-badge{
+  padding:2px 6px;
+  border-radius:4px;
+  color:#fff;
+  font-size:12px
+}
+
+.status-badge.pending{background:orange}
+.status-badge.completed{background:green}
+
+/* ✅ فقط این قسمت تغییر داده شده */
+.status-badge.cancelled{
+  background:#e74c3c;
+  color:#fff;
+  font-weight:600;
+}
+
+button.cancel{
+  position:absolute;
+  right:10px;
+  top:10px;
+  background:#e74c3c;
+  color:#fff;
+  border:none;
+  padding:5px 10px;
+  border-radius:4px;
+  cursor:pointer
+}
 button.approve{background:#27ae60;color:#fff}
 button.reject{background:#c0392b;color:#fff}
 button:disabled{opacity:0.6;cursor:not-allowed}
