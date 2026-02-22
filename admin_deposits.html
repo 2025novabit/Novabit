@@ -6,23 +6,42 @@
 <title>Admin Deposit Requests</title>
 
 <style>
-body{margin:0;font-family:'Roboto',sans-serif;background:#f8f9fa;}
-header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
-header button{background:#e74c3c;border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;}
-.container{padding:20px;}
-.request-card{background:#fff;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 4px 12px rgba(0,0,0,0.08);position:relative;}
-.request-card h3{margin:0 0 8px 0;}
-.request-card p{margin:4px 0;font-size:14px;}
-.amount-input{width:120px;padding:6px;border-radius:6px;border:1px solid #ccc;margin-top:6px;}
-.status-badge{position:absolute;top:15px;right:15px;padding:4px 8px;border-radius:5px;font-size:12px;color:#fff;}
-.status-badge.pending{background:orange;}
-.status-badge.approved{background:#27ae60;}
-.status-badge.rejected{background:#e74c3c;}
-.action-buttons{margin-top:10px;}
-.action-buttons button{padding:6px 12px;border:none;border-radius:6px;cursor:pointer;margin-right:6px;}
-.approve{background:#27ae60;color:#fff;}
-.reject{background:#e74c3c;color:#fff;}
-button:disabled{opacity:0.5;cursor:not-allowed;}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;}
+header{
+  background:#1a1a2e;
+  color:#fff;
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header button{
+  background:#e74c3c;
+  border:none;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:6px;
+  cursor:pointer;
+}
+.container{padding:30px;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;border:1px solid #ccc;text-align:center;}
+th{background:#1a1a2e;color:#fff;}
+input.amount-input{
+  width:100px;
+  padding:5px;
+  text-align:center;
+}
+button.action-btn{
+  padding:6px 12px;
+  margin:2px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+button.approve{background:#27ae60;color:#fff;}
+button.reject{background:#c0392b;color:#fff;}
+button.action-btn:hover{opacity:0.85;}
 </style>
 </head>
 
@@ -33,87 +52,104 @@ button:disabled{opacity:0.5;cursor:not-allowed;}
   <button id="backBtn">Back</button>
 </header>
 
-<script>
-document.getElementById('backBtn').addEventListener('click',()=>{
-  window.location.href = 'admin_dashboard.html'; // مسیر صحیح به داشبورد ادمین
-});
-</script>
-
 <div class="container">
-  <div id="depositBody">Loading...</div>
+  <table>
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Asset</th>
+        <th>Network</th>
+        <th>Amount</th>
+        <th>Txid</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="depositBody"></tbody>
+  </table>
 </div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+/* 🔑 Supabase */
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* 🔐 check admin login */
 if (!localStorage.getItem('admin_logged_in')) {
   alert("Please login as admin");
   window.location.href = "admin.html";
 }
 
-function goBack(){ window.location.href="admin_dashboard.html"; }
+/* 🔙 back */
+document.getElementById('backBtn').addEventListener('click',()=>{
+  window.location.href = 'admin_dashboard.html';
+});
 
+/* 📥 load deposit requests */
 async function loadDeposits(){
   const { data, error } = await supabase
     .from('deposit_requests')
     .select('*')
-    .order('created_at',{ascending:false});
+    .order('created_at', { ascending:false });
 
-  if(error){ console.error(error); return; }
+  if(error){
+    console.error(error);
+    return;
+  }
 
   const body = document.getElementById('depositBody');
   body.innerHTML = '';
-  if(!data || data.length===0){ body.innerHTML="No requests found"; return; }
 
   data.forEach(row=>{
-    const card = document.createElement('div');
-    card.className="request-card";
-
-    card.innerHTML=`
-      <span class="status-badge ${row.status || 'pending'}">
-        ${(row.status || 'pending').toUpperCase()}
-      </span>
-      <h3>${row.asset} - ${row.network}</h3>
-      <p><b>User:</b> ${row.user_id}</p>
-      <p><b>TxID:</b> ${row.txid || '-'}</p>
-      <p><b>Date:</b> ${new Date(row.created_at).toLocaleString()}</p>
-      <input class="amount-input" type="number"
-        value="${row.amount || 0}"
-        id="amount-${row.id}"
-        ${row.status !== 'pending' ? 'readonly' : ''}>
-      <div class="action-buttons">
-        <button class="approve" ${row.status!=='pending'?'disabled':''}
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.user_id}</td>
+      <td>${row.asset}</td>
+      <td>${row.network}</td>
+      <td>
+        <input class="amount-input" type="number" step="0.00000001"
+          value="${row.amount || 0}"
+          id="amount-${row.id}"
+          ${row.status !== 'pending' ? 'readonly' : ''}>
+      </td>
+      <td>${row.txid || ''}</td>
+      <td>${row.status || 'pending'}</td>
+      <td>${new Date(row.created_at).toLocaleString()}</td>
+      <td>
+        <button class="action-btn approve" ${row.status !== 'pending' ? 'disabled' : ''}
           onclick="approve('${row.id}','${row.user_id}','${row.asset}')">Approve</button>
-        <button class="reject" ${row.status!=='pending'?'disabled':''}
+        <button class="action-btn reject" ${row.status !== 'pending' ? 'disabled' : ''}
           onclick="rejectReq('${row.id}')">Reject</button>
-      </div>
+      </td>
     `;
-    body.appendChild(card);
+    body.appendChild(tr);
   });
 }
 
-// ✅ Approve
-window.approve = async (requestId, userId, asset)=>{
-  const { data:request, error:reqErr } = await supabase
+/* ✅ approve */
+window.approve = async (requestId, userId, asset) => {
+  const { data:request, error: reqErr } = await supabase
     .from('deposit_requests')
-    .select('status, amount, txid')
+    .select('status, amount')
     .eq('id', requestId)
     .single();
 
   if(reqErr){ alert(reqErr.message); return; }
-  if(request.status!=='pending'){ alert("Request already processed"); return; }
+  if(request.status !== 'pending'){ alert("This request has been processed!"); return; }
 
   const amount = Number(document.getElementById(`amount-${requestId}`).value);
-  if(amount<=0){ alert("Invalid amount"); return; }
+  if(amount <= 0){ alert("Invalid amount"); return; }
 
   const { error:upErr } = await supabase
     .from('deposit_requests')
-    .update({ status:'approved' })
+    .update({ status:'approved', amount })
     .eq('id', requestId);
+
   if(upErr){ alert(upErr.message); return; }
 
   const { data:wallet, error:wErr } = await supabase
@@ -122,38 +158,44 @@ window.approve = async (requestId, userId, asset)=>{
     .eq('user_id', userId)
     .eq('coin_symbol', asset)
     .single();
+
   if(wErr){ alert("Wallet not found"); return; }
 
   const newBalance = Number(wallet.balance) + amount;
+
   const { error:bErr } = await supabase
     .from('wallets')
-    .update({ balance:newBalance })
+    .update({ balance: newBalance })
     .eq('user_id', userId)
     .eq('coin_symbol', asset);
+
   if(bErr){ alert(bErr.message); return; }
 
   loadDeposits();
-}
+};
 
-// ❌ Reject
-window.rejectReq = async (requestId)=>{
+/* ❌ reject */
+window.rejectReq = async (requestId) => {
   const { data:request, error } = await supabase
     .from('deposit_requests')
     .select('status')
     .eq('id', requestId)
     .single();
+
   if(error){ alert(error.message); return; }
-  if(request.status!=='pending'){ alert("Request already processed"); return; }
+  if(request.status !== 'pending'){ alert("This request has already been processed!"); return; }
 
   const { error:rejErr } = await supabase
     .from('deposit_requests')
     .update({ status:'rejected' })
     .eq('id', requestId);
+
   if(rejErr){ alert(rejErr.message); return; }
 
   loadDeposits();
-}
+};
 
+/* init */
 window.onload = loadDeposits;
 </script>
 
