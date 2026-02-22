@@ -6,100 +6,23 @@
 <title>Admin Deposit Requests</title>
 
 <style>
-body{
-  margin:0;
-  font-family:'Roboto',sans-serif;
-  background:#f8f9fa;
-}
-
-header{
-  background:#1a1a2e;
-  color:#fff;
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-header button{
-  background:#e74c3c;
-  border:none;
-  color:#fff;
-  padding:8px 14px;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-.container{
-  padding:20px;
-}
-
-.request-card{
-  background:#fff;
-  border-radius:12px;
-  padding:15px;
-  margin-bottom:15px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.08);
-  position:relative;
-}
-
-.request-card h3{
-  margin:0 0 8px 0;
-}
-
-.request-card p{
-  margin:4px 0;
-  font-size:14px;
-}
-
-.amount-input{
-  width:120px;
-  padding:6px;
-  border-radius:6px;
-  border:1px solid #ccc;
-  margin-top:6px;
-}
-
-.status-badge{
-  position:absolute;
-  top:15px;
-  right:15px;
-  padding:4px 8px;
-  border-radius:5px;
-  font-size:12px;
-  color:#fff;
-}
-
+body{margin:0;font-family:'Roboto',sans-serif;background:#f8f9fa;}
+header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
+header button{background:#e74c3c;border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;}
+.container{padding:20px;}
+.request-card{background:#fff;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 4px 12px rgba(0,0,0,0.08);position:relative;}
+.request-card h3{margin:0 0 8px 0;}
+.request-card p{margin:4px 0;font-size:14px;}
+.amount-input{width:120px;padding:6px;border-radius:6px;border:1px solid #ccc;margin-top:6px;}
+.status-badge{position:absolute;top:15px;right:15px;padding:4px 8px;border-radius:5px;font-size:12px;color:#fff;}
 .status-badge.pending{background:orange;}
 .status-badge.approved{background:#27ae60;}
 .status-badge.rejected{background:#e74c3c;}
-
-.action-buttons{
-  margin-top:10px;
-}
-
-.action-buttons button{
-  padding:6px 12px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  margin-right:6px;
-}
-
-.approve{
-  background:#27ae60;
-  color:#fff;
-}
-
-.reject{
-  background:#e74c3c;
-  color:#fff;
-}
-
-button:disabled{
-  opacity:0.5;
-  cursor:not-allowed;
-}
+.action-buttons{margin-top:10px;}
+.action-buttons button{padding:6px 12px;border:none;border-radius:6px;cursor:pointer;margin-right:6px;}
+.approve{background:#27ae60;color:#fff;}
+.reject{background:#e74c3c;color:#fff;}
+button:disabled{opacity:0.5;cursor:not-allowed;}
 </style>
 </head>
 
@@ -126,64 +49,103 @@ if (!localStorage.getItem('admin_logged_in')) {
   window.location.href = "admin.html";
 }
 
-function goBack(){
-  window.location.href = "admin_dashboard.html";
-}
+function goBack(){ window.location.href="admin_dashboard.html"; }
 
 async function loadDeposits(){
   const { data, error } = await supabase
     .from('deposit_requests')
     .select('*')
-    .order('created_at', { ascending:false });
+    .order('created_at',{ascending:false});
 
-  if(error){
-    console.error(error);
-    return;
-  }
+  if(error){ console.error(error); return; }
 
   const body = document.getElementById('depositBody');
   body.innerHTML = '';
-
-  if(!data || data.length === 0){
-    body.innerHTML = "No requests found";
-    return;
-  }
+  if(!data || data.length===0){ body.innerHTML="No requests found"; return; }
 
   data.forEach(row=>{
     const card = document.createElement('div');
-    card.className = "request-card";
+    card.className="request-card";
 
-    card.innerHTML = `
+    card.innerHTML=`
       <span class="status-badge ${row.status || 'pending'}">
         ${(row.status || 'pending').toUpperCase()}
       </span>
-
       <h3>${row.asset} - ${row.network}</h3>
       <p><b>User:</b> ${row.user_id}</p>
+      <p><b>TxID:</b> ${row.txid || '-'}</p>
       <p><b>Date:</b> ${new Date(row.created_at).toLocaleString()}</p>
-
       <input class="amount-input" type="number"
         value="${row.amount || 0}"
         id="amount-${row.id}"
         ${row.status !== 'pending' ? 'readonly' : ''}>
-
       <div class="action-buttons">
-        <button class="approve"
-          ${row.status !== 'pending' ? 'disabled' : ''}
-          onclick="approve('${row.id}','${row.user_id}','${row.asset}')">
-          Approve
-        </button>
-
-        <button class="reject"
-          ${row.status !== 'pending' ? 'disabled' : ''}
-          onclick="rejectReq('${row.id}')">
-          Reject
-        </button>
+        <button class="approve" ${row.status!=='pending'?'disabled':''}
+          onclick="approve('${row.id}','${row.user_id}','${row.asset}')">Approve</button>
+        <button class="reject" ${row.status!=='pending'?'disabled':''}
+          onclick="rejectReq('${row.id}')">Reject</button>
       </div>
     `;
-
     body.appendChild(card);
   });
+}
+
+// ✅ Approve
+window.approve = async (requestId, userId, asset)=>{
+  const { data:request, error:reqErr } = await supabase
+    .from('deposit_requests')
+    .select('status, amount, txid')
+    .eq('id', requestId)
+    .single();
+
+  if(reqErr){ alert(reqErr.message); return; }
+  if(request.status!=='pending'){ alert("Request already processed"); return; }
+
+  const amount = Number(document.getElementById(`amount-${requestId}`).value);
+  if(amount<=0){ alert("Invalid amount"); return; }
+
+  const { error:upErr } = await supabase
+    .from('deposit_requests')
+    .update({ status:'approved' })
+    .eq('id', requestId);
+  if(upErr){ alert(upErr.message); return; }
+
+  const { data:wallet, error:wErr } = await supabase
+    .from('wallets')
+    .select('balance')
+    .eq('user_id', userId)
+    .eq('coin_symbol', asset)
+    .single();
+  if(wErr){ alert("Wallet not found"); return; }
+
+  const newBalance = Number(wallet.balance) + amount;
+  const { error:bErr } = await supabase
+    .from('wallets')
+    .update({ balance:newBalance })
+    .eq('user_id', userId)
+    .eq('coin_symbol', asset);
+  if(bErr){ alert(bErr.message); return; }
+
+  loadDeposits();
+}
+
+// ❌ Reject
+window.rejectReq = async (requestId)=>{
+  const { data:request, error } = await supabase
+    .from('deposit_requests')
+    .select('status')
+    .eq('id', requestId)
+    .single();
+  if(error){ alert(error.message); return; }
+  if(request.status!=='pending'){ alert("Request already processed"); return; }
+
+  const { error:rejErr } = await supabase
+    .from('deposit_requests')
+    .update({ status:'rejected' })
+    .eq('id', requestId);
+  if(rejErr){ alert(rejErr.message); return; }
+
+  loadDeposits();
 }
 
 window.onload = loadDeposits;
