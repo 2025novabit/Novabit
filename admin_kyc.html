@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin KYC Requests</title>
-
 <style>
 body{margin:0;font-family:'Roboto',sans-serif;background:#f8f9fa;}
 header{background:#1a1a2e;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
@@ -24,7 +23,6 @@ header button{background:#e74c3c;border:none;color:#fff;padding:8px 14px;border-
 button:disabled{opacity:0.5;cursor:not-allowed;}
 </style>
 </head>
-
 <body>
 
 <header>
@@ -87,7 +85,6 @@ async function loadKYC(){
 
 window.approve = async (kycId)=>{
   try{
-    // 1️⃣ بروزرسانی KYC
     const { data:kyc, error:kycErr } = await supabase
       .from('kyc_requests')
       .update({ status:'approved' })
@@ -97,7 +94,6 @@ window.approve = async (kycId)=>{
 
     if(kycErr || !kyc){ alert("KYC approval failed"); return; }
 
-    // 2️⃣ جایزه/رفرال در صورت نیاز
     const { data:user } = await supabase
       .from('users')
       .select('referral_id')
