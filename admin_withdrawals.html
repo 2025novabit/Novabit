@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Withdraw Requests | Admin</title>
+<title>Admin Withdraw Requests</title>
 
 <style>
 body{font-family:'Roboto',sans-serif;margin:0;background:#f8f9fa}
@@ -24,7 +24,7 @@ header button{
   cursor:pointer;
 }
 .container{padding:20px}
-.request-card{
+.history-item{
   background:#fff;
   border:1px solid #ccc;
   border-radius:10px;
@@ -32,23 +32,23 @@ header button{
   margin-bottom:15px;
   position:relative;
 }
-.status{
-  position:absolute;
-  top:10px;
-  right:10px;
-  padding:4px 8px;
+.status-badge{
+  padding:3px 8px;
   border-radius:4px;
   color:#fff;
   font-size:12px;
+  position:absolute;
+  top:10px;
+  right:10px;
 }
-.status.pending{background:orange}
-.status.approved{background:green}
-.status.rejected{background:red}
+.status-badge.pending{background:orange}
+.status-badge.approved{background:green}
+.status-badge.rejected{background:red}
 button.action{
   margin-top:10px;
   padding:6px 12px;
   border:none;
-  border-radius:6px;
+  border-radius:5px;
   cursor:pointer;
 }
 button.approve{background:#27ae60;color:#fff}
@@ -61,11 +61,11 @@ button:disabled{opacity:0.6;cursor:not-allowed}
 
 <header>
   <h3>Withdraw Requests</h3>
-  <button onclick="goBack()">Back</button>
+  <button onclick="location.href='admin_dashboard.html'">Back</button>
 </header>
 
 <div class="container">
-  <div id="requestList">Loading...</div>
+  <div id="historyList">Loading...</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -74,37 +74,42 @@ button:disabled{opacity:0.6;cursor:not-allowed}
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function goBack(){
-  window.location.href="admin_dashboard.html";
-}
+async function loadWithdrawals(){
 
-async function loadRequests(){
-  const { data, error } = await supabase
-    .from('withdraw_requests')
-    .select('*')
-    .order('created_at',{ascending:false});
+  const container = document.getElementById("historyList");
+  container.innerHTML = "Loading...";
 
-  const container = document.getElementById('requestList');
-  container.innerHTML='';
+  const { data, error } = await client
+    .from("withdraw_requests")
+    .select("*")
+    .order("created_at", { ascending:false });
 
-  if(error || !data){
-    container.innerHTML='Error loading requests';
+  if(error){
+    container.innerHTML = "Error loading data";
+    console.error(error);
     return;
   }
 
-  if(data.length===0){
-    container.innerHTML='No withdrawal requests';
+  if(!data || data.length===0){
+    container.innerHTML = "No withdrawal requests";
     return;
   }
+
+  container.innerHTML = "";
 
   data.forEach(row=>{
-    const div=document.createElement('div');
-    div.className='request-card';
 
-    div.innerHTML=`
-      <div class="status ${row.status}">${row.status.toUpperCase()}</div>
+    const div = document.createElement("div");
+    div.className = "history-item";
+
+    const status = document.createElement("span");
+    status.className = "status-badge " + row.status;
+    status.innerText = row.status.toUpperCase();
+    div.appendChild(status);
+
+    div.innerHTML += `
       <b>User:</b> ${row.user_id}<br>
       <b>Coin:</b> ${row.coin_symbol}<br>
       <b>Network:</b> ${row.network || '-'}<br>
@@ -113,16 +118,17 @@ async function loadRequests(){
       <b>Date:</b> ${new Date(row.created_at).toLocaleString()}
     `;
 
-    if(row.status==='pending'){
-      const approveBtn=document.createElement('button');
-      approveBtn.className='action approve';
-      approveBtn.innerText='Approve';
-      approveBtn.onclick=()=>approveWithdraw(row.id);
+    if(row.status === "pending"){
 
-      const rejectBtn=document.createElement('button');
-      rejectBtn.className='action reject';
-      rejectBtn.innerText='Reject';
-      rejectBtn.onclick=()=>rejectWithdraw(row.id);
+      const approveBtn = document.createElement("button");
+      approveBtn.className = "action approve";
+      approveBtn.innerText = "Approve";
+      approveBtn.onclick = ()=>approveWithdraw(row);
+
+      const rejectBtn = document.createElement("button");
+      rejectBtn.className = "action reject";
+      rejectBtn.innerText = "Reject";
+      rejectBtn.onclick = ()=>rejectWithdraw(row);
 
       div.appendChild(approveBtn);
       div.appendChild(rejectBtn);
@@ -132,86 +138,89 @@ async function loadRequests(){
   });
 }
 
-window.approveWithdraw = async (id)=>{
+async function approveWithdraw(row){
 
-  const { data:request } = await supabase
-    .from('withdraw_requests')
-    .select('*')
-    .eq('id',id)
+  // جلوگیری از دوبار کلیک
+  const { data:check } = await client
+    .from("withdraw_requests")
+    .select("status")
+    .eq("id",row.id)
     .single();
 
-  if(!request || request.status!=='pending'){
+  if(!check || check.status !== "pending"){
     alert("Already processed");
     return;
   }
 
-  await supabase
-    .from('withdraw_requests')
-    .update({status:'approved'})
-    .eq('id',id)
-    .eq('status','pending'); // جلوگیری از دوبار کلیک
+  // تغییر وضعیت
+  await client
+    .from("withdraw_requests")
+    .update({ status:"approved" })
+    .eq("id",row.id)
+    .eq("status","pending");
 
-  const { data:wallet } = await supabase
-    .from('wallets')
-    .select('*')
-    .eq('user_id',request.user_id)
-    .eq('coin_symbol',request.coin_symbol)
+  // کم کردن locked
+  const { data:wallet } = await client
+    .from("wallets")
+    .select("*")
+    .eq("user_id",row.user_id)
+    .eq("coin_symbol",row.coin_symbol)
     .single();
 
   if(wallet){
-    const newLocked = Number(wallet.locked) - Number(request.amount);
-    await supabase
-      .from('wallets')
-      .update({locked:newLocked<0?0:newLocked})
-      .eq('id',wallet.id);
+    const newLocked = Number(wallet.locked) - Number(row.amount);
+    await client
+      .from("wallets")
+      .update({ locked: newLocked < 0 ? 0 : newLocked })
+      .eq("id",wallet.id);
   }
 
-  loadRequests();
+  loadWithdrawals();
 }
 
-window.rejectWithdraw = async (id)=>{
+async function rejectWithdraw(row){
 
-  const { data:request } = await supabase
-    .from('withdraw_requests')
-    .select('*')
-    .eq('id',id)
+  const { data:check } = await client
+    .from("withdraw_requests")
+    .select("status")
+    .eq("id",row.id)
     .single();
 
-  if(!request || request.status!=='pending'){
+  if(!check || check.status !== "pending"){
     alert("Already processed");
     return;
   }
 
-  await supabase
-    .from('withdraw_requests')
-    .update({status:'rejected'})
-    .eq('id',id)
-    .eq('status','pending');
+  await client
+    .from("withdraw_requests")
+    .update({ status:"rejected" })
+    .eq("id",row.id)
+    .eq("status","pending");
 
-  const { data:wallet } = await supabase
-    .from('wallets')
-    .select('*')
-    .eq('user_id',request.user_id)
-    .eq('coin_symbol',request.coin_symbol)
+  const { data:wallet } = await client
+    .from("wallets")
+    .select("*")
+    .eq("user_id",row.user_id)
+    .eq("coin_symbol",row.coin_symbol)
     .single();
 
   if(wallet){
-    const newBalance = Number(wallet.balance)+Number(request.amount);
-    const newLocked = Number(wallet.locked)-Number(request.amount);
+    const newBalance = Number(wallet.balance) + Number(row.amount);
+    const newLocked = Number(wallet.locked) - Number(row.amount);
 
-    await supabase
-      .from('wallets')
+    await client
+      .from("wallets")
       .update({
         balance:newBalance,
-        locked:newLocked<0?0:newLocked
+        locked:newLocked < 0 ? 0 : newLocked
       })
-      .eq('id',wallet.id);
+      .eq("id",wallet.id);
   }
 
-  loadRequests();
+  loadWithdrawals();
 }
 
-loadRequests();
+loadWithdrawals();
 
 </script>
 </body>
