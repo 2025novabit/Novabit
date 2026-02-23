@@ -19,13 +19,13 @@
   async function loadReferral() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      window.location.href = "login.html"; // اگر لاگین نبود برگرد به صفحه لاگین
+      window.location.href = "login.html";
       return;
     }
 
     const userId = session.user.id;
 
-    // 🔹 لینک ریفرال خود کاربر
+    // لینک ریفرال کاربر
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('referral_code')
@@ -39,11 +39,12 @@
 
     const referralLink = `${window.location.origin}/login.html?ref=${user.referral_code}`;
     document.getElementById('referralLink').innerHTML = `
-      <input type="text" value="${referralLink}" id="refLinkInput" readonly style="width:80%;padding:5px;">
+      <input type="text" value="${referralLink}" id="refLinkInput" readonly style="width:65%;padding:5px;">
       <button onclick="copyReferralLink()">Copy Link</button>
+      <button onclick="shareOnTelegram()">Share on Telegram</button>
     `;
 
-    // 🔹 کاربران دعوت شده توسط این کاربر
+    // کاربران دعوت شده توسط این کاربر
     const { data: invitedUsers, error: inviteError } = await supabase
       .from('users')
       .select('first_name,last_name')
@@ -67,6 +68,12 @@
     input.setSelectionRange(0, 99999);
     document.execCommand('copy');
     alert('Referral link copied!');
+  }
+
+  window.shareOnTelegram = () => {
+    const referralLink = document.getElementById('refLinkInput').value;
+    const tgLink = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me using my referral link:")}`;
+    window.open(tgLink, '_blank');
   }
 
   window.addEventListener('DOMContentLoaded', loadReferral);
