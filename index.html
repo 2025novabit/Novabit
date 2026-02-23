@@ -10,32 +10,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
+
 window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Countries list (complete)
-const countries = [
-"Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria",
-"Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan",
-"Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia",
-"Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo (Congo-Brazzaville)","Costa Rica",
-"Côte d’Ivoire","Croatia","Cuba","Cyprus","Czechia (Czech Republic)","Democratic Republic of the Congo","Denmark","Djibouti","Dominica","Dominican Republic",
-"Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini (fmr. Swaziland)","Ethiopia","Fiji","Finland",
-"France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea",
-"Guinea-Bissau","Guyana","Haiti","Holy See","Honduras","Hungary","Iceland","India","Indonesia","Iran",
-"Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati",
-"Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania",
-"Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius",
-"Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar (formerly Burma)","Namibia",
-"Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway",
-"Oman","Pakistan","Palau","Palestine State","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland",
-"Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino",
-"Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands",
-"Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland",
-"Syria","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey",
-"Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu",
-"Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
-];
-
 </script>
 
 <style>
@@ -46,7 +22,7 @@ body{
   display:flex;
   justify-content:center;
   align-items:center;
-  min-height:100vh;
+  height:100vh;
 }
 .container{
   background:#fff;
@@ -91,39 +67,48 @@ button.submit-btn{
 </head>
 
 <body>
+
 <div class="container">
   <button class="home-btn" onclick="location.href='dashboard.html'">Home</button>
+
   <h2>Welcome</h2>
+
   <div class="toggle-btns">
     <button id="btnLogin" class="active">Login</button>
     <button id="btnSignUp">Sign Up</button>
   </div>
 
-  <!-- Login Form -->
-  <form id="loginForm" style="display:flex;">
+  <!-- LOGIN -->
+  <form id="loginForm">
     <label>Email</label>
-    <input type="email" id="loginEmail">
+    <input type="email" id="loginEmail" required>
     <label>Password</label>
-    <input type="password" id="loginPassword">
+    <input type="password" id="loginPassword" required>
     <button type="button" class="submit-btn" id="loginSubmit">Login</button>
   </form>
 
-  <!-- Sign Up Form -->
+  <!-- SIGN UP -->
   <form id="signupForm">
     <label>First Name</label>
-    <input type="text" id="signupFirstName">
+    <input type="text" id="signupFirstName" required>
+
     <label>Last Name</label>
-    <input type="text" id="signupLastName">
+    <input type="text" id="signupLastName" required>
+
     <label>Date of Birth</label>
-    <input type="date" id="signupDOB">
+    <input type="date" id="signupDOB" required>
+
     <label>Country</label>
-    <select id="signupCountry"><option value="">Select Country</option></select>
+    <select id="signupCountry" required>
+      <option value="">Select Country</option>
+    </select>
+
     <label>Email</label>
-    <input type="email" id="signupEmail">
+    <input type="email" id="signupEmail" required>
+
     <label>Password</label>
-    <input type="password" id="signupPassword">
-    <label>Referral Code (optional)</label>
-    <input type="text" id="signupReferral">
+    <input type="password" id="signupPassword" required>
+
     <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
   </form>
 
@@ -131,87 +116,120 @@ button.submit-btn{
 </div>
 
 <script type="module">
-const signupCountry = document.getElementById('signupCountry');
-countries.forEach(c=>{
-  signupCountry.insertAdjacentHTML("beforeend",`<option value="${c}">${c}</option>`);
-});
+window.addEventListener('DOMContentLoaded', () => {
 
-// Toggle forms
-const btnLogin = document.getElementById('btnLogin');
-const btnSignUp = document.getElementById('btnSignUp');
-const loginForm = document.getElementById('loginForm');
-const signupForm = document.getElementById('signupForm');
-const msg = document.getElementById('msg');
+  const btnLogin = document.getElementById('btnLogin');
+  const btnSignUp = document.getElementById('btnSignUp');
+  const loginForm = document.getElementById('loginForm');
+  const signupForm = document.getElementById('signupForm');
+  const msg = document.getElementById('msg');
+  const signupCountry = document.getElementById('signupCountry');
 
-btnLogin.onclick = () => {
-  btnLogin.classList.add("active");
-  btnSignUp.classList.remove("active");
-  loginForm.style.display="flex";
-  signupForm.style.display="none";
-  msg.innerText="";
-};
-btnSignUp.onclick = () => {
-  btnSignUp.classList.add("active");
-  btnLogin.classList.remove("active");
-  signupForm.style.display="flex";
-  loginForm.style.display="none";
-  msg.innerText="";
-};
+  // لیست کامل کشورها
+  const countries = [
+    "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
+    "Bahamas","Bahrain","Bangladesh","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana",
+    "Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Central African Republic",
+    "Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark",
+    "Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini",
+    "Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea",
+    "Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy",
+    "Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia",
+    "Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands",
+    "Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar",
+    "Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway",
+    "Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar",
+    "Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino",
+    "Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia",
+    "Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden",
+    "Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago",
+    "Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States",
+    "Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
+  ];
 
-// Auto-login if session exists
-window.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if(session) {
+  countries.forEach(c => {
+    signupCountry.insertAdjacentHTML("beforeend", `<option value="${c}">${c}</option>`);
+  });
+
+  // Toggle فرم ها
+  loginForm.style.display = "flex";
+  signupForm.style.display = "none";
+
+  btnLogin.addEventListener('click', () => {
+    btnLogin.classList.add("active");
+    btnSignUp.classList.remove("active");
+    loginForm.style.display = "flex";
+    signupForm.style.display = "none";
+    msg.innerText = "";
+  });
+
+  btnSignUp.addEventListener('click', () => {
+    btnSignUp.classList.add("active");
+    btnLogin.classList.remove("active");
+    signupForm.style.display = "flex";
+    loginForm.style.display = "none";
+    msg.innerText = "";
+  });
+
+  // Login
+  const loginSubmit = document.getElementById('loginSubmit');
+  loginSubmit.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: document.getElementById('loginEmail').value,
+      password: document.getElementById('loginPassword').value
+    });
+    if (error) { msg.innerText = error.message; return; }
     location.href = "dashboard.html";
-  } else {
-    loginForm.style.display="flex";
-  }
+  });
+
+  // Sign Up
+  const signupSubmit = document.getElementById('signupSubmit');
+  signupSubmit.addEventListener('click', async () => {
+    msg.innerText = "";
+
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value.trim();
+    const firstName = document.getElementById('signupFirstName').value.trim();
+    const lastName = document.getElementById('signupLastName').value.trim();
+    const dob = document.getElementById('signupDOB').value;
+    const country = signupCountry.value;
+
+    if(!email || !password || !firstName || !lastName || !dob || !country){
+      msg.innerText = "Please fill all fields";
+      return;
+    }
+
+    const params = new URLSearchParams(location.search);
+    const refCode = params.get("ref");
+
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) { msg.innerText = error.message; return; }
+
+    const userId = data.user.id;
+    const myReferralCode = userId.slice(0, 8);
+
+    await supabase.from("users").insert({
+      id: userId,
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      dob,
+      country,
+      referral_code: myReferralCode,
+      referral_id: refCode || null
+    });
+
+    msg.style.color = "green";
+    msg.innerText = "Registered successfully. Please login.";
+    // فرم ثبت نام مخفی و فرم لاگین نمایش داده شود
+    signupForm.style.display = "none";
+    loginForm.style.display = "flex";
+    btnLogin.classList.add("active");
+    btnSignUp.classList.remove("active");
+  });
+
 });
-
-// Login
-loginSubmit.onclick = async () => {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: loginEmail.value.trim(),
-    password: loginPassword.value.trim()
-  });
-  if(error){ msg.innerText = error.message; return; }
-  location.href = "dashboard.html";
-};
-
-// Sign Up
-signupSubmit.onclick = async () => {
-  msg.innerText = "";
-  const email = signupEmail.value.trim();
-  const password = signupPassword.value.trim();
-  const first_name = signupFirstName.value.trim();
-  const last_name = signupLastName.value.trim();
-  const dob = signupDOB.value;
-  const country = signupCountry.value;
-  const refCode = signupReferral.value.trim() || null;
-
-  if(!email || !password) { msg.innerText="Email and Password required"; return; }
-
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if(error){ msg.innerText = error.message; return; }
-
-  const userId = data.user.id;
-  const myReferralCode = userId.slice(0,8);
-
-  await supabase.from("users").insert({
-    id: userId,
-    email,
-    first_name,
-    last_name,
-    dob,
-    country,
-    referral_code: myReferralCode,
-    referral_id: refCode,
-  });
-
-  msg.style.color="green";
-  msg.innerText = "Registered successfully. Please login.";
-  btnLogin.click();
-};
 </script>
+
 </body>
 </html>
