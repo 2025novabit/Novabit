@@ -25,7 +25,6 @@
 
     const userId = session.user.id;
 
-    // لینک ریفرال کاربر
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('referral_code')
@@ -74,11 +73,15 @@
   window.shareOnTelegram = () => {
     const referralLink = document.getElementById('refLinkInput').value;
 
-    // اگر در مرورگر موبایل تلگرام هستیم، از tg:// استفاده می‌کنیم
-    const isTelegram = /Telegram/i.test(navigator.userAgent);
-    const tgLink = isTelegram
-      ? `tg://msg_url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me using my referral link:")}`
-      : `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me using my referral link:")}`;
+    // تشخیص اگر در مینی اپ تلگرام هستیم
+    const isTelegramMiniApp = window.Telegram?.WebApp?.initData; // تلگرام وب اپ
+
+    let tgLink;
+    if (isTelegramMiniApp) {
+      tgLink = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me using my referral link:")}`;
+    } else {
+      tgLink = `tg://msg_url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me using my referral link:")}`;
+    }
 
     window.open(tgLink, '_blank');
   }
