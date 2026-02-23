@@ -10,7 +10,6 @@
 
   const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
-
   window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
@@ -33,19 +32,6 @@ body{
   box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
 h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
-.home-btn{
-  display:block;
-  width:100%;
-  margin-bottom:20px;
-  padding:12px 0;
-  font-size:16px;
-  font-weight:bold;
-  border:none;
-  border-radius:8px;
-  background:#4b49ac;
-  color:#fff;
-  cursor:pointer;
-}
 .toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
 .toggle-btns button{
   flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;
@@ -69,8 +55,6 @@ button.submit-btn{
 <body>
 
 <div class="container">
-  <button class="home-btn" onclick="location.href='index.html'">Home</button>
-
   <h2>Welcome</h2>
 
   <div class="toggle-btns">
@@ -116,19 +100,19 @@ button.submit-btn{
 </div>
 
 <script type="module">
-// 🔹 Countries
-async function loadCountries(){
-  const res = await fetch("https://restcountries.com/v3.1/all");
-  const data = await res.json();
-  data.sort((a,b)=>a.name.common.localeCompare(b.name.common));
-  data.forEach(c=>{
-    signupCountry.insertAdjacentHTML(
-      "beforeend",
-      `<option value="${c.name.common}">${c.name.common}</option>`
-    );
-  });
-}
-loadCountries();
+// 🔹 Countries: Top 20
+const topCountries = [
+  "United States", "China", "India", "Brazil", "Germany", "United Kingdom",
+  "France", "Italy", "Canada", "Russia", "Australia", "Japan", "South Korea",
+  "Mexico", "Spain", "Indonesia", "Turkey", "Saudi Arabia", "Netherlands", "Switzerland"
+];
+
+topCountries.forEach(c=>{
+  signupCountry.insertAdjacentHTML(
+    "beforeend",
+    `<option value="${c}">${c}</option>`
+  );
+});
 
 // 🔹 Toggle Forms
 btnLogin.onclick=()=>{
@@ -147,35 +131,33 @@ btnSignUp.onclick=()=>{
   msg.innerText="";
 };
 
-// 🔹 Prevent page refresh
+// 🔹 Prevent refresh & handle login
 loginForm.addEventListener("submit", async (e)=>{
   e.preventDefault();
-
   const {error}=await supabase.auth.signInWithPassword({
-    email:loginEmail.value,
-    password:loginPassword.value
+    email: loginEmail.value,
+    password: loginPassword.value
   });
-
   if(error){
     msg.style.color="red";
     msg.innerText=error.message;
     return;
   }
-
   location.href="dashboard.html";
 });
 
+// 🔹 Sign Up
 signupForm.addEventListener("submit", async (e)=>{
   e.preventDefault();
   msg.innerText="";
 
-  const email=signupEmail.value.trim();
-  const password=signupPassword.value.trim();
+  const email = signupEmail.value.trim();
+  const password = signupPassword.value.trim();
 
-  const params=new URLSearchParams(location.search);
-  const refCode=params.get("ref");
+  const params = new URLSearchParams(location.search);
+  const refCode = params.get("ref");
 
-  // Telegram ID اتومات
+  // Telegram ID اتومات (در صورت WebApp)
   let telegramId = null;
   if(window.Telegram && Telegram.WebApp){
     Telegram.WebApp.ready();
@@ -183,18 +165,18 @@ signupForm.addEventListener("submit", async (e)=>{
     if(user){ telegramId = user.id.toString(); }
   }
 
-  const {data,error}=await supabase.auth.signUp({email,password});
+  const { data, error } = await supabase.auth.signUp({email, password});
   if(error){
     msg.style.color="red";
     msg.innerText=error.message;
     return;
   }
 
-  const userId=data.user.id;
-  const myReferralCode=userId.slice(0,8);
+  const userId = data.user.id;
+  const myReferralCode = userId.slice(0,8);
 
   await supabase.from("users").insert({
-    id:userId,
+    id: userId,
     email,
     first_name: signupFirstName.value,
     last_name: signupLastName.value,
