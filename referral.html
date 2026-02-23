@@ -70,9 +70,16 @@
     alert('Referral link copied!');
   }
 
+  // 🔹 باز کردن لینک مستقیم در مینی اپ تلگرام
   window.shareOnTelegram = () => {
     const referralLink = document.getElementById('refLinkInput').value;
-    const tgLink = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me using my referral link:")}`;
+
+    // اگر در مرورگر موبایل تلگرام هستیم، از tg:// استفاده می‌کنیم
+    const isTelegram = /Telegram/i.test(navigator.userAgent);
+    const tgLink = isTelegram
+      ? `tg://msg_url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me using my referral link:")}`
+      : `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me using my referral link:")}`;
+
     window.open(tgLink, '_blank');
   }
 
