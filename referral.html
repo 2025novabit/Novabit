@@ -14,12 +14,15 @@
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   window.togglePanel = () => document.getElementById('sidePanel').classList.toggle('active');
-  window.logout = async () => { await supabase.auth.signOut(); window.location.href="login.html"; }
+  window.logout = async () => { 
+    await supabase.auth.signOut(); 
+    window.location.href="login.html"; 
+  }
 
   async function loadReferral() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      window.location.href = "login.html";
+      window.location.href = "login.html"; 
       return;
     }
 
@@ -36,11 +39,16 @@
       return;
     }
 
-    const referralLink = `${window.location.origin}/login.html?ref=${user.referral_code}`;
+    // لینک مستقیم ربات با کد ریفرال
+    const botUsername = "@novabit_exchange_bot"; // ← نام ربات تلگرام خودت
+    const referralLink = `https://t.me/${botUsername}?start=${user.referral_code}`;
+
     document.getElementById('referralLink').innerHTML = `
       <input type="text" value="${referralLink}" id="refLinkInput" readonly style="width:65%;padding:5px;">
       <button onclick="copyReferralLink()">Copy Link</button>
-      <button onclick="shareOnTelegram()">Share on Telegram</button>
+      <a href="${referralLink}" target="_blank">
+        <button>Open Telegram Bot</button>
+      </a>
     `;
 
     // کاربران دعوت شده توسط این کاربر
@@ -67,23 +75,6 @@
     input.setSelectionRange(0, 99999);
     document.execCommand('copy');
     alert('Referral link copied!');
-  }
-
-  // 🔹 باز کردن لینک مستقیم در مینی اپ تلگرام
-  window.shareOnTelegram = () => {
-    const referralLink = document.getElementById('refLinkInput').value;
-
-    // تشخیص اگر در مینی اپ تلگرام هستیم
-    const isTelegramMiniApp = window.Telegram?.WebApp?.initData; // تلگرام وب اپ
-
-    let tgLink;
-    if (isTelegramMiniApp) {
-      tgLink = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me using my referral link:")}`;
-    } else {
-      tgLink = `tg://msg_url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me using my referral link:")}`;
-    }
-
-    window.open(tgLink, '_blank');
   }
 
   window.addEventListener('DOMContentLoaded', loadReferral);
