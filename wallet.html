@@ -100,7 +100,7 @@ function toggleMenu() {
 async function loadWallet() {
   const { data: auth } = await supabaseClient.auth.getUser();
   if (!auth.user) {
-    window.location.href = "login.html";
+    window.location.href = "index.html";
     return;
   }
 
