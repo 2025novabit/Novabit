@@ -21,11 +21,24 @@ header h1{margin:0;font-size:20px;}
 .total-balance{font-size:32px;font-weight:bold;margin:10px 0 20px;}
 button{padding:10px 20px;margin-right:10px;background:#4b49ac;color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:500;}
 button:disabled{background:#999;cursor:not-allowed;}
-.table-container{max-height:400px;overflow:auto;margin-top:10px;}
-table{width:100%;border-collapse:collapse;}
-th,td{padding:10px;font-size:14px;text-align:left;}
-th{background:#1a1a2e;color:#fff;position:sticky;top:0;}
-tr:nth-child(even){background:#f1f1f1;}
+
+.coin-scroll{display:flex;flex-direction:column;gap:10px;margin-top:15px;}
+.coin-card{
+  background:#fff;
+  border:1px solid #ccc;
+  border-radius:10px;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.coin-left{display:flex;flex-direction:column;}
+.coin-symbol{font-weight:bold;font-size:15px;}
+.coin-price{font-size:13px;color:#555;}
+.coin-right{text-align:right;}
+.coin-balance{font-size:14px;}
+.coin-value{font-size:13px;color:#4b49ac;font-weight:500;}
+
 .bottom-nav{position:fixed;bottom:0;width:100%;background:#1a1a2e;display:flex;justify-content:space-around;padding:10px 0;z-index:20;}
 .bottom-nav a{color:#fff;text-decoration:none;font-size:14px;display:flex;flex-direction:column;align-items:center;}
 .bottom-nav a.active{color:#4b49ac;}
@@ -61,19 +74,7 @@ tr:nth-child(even){background:#f1f1f1;}
 
 <div class="card">
   <h2>Assets (Top 100)</h2>
-  <div class="table-container">
-    <table id="walletTable">
-      <thead>
-        <tr>
-          <th>Coin</th>
-          <th>Price (USD)</th>
-          <th>Balance</th>
-          <th>Value (USD)</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <div class="coin-scroll" id="walletList"></div>
 </div>
 
 </div>
@@ -90,7 +91,6 @@ tr:nth-child(even){background:#f1f1f1;}
 <script>
 const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
-
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 function toggleMenu() {
@@ -104,7 +104,7 @@ async function loadWallet() {
     return;
   }
 
-  const { data: wallets, error } = await supabaseClient
+  const { data: wallets } = await supabaseClient
     .from('wallets')
     .select(`
       coin_symbol,
@@ -114,14 +114,6 @@ async function loadWallet() {
       )
     `)
     .eq('user_id', auth.user.id);
-
-  if (error) {
-    console.error('Failed to load wallet data', error);
-    return;
-  }
-
-  const tbody = document.querySelector('#walletTable tbody');
-  tbody.innerHTML = '';
 
   const ids = wallets
     .map(w => w.coins?.coingecko_id)
@@ -135,34 +127,40 @@ async function loadWallet() {
     ).then(r => r.json());
   }
 
-  // افزودن قیمت و value به هر کیف پول
   const walletWithPrice = wallets.map(w => {
     const price = prices[w.coins?.coingecko_id]?.usd || 0;
     const value = price * Number(w.balance);
     return { ...w, price, value };
   });
 
-  // مرتب‌سازی بر اساس قیمت از بالا به پایین
-  walletWithPrice.sort((a,b) => b.price - a.price);
+  // اول موجودی دارها
+  walletWithPrice.sort((a,b)=>{
+    const aHas = Number(a.balance) > 0 ? 1 : 0;
+    const bHas = Number(b.balance) > 0 ? 1 : 0;
+    return bHas - aHas;
+  });
+
+  const walletList = document.getElementById('walletList');
+  walletList.innerHTML = '';
 
   let total = 0;
+
   walletWithPrice.forEach(w => {
     total += w.value;
 
-    // تنظیم اعشار طبق درخواست
-    let decimals = 2;
-    if(w.price > 10) decimals = 2;
-    else if(w.price > 1) decimals = 4;
-    else decimals = 6;
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${w.coin_symbol}</td>
-      <td>$${w.price.toFixed(decimals)}</td>
-      <td>${Number(w.balance).toFixed(6)}</td>
-      <td>$${w.value.toFixed(2)}</td>
+    const div = document.createElement('div');
+    div.className = 'coin-card';
+    div.innerHTML = `
+      <div class="coin-left">
+        <div class="coin-symbol">${w.coin_symbol}</div>
+        <div class="coin-price">Price: $${w.price.toFixed(6)}</div>
+      </div>
+      <div class="coin-right">
+        <div class="coin-balance">Balance: ${Number(w.balance).toFixed(6)}</div>
+        <div class="coin-value">$${w.value.toFixed(2)}</div>
+      </div>
     `;
-    tbody.appendChild(tr);
+    walletList.appendChild(div);
   });
 
   document.getElementById('totalBalance').innerText = `$${total.toFixed(2)}`;
