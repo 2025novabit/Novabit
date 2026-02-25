@@ -197,43 +197,72 @@ async function loadUser() {
   const fullName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'User';
   document.getElementById('userName').textContent = fullName;
 
-  // بررسی KYC و پاداش
+  // تابع برای بررسی وضعیت KYC و پاداش
+async function updateRewardButton() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+
+  // دریافت اطلاعات کاربر
+  const { data: user } = await supabase
+    .from('users')
+    .select('id, first_name, reward_claimed')
+    .eq('id', session.user.id)
+    .single();
+
+  if (!user) return;
+
+  // بررسی وضعیت KYC
   const { data: kyc } = await supabase
     .from('kyc_requests')
     .select('status')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .single();
 
-  const rewardBtn = document.getElementById('rewardBtn');
-  if(!kyc || kyc.status !== 'approved') {
-    rewardBtn.disabled = true;
-    rewardBtn.textContent = 'Complete KYC to receive reward';
-  } else if(user.reward_claimed) {
-    rewardBtn.disabled = true;
-    rewardBtn.textContent = 'Reward already claimed';
-  } else {
-    rewardBtn.disabled = false;
-    rewardBtn.textContent = 'Receive Reward';
+  // ایجاد یا پیدا کردن دکمه
+  let rewardBtn = document.getElementById('rewardBtn');
+  if (!rewardBtn) {
+    rewardBtn = document.createElement('button');
+    rewardBtn.id = 'rewardBtn';
+    rewardBtn.style.padding = '10px 20px';
+    rewardBtn.style.marginTop = '15px';
+    rewardBtn.style.backgroundColor = '#4b49ac';
+    rewardBtn.style.color = '#fff';
+    rewardBtn.style.border = 'none';
+    rewardBtn.style.borderRadius = '5px';
+    rewardBtn.style.cursor = 'pointer';
+    rewardBtn.textContent = 'Claim Reward';
+    document.querySelector('.balance-card').appendChild(rewardBtn);
   }
 
-  rewardBtn.onclick = async () => {
+  // وضعیت دکمه بر اساس KYC و دریافت پاداش
+  if (!kyc || kyc.status !== 'approved') {
     rewardBtn.disabled = true;
-    rewardBtn.textContent = 'Reward claimed!';
+    rewardBtn.style.backgroundColor = '#999';
+    rewardBtn.title = 'Please complete KYC first';
+  } else if (user.reward_claimed) {
+    rewardBtn.remove(); // اگر پاداش قبلاً گرفته شده، دکمه پاک شود
+  } else {
+    rewardBtn.disabled = false;
+    rewardBtn.style.backgroundColor = '#4b49ac';
+    rewardBtn.title = '';
 
-    // افزودن پاداش در جدول wallets
-    await supabase
-      .from('wallets')
-      .update({ balance: 151 })
-      .eq('user_id', session.user.id)
-      .eq('coin_symbol', 'DOGE');
+    // رویداد کلیک روی دکمه
+    rewardBtn.onclick = async () => {
+      // اضافه کردن پاداش به wallets
+      await supabase.from('wallets').insert({
+        user_id: user.id,
+        coin_symbol: 'DOGE',
+        balance: 151, // تعداد دوج کوین
+        locked: 0
+      });
 
-    // ثبت در جدول users که پاداش گرفته شد
-    await supabase
-      .from('users')
-      .update({ reward_claimed: true })
-      .eq('id', session.user.id);
-     
-    // حذف دکمه پس از دریافت پاداش
+      // بروزرسانی وضعیت دریافت پاداش در users
+      await supabase.from('users').update({ reward_claimed: true }).eq('id', user.id);
+
+      // پیام به کاربر
+      alert('🎉 You have received 151 DOGE (~$15)!');
+
+      // حذف دکمه پس از دریافت پاداش
       rewardBtn.remove();
     };
   }
