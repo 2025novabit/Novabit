@@ -178,67 +178,89 @@ window.addEventListener('DOMContentLoaded', () => {
     location.href="dashboard.html";
   };
 
-  // SIGNUP
-  document.getElementById("signupSubmit").onclick = async () => {
+// SIGNUP
+document.getElementById("signupSubmit").onclick = async () => {
 
-    msg.innerText="";
-    msg.style.color="red";
+  msg.innerText="";
+  msg.style.color="red";
 
-    const email = signupEmail.value.trim();
-    const password = signupPassword.value.trim();
-    const firstName = signupFirstName.value.trim();
-    const lastName = signupLastName.value.trim();
-    const dob = signupDOB.value;
-    const country = signupCountry.value;
-    const referralCode = referralInput.value.trim();
+  const email = signupEmail.value.trim();
+  const password = signupPassword.value.trim();
+  const firstName = signupFirstName.value.trim();
+  const lastName = signupLastName.value.trim();
+  const dob = signupDOB.value;
+  const country = signupCountry.value;
+  const referralCode = referralInput.value.trim();
 
-    if(!email || !password || !firstName || !lastName || !dob || !country){
-      msg.innerText="Please fill all required fields";
+  if(!email || !password || !firstName || !lastName || !dob || !country){
+    msg.innerText="Please fill all required fields";
+    return;
+  }
+
+  let validReferral = null;
+
+  // چک کد ریفرال
+  if (referralCode) {
+    const { data: refUser } = await supabase
+      .from("users")
+      .select("referral_code")
+      .eq("referral_code", referralCode)
+      .single();
+
+    if (!refUser) {
+      msg.innerText="Invalid referral code";
       return;
     }
 
-    let validReferral = null;
+    validReferral = referralCode;
+  }
 
-    if (referralCode) {
-      const { data: refUser } = await supabase
-        .from("users")
-        .select("referral_code")
-        .eq("referral_code", referralCode)
-        .single();
+  // ثبت در auth
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) { msg.innerText=error.message; return; }
 
-      if (!refUser) {
-        msg.innerText="Invalid referral code";
-        return;
-      }
+  const userIdAuth = data.user.id;
 
-      validReferral = referralCode;
-    }
+  // ✅ ساخت user_id هشت رقمی عددی
+  let customUserId;
+  let exists = true;
 
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) { msg.innerText=error.message; return; }
+  while (exists) {
+    customUserId = Math.floor(10000000 + Math.random() * 90000000).toString();
 
-    const userId = data.user.id;
-    const myReferralCode = userId.slice(0,8);
+    const { data: checkUser } = await supabase
+      .from("users")
+      .select("user_id")
+      .eq("user_id", customUserId)
+      .single();
 
-    await supabase.from("users").insert({
-      id:userId,
-      email,
-      first_name:firstName,
-      last_name:lastName,
-      dob,
-      country,
-      referral_code:myReferralCode,
-      referral_id:validReferral
-    });
+    if (!checkUser) exists = false;
+  }
 
-    msg.style.color="green";
-    msg.innerText="Registered successfully. Please login.";
+  // ساخت کد ریفرال برای خودش
+  const myReferralCode = customUserId;
 
-    signupForm.style.display="none";
-    loginForm.style.display="flex";
-    btnLogin.classList.add("active");
-    btnSignUp.classList.remove("active");
-  };
+  // ثبت در جدول users
+  await supabase.from("users").insert({
+    id: userIdAuth,
+    email,
+    first_name: firstName,
+    last_name: lastName,
+    dob,
+    country,
+    user_id: customUserId,          // ✅ این همان ۸ رقمی است
+    referral_code: myReferralCode,  // کد ریفرال خودش
+    referral_id: validReferral
+  });
+
+  msg.style.color="green";
+  msg.innerText="Registered successfully. Please login.";
+
+  signupForm.style.display="none";
+  loginForm.style.display="flex";
+  btnLogin.classList.add("active");
+  btnSignUp.classList.remove("active");
+};
 
 });
 </script>
