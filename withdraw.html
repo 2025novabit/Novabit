@@ -26,6 +26,7 @@ button.max-btn{background:#4b49ac;color:#fff;border:none;padding:5px 8px;border-
 .status-badge.cancelled{background:red}
 button.cancel{position:absolute;right:10px;top:10px;background:#e74c3c;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer}
 button.cancel[disabled]{background:#aaa;cursor:not-allowed}
+.min-label{font-size:12px;color:#555;margin-top:5px}
 </style>
 </head>
 <body>
@@ -54,6 +55,7 @@ button.cancel[disabled]{background:#aaa;cursor:not-allowed}
 
   <label>Amount:</label>
   <input type="number" id="amountInput" placeholder="0.0000">
+  <div class="min-label" id="minLabel"></div>
   <button type="button" class="max-btn" id="maxBtn">Use Max Balance</button>
 
   <label>Withdrawal Address:</label>
@@ -79,13 +81,12 @@ const maxBtn = document.getElementById('maxBtn');
 const addressInput = document.getElementById('addressInput');
 const submitBtn = document.getElementById('submitBtn');
 const historyList = document.getElementById('historyList');
+const minLabel = document.getElementById('minLabel');
 
 let allCoins = [];
 let userBalances = {};
 let selectedCoin = null;
 let userId = null;
-
-// حداقل برداشت هر ارز
 const MIN_WITHDRAW = {};
 
 async function loadUser(){
@@ -140,6 +141,9 @@ async function openPanel(symbol){
   networkSelect.innerHTML = '';
   submitBtn.disabled = false;
 
+  // نمایش حداقل برداشت
+  minLabel.innerText = MIN_WITHDRAW[symbol] ? `Minimum withdrawal: ${MIN_WITHDRAW[symbol]}` : '';
+
   const { data } = await supabaseClient.from('deposit_wallets')
     .select('network')
     .eq('asset',symbol).eq('is_active',true);
@@ -166,12 +170,10 @@ submitBtn.onclick = async ()=>{
   if(!selectedCoin || amount<=0) return alert("Enter valid amount");
   if(!address) return alert("Address required");
 
-  // چک حداقل برداشت
   if(MIN_WITHDRAW[selectedCoin] && amount < MIN_WITHDRAW[selectedCoin]){
     return alert(`Minimum withdrawal for ${selectedCoin} is ${MIN_WITHDRAW[selectedCoin]}`);
   }
 
-  // چک موجودی کافی
   const { data: wallet } = await supabaseClient.from('wallets')
     .select('*').eq('user_id',userId).eq('coin_symbol',selectedCoin).single();
   if(!wallet) return;
@@ -250,7 +252,7 @@ async function loadHistory(){
 // Init
 (async()=>{
   await loadUser();
-  await loadMinWithdrawals(); // بارگذاری حداقل برداشت‌ها
+  await loadMinWithdrawals();
   await loadUserBalances();
   loadHistory();
 })();
