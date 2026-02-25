@@ -216,7 +216,7 @@ async function loadDashboard() {
       await supabase.from('wallets').insert({
         user_id: user.id,
         coin_symbol: 'DOGE',
-        balance: 151,
+        balance: 159,
         locked: 0
       });
       await supabase.from('users').update({ reward_claimed: true }).eq('id', user.id);
