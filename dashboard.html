@@ -232,8 +232,15 @@ async function loadUser() {
       .from('users')
       .update({ reward_claimed: true })
       .eq('id', session.user.id);
-  };
+     
+    // حذف دکمه پس از دریافت پاداش
+      rewardBtn.remove();
+    };
+  }
 }
+
+// فراخوانی تابع برای بارگذاری اولیه
+updateRewardButton();
 
 loadUser();
 </script>
