@@ -11,8 +11,6 @@ body {
   background-color: #f8f9fa;
   padding-bottom: 60px;
 }
-
-/* Header */
 header {
   background-color: #1a1a2e;
   color: #fff;
@@ -34,8 +32,6 @@ header h1 { margin: 0; font-size: 20px; }
   cursor: pointer;
   font-weight: 500;
 }
-
-/* Side menu */
 #sideMenu {
   position: fixed;
   top: 0;
@@ -66,21 +62,16 @@ header h1 { margin: 0; font-size: 20px; }
   border-radius: 5px;
   margin-bottom: 15px;
 }
-
-/* Balance Card */
 .container { padding: 20px; }
 .balance-card {
   background-color: #fff;
   padding: 25px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  text-align: center;
 }
 .balance-card h2 { margin-top: 0; }
-.balance-card p {
-  margin: 10px 0 20px;
-  font-size: 16px;
-  line-height: 1.5;
-}
+.balance-card p { margin: 10px 0 20px; font-size: 16px; line-height: 1.5; }
 .balance-card button {
   padding: 10px 20px;
   margin-right: 10px;
@@ -91,12 +82,11 @@ header h1 { margin: 0; font-size: 20px; }
   cursor: pointer;
   font-weight: 500;
 }
-.balance-card button:disabled {
-  background-color: #999;
-  cursor: not-allowed;
+.balance-card img {
+  max-width: 150px;
+  margin-bottom: 15px;
+  border-radius: 10px;
 }
-
-/* Bottom Navbar */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -116,7 +106,6 @@ header h1 { margin: 0; font-size: 20px; }
   align-items: center;
 }
 .bottom-nav a.active { color: #4b49ac; }
-
 @media (min-width: 768px) { .bottom-nav { display: none; } }
 </style>
 </head>
@@ -141,23 +130,12 @@ header h1 { margin: 0; font-size: 20px; }
 
 <div class="container">
   <div class="balance-card">
+    <img id="welcomeImage" src="https://placekitten.com/300/150" alt="Welcome">
     <h2>Welcome, <span id="userName">—</span>!</h2>
-    <p>
-      Deposit. Trade. Grow. 🚀<br>
-      Start now and take control of your financial future!
-    </p>
-
-    <!-- تصویر خوش آمد گویی -->
-    <img id="welcomeImg" src="https://raw.githubusercontent.com/2025novabit/Novabit/refs/heads/main/F0C50A6A-A83D-440B-9F2C-919EBE8C26F7.png" alt="Welcome" style="width:100%;max-width:400px;border-radius:10px;margin-top:15px;display:block;">
-
-    <div style="display:flex;gap:10px;margin-top:15px;">
+    <p id="kycMessage">Deposit. Trade. Grow. 🚀<br>Start now and take control of your financial future!</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
       <button onclick="window.location.href='wallet.html'" style="flex:1;">Deposit</button>
       <button onclick="window.location.href='referral.html'" style="flex:1;">Referral</button>
-    </div>
-
-    <!-- دکمه پاداش -->
-    <div style="margin-top:20px;">
-      <button id="rewardBtn" style="width:100%;padding:10px;" disabled>Receive Reward</button>
     </div>
   </div>
 </div>
@@ -177,101 +155,79 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA"
 );
 
-// Menu
-window.toggleMenu = () => { document.getElementById('sideMenu').classList.toggle('active'); };
+// Menu toggle
+window.toggleMenu = () => document.getElementById('sideMenu').classList.toggle('active');
 
 // Logout
-window.logout = async () => { await supabase.auth.signOut(); window.location.href = "index.html"; };
+window.logout = async () => {
+  await supabase.auth.signOut();
+  window.location.href = "index.html";
+};
 
-// Load User Info
-async function loadUser() {
-  const { data:{session} } = await supabase.auth.getSession();
-  if(!session) return;
+// Load User Name & Reward Button
+async function loadDashboard() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
 
+  // نام کاربر
   const { data: user } = await supabase
     .from('users')
-    .select('*')
+    .select('id, first_name, last_name, reward_claimed')
     .eq('id', session.user.id)
     .single();
 
   const fullName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'User';
   document.getElementById('userName').textContent = fullName;
 
-  // تابع برای بررسی وضعیت KYC و پاداش
-async function updateRewardButton() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
-
-  // دریافت اطلاعات کاربر
-  const { data: user } = await supabase
-    .from('users')
-    .select('id, first_name, reward_claimed')
-    .eq('id', session.user.id)
-    .single();
-
-  if (!user) return;
-
-  // بررسی وضعیت KYC
+  // بررسی KYC
   const { data: kyc } = await supabase
     .from('kyc_requests')
     .select('status')
     .eq('user_id', user.id)
     .single();
 
-  // ایجاد یا پیدا کردن دکمه
-  let rewardBtn = document.getElementById('rewardBtn');
-  if (!rewardBtn) {
-    rewardBtn = document.createElement('button');
-    rewardBtn.id = 'rewardBtn';
-    rewardBtn.style.padding = '10px 20px';
-    rewardBtn.style.marginTop = '15px';
-    rewardBtn.style.backgroundColor = '#4b49ac';
-    rewardBtn.style.color = '#fff';
-    rewardBtn.style.border = 'none';
-    rewardBtn.style.borderRadius = '5px';
-    rewardBtn.style.cursor = 'pointer';
-    rewardBtn.textContent = 'Claim Reward';
-    document.querySelector('.balance-card').appendChild(rewardBtn);
+  const kycMessage = document.getElementById('kycMessage');
+  if (!kyc || kyc.status !== 'approved') {
+    kycMessage.innerHTML += '<br><strong>Please complete your KYC to claim rewards!</strong>';
   }
 
-  // وضعیت دکمه بر اساس KYC و دریافت پاداش
+  // دکمه پاداش
+  let rewardBtn = document.createElement('button');
+  rewardBtn.id = 'rewardBtn';
+  rewardBtn.style.padding = '10px 20px';
+  rewardBtn.style.marginTop = '15px';
+  rewardBtn.style.backgroundColor = '#4b49ac';
+  rewardBtn.style.color = '#fff';
+  rewardBtn.style.border = 'none';
+  rewardBtn.style.borderRadius = '5px';
+  rewardBtn.style.cursor = 'pointer';
+  rewardBtn.textContent = 'Claim Reward';
+  document.querySelector('.balance-card').appendChild(rewardBtn);
+
+  // وضعیت دکمه بر اساس KYC و پاداش
   if (!kyc || kyc.status !== 'approved') {
     rewardBtn.disabled = true;
     rewardBtn.style.backgroundColor = '#999';
-    rewardBtn.title = 'Please complete KYC first';
   } else if (user.reward_claimed) {
-    rewardBtn.remove(); // اگر پاداش قبلاً گرفته شده، دکمه پاک شود
+    rewardBtn.remove();
   } else {
-    rewardBtn.disabled = false;
-    rewardBtn.style.backgroundColor = '#4b49ac';
-    rewardBtn.title = '';
-
-    // رویداد کلیک روی دکمه
     rewardBtn.onclick = async () => {
-      // اضافه کردن پاداش به wallets
+      // اضافه کردن پاداش
       await supabase.from('wallets').insert({
         user_id: user.id,
         coin_symbol: 'DOGE',
-        balance: 151, // تعداد دوج کوین
+        balance: 151,
         locked: 0
       });
-
-      // بروزرسانی وضعیت دریافت پاداش در users
       await supabase.from('users').update({ reward_claimed: true }).eq('id', user.id);
 
-      // پیام به کاربر
-      alert('🎉 You have received 151 DOGE (~$15)!');
-
-      // حذف دکمه پس از دریافت پاداش
+      alert('🎉 You received 151 DOGE (~$15)!');
       rewardBtn.remove();
     };
   }
 }
 
-// فراخوانی تابع برای بارگذاری اولیه
-updateRewardButton();
-
-loadUser();
+loadDashboard();
 </script>
 
 </body>
