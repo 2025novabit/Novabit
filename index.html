@@ -12,13 +12,11 @@ const SUPABASE_URL = "https://iecnioogmafgxwarmkxz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllY25pb29nbWFmZ3h3YXJta3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTYwNDgsImV4cCI6MjA4MzM3MjA0OH0.3zkHQpwdYUVdf6_GkPfkLRu7xgWMaUHNuFmYMBgBsJA";
 
 window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-// بررسی ورود خودکار کاربر
+
+// اگر قبلاً لاگین باشد مستقیم داشبورد
 window.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    // اگر کاربر قبلاً لاگین کرده، مستقیم به داشبورد برو
-    location.href = 'dashboard.html';
-  }
+  if (session) location.href = "dashboard.html";
 });
 </script>
 
@@ -41,19 +39,6 @@ body{
   box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
 h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
-.home-btn{
-  display:block;
-  width:100%;
-  margin-bottom:20px;
-  padding:12px 0;
-  font-size:16px;
-  font-weight:bold;
-  border:none;
-  border-radius:8px;
-  background:#4b49ac;
-  color:#fff;
-  cursor:pointer;
-}
 .toggle-btns{display:flex;justify-content:center;margin-bottom:20px;}
 .toggle-btns button{
   flex:1;margin:0 5px;padding:10px;border:none;border-radius:8px;
@@ -63,22 +48,20 @@ h2{text-align:center;color:#1a1a2e;margin-bottom:25px;}
 form{display:none;flex-direction:column;}
 label{margin-top:10px;font-weight:500;color:#1a1a2e;}
 input,select{
-  width:100%;padding:12px 15px;margin:5px 0;
-  border-radius:8px;border:1px solid #ccc;font-size:16px;
+  width:100%;padding:12px;margin:5px 0;
+  border-radius:8px;border:1px solid #ccc;font-size:15px;
 }
 button.submit-btn{
   width:100%;padding:12px;margin:15px 0;border-radius:8px;
   border:none;background:#4b49ac;color:#fff;font-size:16px;cursor:pointer;
 }
-#msg{text-align:center;font-weight:600;color:red;}
+#msg{text-align:center;font-weight:600;color:red;margin-top:10px;}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-  <button class="home-btn" onclick="location.href='dashboard.html'">Home</button>
-
   <h2>Welcome</h2>
 
   <div class="toggle-btns">
@@ -90,13 +73,16 @@ button.submit-btn{
   <form id="loginForm">
     <label>Email</label>
     <input type="email" id="loginEmail" required>
+
     <label>Password</label>
     <input type="password" id="loginPassword" required>
+
     <button type="button" class="submit-btn" id="loginSubmit">Login</button>
   </form>
 
-  <!-- SIGN UP -->
+  <!-- SIGNUP -->
   <form id="signupForm">
+
     <label>First Name</label>
     <input type="text" id="signupFirstName" required>
 
@@ -117,6 +103,9 @@ button.submit-btn{
     <label>Password</label>
     <input type="password" id="signupPassword" required>
 
+    <label>Referral Code (Optional)</label>
+    <input type="text" id="signupReferral" placeholder="Enter referral code">
+
     <button type="button" class="submit-btn" id="signupSubmit">Sign Up</button>
   </form>
 
@@ -124,6 +113,7 @@ button.submit-btn{
 </div>
 
 <script type="module">
+
 window.addEventListener('DOMContentLoaded', () => {
 
   const btnLogin = document.getElementById('btnLogin');
@@ -132,109 +122,123 @@ window.addEventListener('DOMContentLoaded', () => {
   const signupForm = document.getElementById('signupForm');
   const msg = document.getElementById('msg');
   const signupCountry = document.getElementById('signupCountry');
+  const referralInput = document.getElementById('signupReferral');
 
   // لیست کامل کشورها
-  const countries = [
-    "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
-    "Bahamas","Bahrain","Bangladesh","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana",
-    "Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Central African Republic",
-    "Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark",
-    "Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini",
-    "Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea",
-    "Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy",
-    "Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia",
-    "Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands",
-    "Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar",
-    "Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway",
-    "Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar",
-    "Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino",
-    "Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia",
-    "Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden",
-    "Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago",
-    "Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States",
-    "Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
-  ];
+  const countries = ["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
+  "Bahamas","Bahrain","Bangladesh","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana",
+  "Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Central African Republic",
+  "Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark",
+  "Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini",
+  "Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Guatemala","Guinea","Guyana",
+  "Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Japan","Jordan",
+  "Kazakhstan","Kenya","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Liberia","Libya","Lithuania","Luxembourg",
+  "Madagascar","Malaysia","Maldives","Mali","Malta","Mexico","Moldova","Monaco","Mongolia","Morocco","Mozambique",
+  "Myanmar","Namibia","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","Norway","Oman","Pakistan",
+  "Panama","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saudi Arabia",
+  "Senegal","Serbia","Singapore","Slovakia","Slovenia","Somalia","South Africa","South Korea","Spain","Sri Lanka",
+  "Sudan","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Thailand","Turkey","Turkmenistan","Uganda",
+  "Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Venezuela","Vietnam",
+  "Yemen","Zambia","Zimbabwe"];
 
-  countries.forEach(c => {
-    signupCountry.insertAdjacentHTML("beforeend", `<option value="${c}">${c}</option>`);
-  });
+  countries.forEach(c => signupCountry.insertAdjacentHTML("beforeend", `<option value="${c}">${c}</option>`));
 
-  // Toggle فرم ها
+  // گرفتن ref از لینک
+  const params = new URLSearchParams(window.location.search);
+  const refFromUrl = params.get("ref");
+  if (refFromUrl) referralInput.value = refFromUrl;
+
+  // toggle
   loginForm.style.display = "flex";
   signupForm.style.display = "none";
 
-  btnLogin.addEventListener('click', () => {
+  btnLogin.onclick = () => {
     btnLogin.classList.add("active");
     btnSignUp.classList.remove("active");
     loginForm.style.display = "flex";
     signupForm.style.display = "none";
-    msg.innerText = "";
-  });
+    msg.innerText="";
+  };
 
-  btnSignUp.addEventListener('click', () => {
+  btnSignUp.onclick = () => {
     btnSignUp.classList.add("active");
     btnLogin.classList.remove("active");
     signupForm.style.display = "flex";
     loginForm.style.display = "none";
-    msg.innerText = "";
-  });
+    msg.innerText="";
+  };
 
-  // Login
-  const loginSubmit = document.getElementById('loginSubmit');
-  loginSubmit.addEventListener('click', async () => {
+  // LOGIN
+  document.getElementById("loginSubmit").onclick = async () => {
     const { error } = await supabase.auth.signInWithPassword({
-      email: document.getElementById('loginEmail').value,
-      password: document.getElementById('loginPassword').value
+      email: loginEmail.value,
+      password: loginPassword.value
     });
     if (error) { msg.innerText = error.message; return; }
-    location.href = "dashboard.html";
-  });
+    location.href="dashboard.html";
+  };
 
-  // Sign Up
-  const signupSubmit = document.getElementById('signupSubmit');
-  signupSubmit.addEventListener('click', async () => {
-    msg.innerText = "";
+  // SIGNUP
+  document.getElementById("signupSubmit").onclick = async () => {
 
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value.trim();
-    const firstName = document.getElementById('signupFirstName').value.trim();
-    const lastName = document.getElementById('signupLastName').value.trim();
-    const dob = document.getElementById('signupDOB').value;
+    msg.innerText="";
+    msg.style.color="red";
+
+    const email = signupEmail.value.trim();
+    const password = signupPassword.value.trim();
+    const firstName = signupFirstName.value.trim();
+    const lastName = signupLastName.value.trim();
+    const dob = signupDOB.value;
     const country = signupCountry.value;
+    const referralCode = referralInput.value.trim();
 
     if(!email || !password || !firstName || !lastName || !dob || !country){
-      msg.innerText = "Please fill all fields";
+      msg.innerText="Please fill all required fields";
       return;
     }
 
-    const params = new URLSearchParams(location.search);
-    const refCode = params.get("ref");
+    let validReferral = null;
+
+    if (referralCode) {
+      const { data: refUser } = await supabase
+        .from("users")
+        .select("referral_code")
+        .eq("referral_code", referralCode)
+        .single();
+
+      if (!refUser) {
+        msg.innerText="Invalid referral code";
+        return;
+      }
+
+      validReferral = referralCode;
+    }
 
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) { msg.innerText = error.message; return; }
+    if (error) { msg.innerText=error.message; return; }
 
     const userId = data.user.id;
-    const myReferralCode = userId.slice(0, 8);
+    const myReferralCode = userId.slice(0,8);
 
     await supabase.from("users").insert({
-      id: userId,
+      id:userId,
       email,
-      first_name: firstName,
-      last_name: lastName,
+      first_name:firstName,
+      last_name:lastName,
       dob,
       country,
-      referral_code: myReferralCode,
-      referral_id: refCode || null
+      referral_code:myReferralCode,
+      referral_id:validReferral
     });
 
-    msg.style.color = "green";
-    msg.innerText = "Registered successfully. Please login.";
-    // فرم ثبت نام مخفی و فرم لاگین نمایش داده شود
-    signupForm.style.display = "none";
-    loginForm.style.display = "flex";
+    msg.style.color="green";
+    msg.innerText="Registered successfully. Please login.";
+
+    signupForm.style.display="none";
+    loginForm.style.display="flex";
     btnLogin.classList.add("active");
     btnSignUp.classList.remove("active");
-  });
+  };
 
 });
 </script>
